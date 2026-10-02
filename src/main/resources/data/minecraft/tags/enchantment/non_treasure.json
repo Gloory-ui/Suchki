@@ -33,6 +33,9 @@
     "minecraft:piercing",
     "minecraft:density",
     "minecraft:breach",
-    "minecraft:lunge"
+    "minecraft:lunge",
+    "suchki:spring",
+    "suchki:deflect",
+    "suchki:stun"
   ]
 }

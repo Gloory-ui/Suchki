@@ -47,6 +47,14 @@ public class SuchkiConfig {
 	/** Шёлковое касание добывает спавнеры. */
 	public boolean silkTouchSpawners = true;
 
+	// --- Новые чары и улучшения ---
+	/** Лесоруб: сколько брёвен максимум рубится за раз. */
+	public int timberMaxLogs = 128;
+	/** Маяк 5-го яруса: радиус действия (в ванили на 4-м ярусе — 50). */
+	public double beaconTierFiveRadius = 70.0;
+	/** Шанс, что у мастера-библиотекаря будет книга на уровень выше ванильного максимума. */
+	public double librarianHighBookChance = 0.3;
+
 	// --- Наковальня ---
 	/** Потолок цены на наковальне в уровнях опыта (вместо «Слишком дорого!»). */
 	public int anvilMaxCost = 30;

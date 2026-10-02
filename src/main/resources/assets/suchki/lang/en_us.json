@@ -28,5 +28,17 @@
   "suchki.tooltip.damage_power": "+%s arrow damage",
   "suchki.tooltip.damage_impaling": "+%s damage to aquatic mobs",
   "suchki.tooltip.protection_set": "Full set: −%s%% damage (fire, explosions, projectiles −%s%%)",
-  "suchki.tooltip.feather_set": "−%s%% fall damage"
+  "suchki.tooltip.feather_set": "−%s%% fall damage",
+  "enchantment.suchki.drill": "Drill",
+  "enchantment.suchki.smelting": "Smelting",
+  "enchantment.suchki.timber": "Timber",
+  "enchantment.suchki.spring": "Spring",
+  "enchantment.suchki.deflect": "Deflection",
+  "enchantment.suchki.stun": "Stun",
+  "suchki.perk.drill": "Mines 3×3; sneak to mine a single block",
+  "suchki.perk.smelting": "Ores and raw metals drop as ingots",
+  "suchki.perk.timber": "Fells the whole tree; sneak to cut a single block",
+  "suchki.perk.spring": "Air jumps: %s",
+  "suchki.perk.deflect": "%s%% chance to send projectiles back at the shooter",
+  "suchki.perk.stun": "%s%% chance to slow and stun the target"
 }

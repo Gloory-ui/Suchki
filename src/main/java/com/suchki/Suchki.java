@@ -17,7 +17,11 @@ public class Suchki implements ModInitializer {
 		SuchkiConfig.load();
 		SuchkiPotions.init();
 		Perks.register();
+		com.suchki.enchant.AreaBreaking.register();
+		com.suchki.enchant.SpringJump.register();
+		com.suchki.enchant.LibrarianBooks.register();
 		if (Boolean.getBoolean("suchki.audit")) {
+			com.suchki.dev.DevTests.register();
 			ServerLifecycleEvents.SERVER_STARTED.register(server -> {
 				MixinEnvironment.getCurrentEnvironment().audit();
 				LOGGER.info("Suchki: проверка миксинов пройдена");

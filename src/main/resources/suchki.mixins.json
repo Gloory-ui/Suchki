@@ -4,8 +4,15 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"AnvilMenuMixin",
+		"BeaconMixin",
+		"BlockDropsMixin",
 		"BlockItemMixin",
 		"CombatRulesMixin",
+		"EntityDeflectMixin",
+		"GrindstoneInputSlotMixin",
+		"GrindstoneMenuAccessor",
+		"GrindstoneMenuMixin",
+		"GrindstoneResultSlotMixin",
 		"ItemStackMixin",
 		"LivingEntityMixin"
 	],
@@ -14,5 +21,8 @@
 	},
 	"overwrites": {
 		"requireAnnotations": true
-	}
+	},
+	"client": [
+		"client.GrindstoneCostLabelMixin"
+	]
 }

@@ -1,0 +1,44 @@
+package com.suchki.mixin;
+
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import com.suchki.enchant.Ench;
+import com.suchki.enchant.SuchkiEnchantments;
+import java.util.ArrayList;
+import java.util.List;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.SingleRecipeInput;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+
+/** Автоплавка: руда и сырые металлы выпадают сразу переплавленными (Удача тоже учитывается). */
+@Mixin(Block.class)
+public abstract class BlockDropsMixin {
+	@ModifyReturnValue(
+			method = "getDrops(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/item/ItemStack;)Ljava/util/List;",
+			at = @At("RETURN"))
+	private static List<ItemStack> suchki$smelt(List<ItemStack> drops, BlockState state, ServerLevel level, BlockPos pos,
+			BlockEntity be, Entity entity, ItemStack tool) {
+		if (entity == null || tool.isEmpty() || Ench.level(level.registryAccess(), SuchkiEnchantments.SMELTING, tool) <= 0) return drops;
+		List<ItemStack> out = new ArrayList<>(drops.size());
+		for (ItemStack stack : drops) {
+			if (!stack.is(ConventionalItemTags.RAW_MATERIALS) && !stack.is(ConventionalItemTags.ORES)) {
+				out.add(stack);
+				continue;
+			}
+			SingleRecipeInput input = new SingleRecipeInput(stack);
+			ItemStack smelted = level.recipeAccess().getRecipeFor(RecipeType.SMELTING, input, level)
+					.map(r -> r.value().assemble(input, level.registryAccess()))
+					.orElse(ItemStack.EMPTY);
+			out.add(smelted.isEmpty() ? stack : smelted.copyWithCount(smelted.getCount() * stack.getCount()));
+		}
+		return out;
+	}
+}

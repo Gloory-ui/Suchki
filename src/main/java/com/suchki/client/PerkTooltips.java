@@ -44,6 +44,12 @@ final class PerkTooltips {
 			case "minecraft:thorns" -> passive(out, "suchki.perk.thorns");
 			case "minecraft:infinity" -> passive(out, "suchki.perk.infinity");
 			case "minecraft:mending" -> passive(out, "suchki.perk.mending");
+			case "suchki:drill" -> passive(out, "suchki.perk.drill");
+			case "suchki:smelting" -> passive(out, "suchki.perk.smelting");
+			case "suchki:timber" -> passive(out, "suchki.perk.timber");
+			case "suchki:spring" -> passive(out, "suchki.perk.spring", level);
+			case "suchki:deflect" -> passive(out, "suchki.perk.deflect", 6 * level);
+			case "suchki:stun" -> passive(out, "suchki.perk.stun", 8 * level);
 			default -> {}
 		}
 
@@ -99,8 +105,8 @@ final class PerkTooltips {
 		out.add(Component.literal("  ").append(Component.translatable(key, args)).withStyle(ChatFormatting.BLUE));
 	}
 
-	private static void passive(List<Component> out, String key) {
-		out.add(Component.literal("  ✦ ").append(Component.translatable(key)).withStyle(ChatFormatting.AQUA));
+	private static void passive(List<Component> out, String key, Object... args) {
+		out.add(Component.literal("  ✦ ").append(Component.translatable(key, args)).withStyle(ChatFormatting.AQUA));
 	}
 
 	private static void perk(List<Component> out, int level, int perkLevel, String key, Object... args) {

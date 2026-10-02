@@ -28,5 +28,17 @@
   "suchki.tooltip.damage_power": "+%s к урону стрелы",
   "suchki.tooltip.damage_impaling": "+%s урона водным мобам",
   "suchki.tooltip.protection_set": "Комплект: −%s%% урона (от огня, взрывов, снарядов −%s%%)",
-  "suchki.tooltip.feather_set": "−%s%% урона от падения"
+  "suchki.tooltip.feather_set": "−%s%% урона от падения",
+  "enchantment.suchki.drill": "Бур",
+  "enchantment.suchki.smelting": "Автоплавка",
+  "enchantment.suchki.timber": "Лесоруб",
+  "enchantment.suchki.spring": "Пружина",
+  "enchantment.suchki.deflect": "Отражение",
+  "enchantment.suchki.stun": "Оглушение",
+  "suchki.perk.drill": "Копает 3×3; присядьте, чтобы копать один блок",
+  "suchki.perk.smelting": "Руда и сырые металлы выпадают слитками",
+  "suchki.perk.timber": "Рубит всё дерево целиком; присядьте, чтобы срубить один блок",
+  "suchki.perk.spring": "Прыжков в воздухе: %s",
+  "suchki.perk.deflect": "Шанс %s%% отбить снаряд обратно в стрелка",
+  "suchki.perk.stun": "Шанс %s%% замедлить и оглушить цель"
 }

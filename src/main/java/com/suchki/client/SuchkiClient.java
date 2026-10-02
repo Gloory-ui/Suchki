@@ -24,6 +24,7 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 public class SuchkiClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
+		SpringJumpClient.register();
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.INGREDIENTS).register(entries -> {
 			HolderLookup.RegistryLookup<Enchantment> lookup =
 					entries.getContext().holders().lookupOrThrow(Registries.ENCHANTMENT);
