@@ -1,0 +1,349 @@
+/*
+ * Copyright 2022 Siphalor
+ * Copyright 2026 TerminalMC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.suchki.clientsort.client.order;
+
+import com.suchki.clientsort.client.ClientSort;
+import it.unimi.dsi.fastutil.ints.IntArrays;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+
+import java.util.*;
+import java.util.concurrent.locks.Lock;
+
+import static com.suchki.clientsort.client.config.Config.options;
+
+public abstract class SortOrder {
+
+    public final String name;
+
+    protected SortOrder(String name) {
+        this.name = name;
+    }
+
+    /**
+     * Sorts the given slot IDs using the given stacks in the slots. Sorting may be done in place.
+     *
+     * @param slotIds an array of slot IDs to sort.
+     * @param stacks  the item stacks in the respective slots.
+     * @param context additional context for the sort.
+     * @return the sorted array of slot IDs.
+     */
+    public int[] sort(int[] slotIds, ItemStack[] stacks, SortContext context) {
+        return slotIds;
+    }
+
+    /**
+     * All registered sort orders, mapped by name.
+     */
+    public static final Map<String, SortOrder> SORT_ORDERS = new HashMap<>();
+    /**
+     * No-op.
+     */
+    public static final SortOrder NONE;
+    /**
+     * Slots: item hover name (case ignorant) (desc)
+     */
+    public static final SortOrder ALPHABET;
+    /**
+     * Slots: creative inventory item search order
+     */
+    public static final SortOrder CREATIVE;
+    /**
+     * Groups: total item quantity (desc)
+     * <p>
+     * Slots: stack size (desc)
+     */
+    public static final SortOrder QUANTITY;
+    /**
+     * Slots: raw item ID (desc)
+     */
+    public static final SortOrder RAW_ID;
+
+    public static <T extends SortOrder> T register(T sortOrder) {
+        SORT_ORDERS.put(sortOrder.name, sortOrder);
+        return sortOrder;
+    }
+
+    /**
+     * Sorts {@code sortIds} by comparing the elements of {@code values}, falling back to comparing
+     * the elements of {@code stacks} if necessary.
+     *
+     * @param sortIds the array of slot IDs to sort.
+     * @param values  an array of precalculated priority numbers for each slot, corresponding 1:1
+     *                with the array of slot IDs.
+     * @param stacks  an array of item stacks for each slot, corresponding 1:1 with the array of
+     *                slot IDs.
+     * @param context additional context for comparison.
+     */
+    private static void sortByValues(
+            int[] sortIds,
+            int[] values,
+            ItemStack[] stacks,
+            SortContext context
+    ) {
+        IntArrays.quickSort(
+                sortIds, (a, b) -> {
+                    // Compare preset priority
+                    int cmp = SortOrder.comparePresetPriority(stacks[a], stacks[b]);
+                    if (cmp != 0) {
+                        return cmp;
+                    }
+
+                    // Compare values
+                    cmp = Integer.compare(values[a], values[b]);
+                    if (cmp != 0) {
+                        return cmp;
+                    }
+
+                    // Compare stacks
+                    return StackComparison.compareEqualItems(stacks[a], stacks[b], context);
+                }
+        );
+    }
+
+    /**
+     * Compares two items on the basis of whether they appear in the pre-configured start or end
+     * priority maps.
+     */
+    private static int comparePresetPriority(ItemStack stackA, ItemStack stackB) {
+        // If one stack is empty, prefer the other
+        if (stackA.isEmpty()) {
+            if (stackB.isEmpty()) {
+                return 0;
+            } else {
+                return 1;
+            }
+        } else if (stackB.isEmpty()) {
+            return -1;
+        }
+
+        Item a = stackA.getItem();
+        Item b = stackB.getItem();
+
+        // Check start items
+        if (options().useStartOverrides) {
+            Integer idxA = options().startOverrideMap.get(a);
+            Integer idxB = options().startOverrideMap.get(b);
+            if (idxA != null || idxB != null) {
+                if (idxA != null && idxB != null) {
+                    // Both appear in start items; compare by index
+                    return Integer.compare(idxA, idxB);
+                }
+                // Only one appears in start items; prefer it
+                return (idxA != null) ? -1 : 1;
+            }
+        }
+
+        // Neither appears in start items; check end items
+        if (options().useEndOverrides) {
+            Integer idxA = options().endOverrideMap.get(a);
+            Integer idxB = options().endOverrideMap.get(b);
+            if (idxA != null || idxB != null) {
+                if (idxA != null && idxB != null) {
+                    // Both appear in end items; compare by index
+                    return Integer.compare(idxA, idxB);
+                }
+                // Only one appears in end items; prefer the other
+                return (idxA != null) ? 1 : -1;
+            }
+        }
+
+        // Neither appears in either map; consider them equal for this comparison
+        return 0;
+    }
+
+    static {
+        NONE = register(new SortOrder("none") {
+        });
+
+        ALPHABET = register(new SortOrder("alphabet") {
+            @Override
+            public int[] sort(int[] slotIds, ItemStack[] stacks, SortContext context) {
+                // Create a reference array based on stack hover names
+                String[] strings = new String[slotIds.length];
+                for (int i = 0; i < slotIds.length; i++) {
+                    ItemStack stack = stacks[i];
+                    strings[i] = stack.isEmpty() ? "" : stack.getHoverName().getString();
+                }
+
+                // Sort by ascending alphabetical order
+                IntArrays.quickSort(
+                        slotIds, (a, b) -> {
+                            // Compare preset priority
+                            int cmp = SortOrder.comparePresetPriority(stacks[a], stacks[b]);
+                            if (cmp != 0) {
+                                return cmp;
+                            }
+
+                            // Compare names
+                            if (strings[a].isEmpty()) {
+                                if (strings[b].isEmpty()) {
+                                    return 0;
+                                } else {
+                                    return 1;
+                                }
+                            } else if (strings[b].isEmpty()) {
+                                return -1;
+                            }
+                            cmp = strings[a].compareToIgnoreCase(strings[b]);
+                            if (cmp != 0) {
+                                return cmp;
+                            }
+
+                            // Fallback to default comparison
+                            return StackComparison.compareEqualItems(stacks[a], stacks[b], context);
+                        }
+                );
+                return slotIds;
+            }
+        });
+
+        CREATIVE = register(new SortOrder("creative") {
+            @Override
+            public int[] sort(int[] slotIds, ItemStack[] stacks, SortContext context) {
+                // Create a reference array based on item positions
+                int[] sortValues = new int[slotIds.length];
+
+                // If using optimized sorting, read the stored search order
+                if (options().optimizeCreativeSorting && ClientSort.searchOrderUpdated) {
+                    Lock lock = CreativeSearchOrder.getReadLock();
+                    lock.lock();
+                    for (int i = 0; i < stacks.length; i++) {
+                        sortValues[i] = CreativeSearchOrder.getPosition(stacks[i]);
+                    }
+                    lock.unlock();
+                } else {
+                    if (options().optimizeCreativeSorting) {
+                        // Cache rebuild was missed, start it now
+                        CreativeSearchOrder.tryRefreshStackPositionMap();
+                    }
+                    // Compare the items manually
+                    Collection<ItemStack> displayStacks =
+                            CreativeModeTabs.searchTab().getDisplayItems();
+                    List<ItemStack> displayStackList;
+                    if (displayStacks instanceof List) {
+                        displayStackList = (List<ItemStack>) displayStacks;
+                    } else {
+                        displayStackList = new ArrayList<>(displayStacks);
+                    }
+                    Object2IntMap<StackMatcher> lookup = new Object2IntOpenHashMap<>(stacks.length);
+                    for (int i = 0; i < stacks.length; i++) {
+                        final ItemStack stack = stacks[i];
+                        sortValues[i] = lookup.computeIfAbsent(
+                                StackMatcher.of(stack), matcher -> {
+                                    @SuppressWarnings("SuspiciousMethodCalls") int index =
+                                            displayStackList.indexOf(matcher);
+                                    if (index != -1)
+                                        return index;
+                                    return lookup.computeIfAbsent(
+                                            StackMatcher.ignoreNbt(stack), altMatcher -> {
+                                                @SuppressWarnings("SuspiciousMethodCalls") int
+                                                        plainIndex =
+                                                        displayStackList.indexOf(altMatcher);
+                                                if (plainIndex == -1)
+                                                    return Integer.MAX_VALUE;
+                                                return plainIndex;
+                                            }
+                                    );
+                                }
+                        );
+                    }
+                }
+
+                // Sort by reference array
+                SortOrder.sortByValues(slotIds, sortValues, stacks, context);
+                return slotIds;
+            }
+        });
+
+        QUANTITY = register(new SortOrder("quantity") {
+            @Override
+            public int[] sort(int[] slotIds, ItemStack[] stacks, SortContext context) {
+                // Record the total count of each item
+                HashMap<Item, Integer> itemTotalAmountMap = new HashMap<>();
+                for (ItemStack stack : stacks) {
+                    if (!stack.isEmpty()) {
+                        itemTotalAmountMap.merge(stack.getItem(), stack.getCount(), Integer::sum);
+                    }
+                }
+
+                // Sort by descending order of total item count
+                IntArrays.quickSort(
+                        slotIds, (a, b) -> {
+                            // Compare preset priority
+                            int cmp = SortOrder.comparePresetPriority(stacks[a], stacks[b]);
+                            if (cmp != 0) {
+                                return cmp;
+                            }
+
+                            // Check if either stack is empty
+                            ItemStack stackA = stacks[a];
+                            ItemStack stackB = stacks[b];
+                            if (stackA.isEmpty()) {
+                                return stackB.isEmpty() ? 0 : 1;
+                            } else if (stackB.isEmpty()) {
+                                return -1;
+                            }
+
+                            // Compare total amounts
+                            Integer amountA = itemTotalAmountMap.get(stackA.getItem());
+                            Integer amountB = itemTotalAmountMap.get(stackB.getItem());
+                            cmp = Integer.compare(amountB, amountA);
+                            if (cmp != 0) {
+                                return cmp;
+                            }
+
+                            // Same total amounts; compare stacks
+                            if (ItemStack.isSameItemSameComponents(stackA, stackB)) {
+                                // Same item; use default comparison
+                                return StackComparison.compareEqualItems(stackA, stackB, context);
+                            } else {
+                                // Different items; use size-ignorant default comparison
+                                return StackComparison.compareEqualItems(
+                                        stackA.copyWithCount(1),
+                                        stackB.copyWithCount(1),
+                                        context
+                                );
+                            }
+                        }
+                );
+                return slotIds;
+            }
+        });
+
+        RAW_ID = register(new SortOrder("rawId") {
+            @Override
+            public int[] sort(int[] slotIds, ItemStack[] stacks, SortContext context) {
+                // Create a reference array based on item IDs
+                int[] values = Arrays.stream(stacks)
+                        .mapToInt(stack -> stack.isEmpty()
+                                ? Integer.MAX_VALUE
+                                : BuiltInRegistries.ITEM.getId(stack.getItem()))
+                        .toArray();
+
+                // Sort by reference array
+                sortByValues(slotIds, values, stacks, context);
+                return slotIds;
+            }
+        });
+    }
+}

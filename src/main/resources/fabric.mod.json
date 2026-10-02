@@ -11,15 +11,18 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.suchki.Suchki"
+			"com.suchki.Suchki",
+			"com.suchki.clientsort.ClientSortFabric"
 		],
 		"client": [
-			"com.suchki.client.SuchkiClient"
+			"com.suchki.client.SuchkiClient",
+			"com.suchki.clientsort.client.ClientSortFabric"
 		]
 	},
 	"mixins": [
 		"suchki.mixins.json",
-		"suchki.appleskin.mixins.json"
+		"suchki.appleskin.mixins.json",
+		"suchki.clientsort.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.19.5",
