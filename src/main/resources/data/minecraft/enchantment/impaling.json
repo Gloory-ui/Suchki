@@ -1,0 +1,57 @@
+{
+  "anvil_cost": 4,
+  "description": {
+    "translate": "enchantment.minecraft.impaling"
+  },
+  "effects": {
+    "minecraft:damage": [
+      {
+        "effect": {
+          "type": "minecraft:add",
+          "value": {
+            "type": "minecraft:lookup",
+            "values": [
+              2.5,
+              5.0,
+              7.5,
+              10.0,
+              12.5,
+              17.5,
+              22.5,
+              27.5,
+              32.5,
+              37.5
+            ],
+            "fallback": {
+              "type": "minecraft:linear",
+              "base": -7.5,
+              "per_level_above_first": 5.0
+            }
+          }
+        },
+        "requirements": {
+          "condition": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "type": "#minecraft:sensitive_to_impaling"
+          }
+        }
+      }
+    ]
+  },
+  "exclusive_set": "#minecraft:exclusive_set/damage",
+  "max_cost": {
+    "base": 21,
+    "per_level_above_first": 8
+  },
+  "max_level": 5,
+  "min_cost": {
+    "base": 1,
+    "per_level_above_first": 8
+  },
+  "slots": [
+    "mainhand"
+  ],
+  "supported_items": "#minecraft:enchantable/trident",
+  "weight": 2
+}

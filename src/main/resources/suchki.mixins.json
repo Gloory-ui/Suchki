@@ -5,6 +5,7 @@
 	"mixins": [
 		"AnvilMenuMixin",
 		"BlockItemMixin",
+		"CombatRulesMixin",
 		"ItemStackMixin",
 		"LivingEntityMixin"
 	],

@@ -4,13 +4,22 @@
 	"version": "${version}",
 	"name": "Suchki",
 	"description": "Улучшенные чары, наковальня без «Слишком дорого!» и смешивание зелий.",
-	"authors": ["Abdusattor"],
+	"authors": [
+		"Abdusattor"
+	],
 	"license": "All-Rights-Reserved",
 	"environment": "*",
 	"entrypoints": {
-		"main": ["com.suchki.Suchki"]
+		"main": [
+			"com.suchki.Suchki"
+		],
+		"client": [
+			"com.suchki.client.SuchkiClient"
+		]
 	},
-	"mixins": ["suchki.mixins.json"],
+	"mixins": [
+		"suchki.mixins.json"
+	],
 	"depends": {
 		"fabricloader": ">=0.19.5",
 		"minecraft": "~1.21.11",

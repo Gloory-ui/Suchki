@@ -39,6 +39,11 @@ public class SuchkiConfig {
 	public int protectionPerkLevel = 10;
 	/** Снижение урона за каждый предмет брони с Защитой на максимуме (4 предмета = 10%). */
 	public double protectionPerkPerPiece = 0.025;
+	/**
+	 * Защитные чары без потолка: сверх ванильных 20 очков (80%) оставшиеся 20% делятся пополам каждые
+	 * столько очков. Меньше — защита сильнее. 27 даёт ≈88% за комплект Защиты X.
+	 */
+	public double protectionHalfStep = 27.0;
 	/** Шёлковое касание добывает спавнеры. */
 	public boolean silkTouchSpawners = true;
 
