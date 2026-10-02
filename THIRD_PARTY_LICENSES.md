@@ -39,15 +39,3 @@ SOFTWARE.
 - Изменения: исходники переведены с маппингов Yarn на Mojang, настройки перенесены в config/suchki.json
   (без Cloth Config/Jankson), убраны интеграции с REI/JEI/Mod Menu, сетевые id перенесены в пространство `suchki`.
 - Лицензия: Unlicense (общественное достояние) — указание авторства не требуется, оставлено из уважения.
-
-## ClientSort (а в нём — Mouse Wheelie и Inventory Management)
-
-- Источник: https://github.com/TerminalMC/ClientSort (ветка mc1.21.11)
-- Где в Suchki: пакет `com.suchki.clientsort`, ресурсы `assets/clientsort`, `resourcepacks/clientsort-dark-mode`
-- Изменения: пакет `dev.terminalmc.clientsort` → `com.suchki.clientsort`; убраны экран настроек через Cloth Config
-  и интеграции с Mod Menu, EMI, SuperMartijn642's Core Lib; общие и Fabric-части сведены в один мод.
-- Лицензия ClientSort: Apache License 2.0 — полный текст в `licenses/ClientSort-Apache-2.0.txt`.
-- Внутри ClientSort есть код:
-  - Mouse Wheelie — Copyright 2022 Siphalor, Apache License 2.0;
-  - Inventory Management — Copyright (c) 2021 Evan Steinkerchner (Roundaround), MIT
-    (текст: `assets/clientsort/license/inventory-management/LICENSE.txt`).

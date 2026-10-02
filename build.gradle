@@ -48,7 +48,6 @@ tasks.withType(JavaCompile).configureEach {
 jar {
 	// Уведомления лицензий стороннего кода (Clumps и др.) должны лежать внутри jar.
 	from("THIRD_PARTY_LICENSES.md")
-	from("licenses") { into("licenses") }
 }
 
 java {
