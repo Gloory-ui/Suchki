@@ -17,6 +17,7 @@ public class Suchki implements ModInitializer {
 		SuchkiConfig.load();
 		SuchkiPotions.init();
 		Perks.register();
+		com.suchki.inventory.AutoRefill.register();
 		new com.suchki.appleskin.AppleSkinCommon().onInitialize();
 		if (Boolean.getBoolean("suchki.audit")) {
 			ServerLifecycleEvents.SERVER_STARTED.register(server -> {

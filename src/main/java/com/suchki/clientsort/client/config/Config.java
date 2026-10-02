@@ -41,8 +41,8 @@ import java.util.function.Supplier;
 public class Config {
 
     private static final Path CONFIG_DIR = PlatformServices.getInstance().getConfigDir();
-    private static final String FILE_NAME = ClientSort.MOD_ID + ".json";
-    private static final String BACKUP_FILE_NAME = ClientSort.MOD_ID + ".unreadable.json";
+    private static final String FILE_NAME = "suchki-" + ClientSort.MOD_ID + ".json";
+    private static final String BACKUP_FILE_NAME = "suchki-" + ClientSort.MOD_ID + ".unreadable.json";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     // Options
@@ -132,7 +132,7 @@ public class Config {
 
         // Sort order options
 
-        public static final String sortOrderStrDefault = SortOrder.CREATIVE.name;
+        public static final String sortOrderStrDefault = SortOrder.CATEGORY.name;
         public String sortOrderStr = sortOrderStrDefault;
         public static Validator<String> sortOrderStrValidator = (val) -> val != null
                 && SortOrder.SORT_ORDERS.containsKey(val) ? val : sortOrderStrDefault;
