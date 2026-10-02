@@ -14,7 +14,18 @@
 		"GrindstoneMenuMixin",
 		"GrindstoneResultSlotMixin",
 		"ItemStackMixin",
-		"LivingEntityMixin"
+		"LivingEntityInvoker",
+		"LivingEntityMixin",
+		"SkillArrowMixin",
+		"SkillBreedMixin",
+		"SkillBrewTriggerMixin",
+		"SkillCombatMixin",
+		"SkillCraftMixin",
+		"SkillFishingMixin",
+		"SkillPlaceTriggerMixin",
+		"SkillPlayerMixin",
+		"SkillPotionMixin",
+		"SkillTriggersMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
@@ -23,6 +34,7 @@
 		"requireAnnotations": true
 	},
 	"client": [
-		"client.GrindstoneCostLabelMixin"
+		"client.GrindstoneCostLabelMixin",
+		"client.PlaceSpeedMixin"
 	]
 }

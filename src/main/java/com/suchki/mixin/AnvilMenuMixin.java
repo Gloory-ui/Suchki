@@ -4,6 +4,12 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.suchki.SuchkiConfig;
 import com.suchki.enchant.Ench;
+import com.suchki.skill.Perk;
+import com.suchki.skill.Skills;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
@@ -36,7 +42,16 @@ public abstract class AnvilMenuMixin extends ItemCombinerMenu {
 		long cost = original.call(value, min, max);
 		// Стопку предметов зачаровать нельзя (ваниль ставит цену 40) — это не трогаем.
 		if (this.inputSlots.getItem(0).getCount() > 1) return cost;
-		return Math.min(cost, SuchkiConfig.INSTANCE.anvilMaxCost);
+		cost = Math.min(cost, SuchkiConfig.INSTANCE.anvilMaxCost);
+		// Кузнец: скидка на наковальне.
+		double discount = Skills.perk(this.player, Perk.ANVIL_DISCOUNT);
+		if (discount > 0 && cost > 0) cost = Math.max(1L, Math.round(cost * (1.0 - Math.min(0.9, discount))));
+		return cost;
+	}
+
+	@Inject(method = "onTake", at = @At("HEAD"))
+	private void suchki$blacksmithXp(Player player, ItemStack stack, CallbackInfo ci) {
+		if (player instanceof ServerPlayer sp) Skills.addXp(sp, "blacksmith", 5);
 	}
 
 	@Inject(method = "calculateIncreasedRepairCost", at = @At("HEAD"), cancellable = true)

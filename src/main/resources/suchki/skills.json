@@ -1,0 +1,2246 @@
+{
+  "max_level": 50,
+  "roles": [
+    {
+      "id": "miner",
+      "name": "Шахтёр",
+      "icon": "minecraft:iron_pickaxe",
+      "color": 10134704,
+      "xp_from": "добыча камня и руды",
+      "branches": [
+        "Скорость копания",
+        "Богатая жила",
+        "Подземник"
+      ],
+      "nodes": [
+        {
+          "id": "miner.0.1",
+          "branch": 0,
+          "tier": 1,
+          "name": "Крепкая хватка",
+          "desc": "+10% к скорости копания",
+          "attrs": [
+            {
+              "attribute": "minecraft:block_break_speed",
+              "amount": 0.1,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "miner.0.2",
+          "branch": 0,
+          "tier": 2,
+          "name": "Набитая рука",
+          "desc": "+10% к скорости копания",
+          "attrs": [
+            {
+              "attribute": "minecraft:block_break_speed",
+              "amount": 0.1,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "miner.0.3",
+          "branch": 0,
+          "tier": 3,
+          "name": "Подводник",
+          "desc": "Под водой копаете втрое быстрее",
+          "attrs": [
+            {
+              "attribute": "minecraft:submerged_mining_speed",
+              "amount": 0.4,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "miner.0.4",
+          "branch": 0,
+          "tier": 4,
+          "name": "Сноровка",
+          "desc": "+15% к скорости копания",
+          "attrs": [
+            {
+              "attribute": "minecraft:block_break_speed",
+              "amount": 0.15,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "miner.0.5",
+          "branch": 0,
+          "tier": 5,
+          "name": "Ураган",
+          "desc": "+25% к скорости копания",
+          "attrs": [
+            {
+              "attribute": "minecraft:block_break_speed",
+              "amount": 0.25,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "miner.1.1",
+          "branch": 1,
+          "tier": 1,
+          "name": "Глазомер",
+          "desc": "Шанс 5% на двойную добычу руды",
+          "attrs": [],
+          "perks": {
+            "ORE_EXTRA": 0.05
+          }
+        },
+        {
+          "id": "miner.1.2",
+          "branch": 1,
+          "tier": 2,
+          "name": "Знаток руды",
+          "desc": "Ещё +5% к шансу двойной руды",
+          "attrs": [],
+          "perks": {
+            "ORE_EXTRA": 0.05
+          }
+        },
+        {
+          "id": "miner.1.3",
+          "branch": 1,
+          "tier": 3,
+          "name": "Жилкоискатель",
+          "desc": "Ещё +5% к шансу двойной руды",
+          "attrs": [],
+          "perks": {
+            "ORE_EXTRA": 0.05
+          }
+        },
+        {
+          "id": "miner.1.4",
+          "branch": 1,
+          "tier": 4,
+          "name": "Рудознатец",
+          "desc": "Ещё +5% к шансу двойной руды",
+          "attrs": [],
+          "perks": {
+            "ORE_EXTRA": 0.05
+          }
+        },
+        {
+          "id": "miner.1.5",
+          "branch": 1,
+          "tier": 5,
+          "name": "Золотая жила",
+          "desc": "Ещё +10% к шансу двойной руды (всего 30%)",
+          "attrs": [],
+          "perks": {
+            "ORE_EXTRA": 0.1
+          }
+        },
+        {
+          "id": "miner.2.1",
+          "branch": 2,
+          "tier": 1,
+          "name": "Кошачий глаз",
+          "desc": "Ночное зрение в тёмных пещерах ниже Y=40",
+          "attrs": [],
+          "perks": {
+            "NIGHT_VISION_UNDERGROUND": 1
+          }
+        },
+        {
+          "id": "miner.2.2",
+          "branch": 2,
+          "tier": 2,
+          "name": "Мягкая посадка",
+          "desc": "Падение до 3 блоков выше обычного не ранит",
+          "attrs": [
+            {
+              "attribute": "minecraft:safe_fall_distance",
+              "amount": 3,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "miner.2.3",
+          "branch": 2,
+          "tier": 3,
+          "name": "Каменная кожа",
+          "desc": "+2 к броне",
+          "attrs": [
+            {
+              "attribute": "minecraft:armor",
+              "amount": 2,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "miner.2.4",
+          "branch": 2,
+          "tier": 4,
+          "name": "Выносливость шахтёра",
+          "desc": "Голод расходуется на 20% медленнее",
+          "attrs": [],
+          "perks": {
+            "HUNGER_SAVE": 0.2
+          }
+        },
+        {
+          "id": "miner.2.5",
+          "branch": 2,
+          "tier": 5,
+          "name": "Хозяин глубин",
+          "desc": "+2 сердца здоровья",
+          "attrs": [
+            {
+              "attribute": "minecraft:max_health",
+              "amount": 4,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        }
+      ]
+    },
+    {
+      "id": "warrior",
+      "name": "Воин",
+      "icon": "minecraft:iron_sword",
+      "color": 12597547,
+      "xp_from": "урон в ближнем бою",
+      "branches": [
+        "Берсерк",
+        "Страж",
+        "Мастер оружия"
+      ],
+      "nodes": [
+        {
+          "id": "warrior.0.1",
+          "branch": 0,
+          "tier": 1,
+          "name": "Ярость",
+          "desc": "+10% урона, когда здоровья меньше половины",
+          "attrs": [],
+          "perks": {
+            "LOW_HP_DAMAGE": 0.1
+          }
+        },
+        {
+          "id": "warrior.0.2",
+          "branch": 0,
+          "tier": 2,
+          "name": "Жажда боя",
+          "desc": "Ещё +10% урона при низком здоровье",
+          "attrs": [],
+          "perks": {
+            "LOW_HP_DAMAGE": 0.1
+          }
+        },
+        {
+          "id": "warrior.0.3",
+          "branch": 0,
+          "tier": 3,
+          "name": "Кровожадность",
+          "desc": "+1 к урону атаки",
+          "attrs": [
+            {
+              "attribute": "minecraft:attack_damage",
+              "amount": 1,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "warrior.0.4",
+          "branch": 0,
+          "tier": 4,
+          "name": "Неистовство",
+          "desc": "Ещё +15% урона при низком здоровье",
+          "attrs": [],
+          "perks": {
+            "LOW_HP_DAMAGE": 0.15
+          }
+        },
+        {
+          "id": "warrior.0.5",
+          "branch": 0,
+          "tier": 5,
+          "name": "Бессмертная ярость",
+          "desc": "Ещё +25% урона при низком здоровье и +10% к скорости атаки",
+          "attrs": [
+            {
+              "attribute": "minecraft:attack_speed",
+              "amount": 0.1,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {
+            "LOW_HP_DAMAGE": 0.25
+          }
+        },
+        {
+          "id": "warrior.1.1",
+          "branch": 1,
+          "tier": 1,
+          "name": "Крепкий щит",
+          "desc": "+1 к броне",
+          "attrs": [
+            {
+              "attribute": "minecraft:armor",
+              "amount": 1,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "warrior.1.2",
+          "branch": 1,
+          "tier": 2,
+          "name": "Стойкость",
+          "desc": "+10% к сопротивлению отбрасыванию",
+          "attrs": [
+            {
+              "attribute": "minecraft:knockback_resistance",
+              "amount": 0.1,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "warrior.1.3",
+          "branch": 1,
+          "tier": 3,
+          "name": "Закалка тела",
+          "desc": "+1 к прочности брони",
+          "attrs": [
+            {
+              "attribute": "minecraft:armor_toughness",
+              "amount": 1,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "warrior.1.4",
+          "branch": 1,
+          "tier": 4,
+          "name": "Бывалый",
+          "desc": "Получаемый урон −5%",
+          "attrs": [],
+          "perks": {
+            "INCOMING_DAMAGE": 0.05
+          }
+        },
+        {
+          "id": "warrior.1.5",
+          "branch": 1,
+          "tier": 5,
+          "name": "Несокрушимый",
+          "desc": "+2 сердца и ещё −5% получаемого урона",
+          "attrs": [
+            {
+              "attribute": "minecraft:max_health",
+              "amount": 4,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {
+            "INCOMING_DAMAGE": 0.05
+          }
+        },
+        {
+          "id": "warrior.2.1",
+          "branch": 2,
+          "tier": 1,
+          "name": "Лёгкая рука",
+          "desc": "+5% к скорости атаки",
+          "attrs": [
+            {
+              "attribute": "minecraft:attack_speed",
+              "amount": 0.05,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "warrior.2.2",
+          "branch": 2,
+          "tier": 2,
+          "name": "Точный удар",
+          "desc": "+5% к урону в ближнем бою",
+          "attrs": [],
+          "perks": {
+            "MELEE_DAMAGE": 0.05
+          }
+        },
+        {
+          "id": "warrior.2.3",
+          "branch": 2,
+          "tier": 3,
+          "name": "Размах",
+          "desc": "Удар с разворота наносит больше урона",
+          "attrs": [
+            {
+              "attribute": "minecraft:sweeping_damage_ratio",
+              "amount": 0.2,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "warrior.2.4",
+          "branch": 2,
+          "tier": 4,
+          "name": "Фехтовальщик",
+          "desc": "+5% к скорости атаки",
+          "attrs": [
+            {
+              "attribute": "minecraft:attack_speed",
+              "amount": 0.05,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "warrior.2.5",
+          "branch": 2,
+          "tier": 5,
+          "name": "Мастер клинка",
+          "desc": "+10% к урону в ближнем бою и +0,5 к дальности удара",
+          "attrs": [
+            {
+              "attribute": "minecraft:entity_interaction_range",
+              "amount": 0.5,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {
+            "MELEE_DAMAGE": 0.1
+          }
+        }
+      ]
+    },
+    {
+      "id": "archer",
+      "name": "Лучник",
+      "icon": "minecraft:bow",
+      "color": 2600544,
+      "xp_from": "попадания из лука и арбалета",
+      "branches": [
+        "Снайпер",
+        "Экономия",
+        "Ловкость"
+      ],
+      "nodes": [
+        {
+          "id": "archer.0.1",
+          "branch": 0,
+          "tier": 1,
+          "name": "Меткий глаз",
+          "desc": "+5% к урону снарядов",
+          "attrs": [],
+          "perks": {
+            "PROJECTILE_DAMAGE": 0.05
+          }
+        },
+        {
+          "id": "archer.0.2",
+          "branch": 0,
+          "tier": 2,
+          "name": "Твёрдая рука",
+          "desc": "Ещё +5% к урону снарядов",
+          "attrs": [],
+          "perks": {
+            "PROJECTILE_DAMAGE": 0.05
+          }
+        },
+        {
+          "id": "archer.0.3",
+          "branch": 0,
+          "tier": 3,
+          "name": "Охотничий выстрел",
+          "desc": "Ещё +10% к урону снарядов",
+          "attrs": [],
+          "perks": {
+            "PROJECTILE_DAMAGE": 0.1
+          }
+        },
+        {
+          "id": "archer.0.4",
+          "branch": 0,
+          "tier": 4,
+          "name": "Без промаха",
+          "desc": "Ещё +10% к урону снарядов",
+          "attrs": [],
+          "perks": {
+            "PROJECTILE_DAMAGE": 0.1
+          }
+        },
+        {
+          "id": "archer.0.5",
+          "branch": 0,
+          "tier": 5,
+          "name": "Соколиный глаз",
+          "desc": "Ещё +15% к урону снарядов (всего 45%)",
+          "attrs": [],
+          "perks": {
+            "PROJECTILE_DAMAGE": 0.15
+          }
+        },
+        {
+          "id": "archer.1.1",
+          "branch": 1,
+          "tier": 1,
+          "name": "Бережливый",
+          "desc": "Шанс 10% не потратить стрелу",
+          "attrs": [],
+          "perks": {
+            "ARROW_SAVE": 0.1
+          }
+        },
+        {
+          "id": "archer.1.2",
+          "branch": 1,
+          "tier": 2,
+          "name": "Запасливый",
+          "desc": "Ещё +10% к шансу сохранить стрелу",
+          "attrs": [],
+          "perks": {
+            "ARROW_SAVE": 0.1
+          }
+        },
+        {
+          "id": "archer.1.3",
+          "branch": 1,
+          "tier": 3,
+          "name": "Подбор стрел",
+          "desc": "Ещё +10% к шансу сохранить стрелу",
+          "attrs": [],
+          "perks": {
+            "ARROW_SAVE": 0.1
+          }
+        },
+        {
+          "id": "archer.1.4",
+          "branch": 1,
+          "tier": 4,
+          "name": "Колчан мастера",
+          "desc": "Ещё +10% к шансу сохранить стрелу",
+          "attrs": [],
+          "perks": {
+            "ARROW_SAVE": 0.1
+          }
+        },
+        {
+          "id": "archer.1.5",
+          "branch": 1,
+          "tier": 5,
+          "name": "Бездонный колчан",
+          "desc": "Ещё +20% к шансу сохранить стрелу (всего 60%)",
+          "attrs": [],
+          "perks": {
+            "ARROW_SAVE": 0.2
+          }
+        },
+        {
+          "id": "archer.2.1",
+          "branch": 2,
+          "tier": 1,
+          "name": "Лёгкий шаг",
+          "desc": "+3% к скорости передвижения",
+          "attrs": [
+            {
+              "attribute": "minecraft:movement_speed",
+              "amount": 0.03,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "archer.2.2",
+          "branch": 2,
+          "tier": 2,
+          "name": "Прыгучесть",
+          "desc": "Прыжок немного выше",
+          "attrs": [
+            {
+              "attribute": "minecraft:jump_strength",
+              "amount": 0.05,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "archer.2.3",
+          "branch": 2,
+          "tier": 3,
+          "name": "Быстрые ноги",
+          "desc": "+3% к скорости передвижения",
+          "attrs": [
+            {
+              "attribute": "minecraft:movement_speed",
+              "amount": 0.03,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "archer.2.4",
+          "branch": 2,
+          "tier": 4,
+          "name": "Кошачья ловкость",
+          "desc": "Падение до 2 блоков выше обычного не ранит",
+          "attrs": [
+            {
+              "attribute": "minecraft:safe_fall_distance",
+              "amount": 2,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "archer.2.5",
+          "branch": 2,
+          "tier": 5,
+          "name": "Ветер",
+          "desc": "+5% к скорости и ещё выше прыжок",
+          "attrs": [
+            {
+              "attribute": "minecraft:movement_speed",
+              "amount": 0.05,
+              "operation": "add_multiplied_base"
+            },
+            {
+              "attribute": "minecraft:jump_strength",
+              "amount": 0.05,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        }
+      ]
+    },
+    {
+      "id": "farmer",
+      "name": "Фермер",
+      "icon": "minecraft:iron_hoe",
+      "color": 13937677,
+      "xp_from": "сбор урожая и разведение животных",
+      "branches": [
+        "Урожай",
+        "Скотовод",
+        "Садовник"
+      ],
+      "nodes": [
+        {
+          "id": "farmer.0.1",
+          "branch": 0,
+          "tier": 1,
+          "name": "Огородник",
+          "desc": "Шанс 10% на двойной урожай",
+          "attrs": [],
+          "perks": {
+            "CROP_EXTRA": 0.1
+          }
+        },
+        {
+          "id": "farmer.0.2",
+          "branch": 0,
+          "tier": 2,
+          "name": "Опытный фермер",
+          "desc": "Ещё +10% к двойному урожаю",
+          "attrs": [],
+          "perks": {
+            "CROP_EXTRA": 0.1
+          }
+        },
+        {
+          "id": "farmer.0.3",
+          "branch": 0,
+          "tier": 3,
+          "name": "Плодородие",
+          "desc": "Ещё +10% к двойному урожаю",
+          "attrs": [],
+          "perks": {
+            "CROP_EXTRA": 0.1
+          }
+        },
+        {
+          "id": "farmer.0.4",
+          "branch": 0,
+          "tier": 4,
+          "name": "Щедрая земля",
+          "desc": "Ещё +10% к двойному урожаю",
+          "attrs": [],
+          "perks": {
+            "CROP_EXTRA": 0.1
+          }
+        },
+        {
+          "id": "farmer.0.5",
+          "branch": 0,
+          "tier": 5,
+          "name": "Золотые руки",
+          "desc": "Ещё +20% к двойному урожаю (всего 60%)",
+          "attrs": [],
+          "perks": {
+            "CROP_EXTRA": 0.2
+          }
+        },
+        {
+          "id": "farmer.1.1",
+          "branch": 1,
+          "tier": 1,
+          "name": "Пастух",
+          "desc": "Шанс 10% на двойняшек при разведении",
+          "attrs": [],
+          "perks": {
+            "TWIN_BREED": 0.1
+          }
+        },
+        {
+          "id": "farmer.1.2",
+          "branch": 1,
+          "tier": 2,
+          "name": "Заботливый",
+          "desc": "Ещё +10% к шансу двойняшек",
+          "attrs": [],
+          "perks": {
+            "TWIN_BREED": 0.1
+          }
+        },
+        {
+          "id": "farmer.1.3",
+          "branch": 1,
+          "tier": 3,
+          "name": "Животновод",
+          "desc": "Ещё +10% к шансу двойняшек",
+          "attrs": [],
+          "perks": {
+            "TWIN_BREED": 0.1
+          }
+        },
+        {
+          "id": "farmer.1.4",
+          "branch": 1,
+          "tier": 4,
+          "name": "Хозяин фермы",
+          "desc": "Ещё +10% к шансу двойняшек",
+          "attrs": [],
+          "perks": {
+            "TWIN_BREED": 0.1
+          }
+        },
+        {
+          "id": "farmer.1.5",
+          "branch": 1,
+          "tier": 5,
+          "name": "Ноев ковчег",
+          "desc": "Ещё +20% к шансу двойняшек (всего 60%)",
+          "attrs": [],
+          "perks": {
+            "TWIN_BREED": 0.2
+          }
+        },
+        {
+          "id": "farmer.2.1",
+          "branch": 2,
+          "tier": 1,
+          "name": "Зелёный палец",
+          "desc": "Посевы рядом с вами растут быстрее",
+          "attrs": [],
+          "perks": {
+            "CROP_AURA": 1
+          }
+        },
+        {
+          "id": "farmer.2.2",
+          "branch": 2,
+          "tier": 2,
+          "name": "Тёплые руки",
+          "desc": "Посевы рядом растут ещё быстрее",
+          "attrs": [],
+          "perks": {
+            "CROP_AURA": 1
+          }
+        },
+        {
+          "id": "farmer.2.3",
+          "branch": 2,
+          "tier": 3,
+          "name": "Садовод",
+          "desc": "Посевы рядом растут ещё быстрее",
+          "attrs": [],
+          "perks": {
+            "CROP_AURA": 2
+          }
+        },
+        {
+          "id": "farmer.2.4",
+          "branch": 2,
+          "tier": 4,
+          "name": "Повелитель почвы",
+          "desc": "Посевы рядом растут ещё быстрее",
+          "attrs": [],
+          "perks": {
+            "CROP_AURA": 2
+          }
+        },
+        {
+          "id": "farmer.2.5",
+          "branch": 2,
+          "tier": 5,
+          "name": "Весна",
+          "desc": "Посевы рядом растут очень быстро",
+          "attrs": [],
+          "perks": {
+            "CROP_AURA": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "fisher",
+      "name": "Рыбак",
+      "icon": "minecraft:fishing_rod",
+      "color": 3049153,
+      "xp_from": "улов",
+      "branches": [
+        "Удачливый",
+        "Терпеливый",
+        "Морской"
+      ],
+      "nodes": [
+        {
+          "id": "fisher.0.1",
+          "branch": 0,
+          "tier": 1,
+          "name": "Новичок-рыболов",
+          "desc": "+1 к удаче рыбалки (больше сокровищ)",
+          "attrs": [],
+          "perks": {
+            "FISH_LUCK": 1
+          }
+        },
+        {
+          "id": "fisher.0.2",
+          "branch": 0,
+          "tier": 2,
+          "name": "Везунчик",
+          "desc": "Ещё +1 к удаче рыбалки",
+          "attrs": [],
+          "perks": {
+            "FISH_LUCK": 1
+          }
+        },
+        {
+          "id": "fisher.0.3",
+          "branch": 0,
+          "tier": 3,
+          "name": "Ловец сокровищ",
+          "desc": "Ещё +1 к удаче рыбалки",
+          "attrs": [],
+          "perks": {
+            "FISH_LUCK": 1
+          }
+        },
+        {
+          "id": "fisher.0.4",
+          "branch": 0,
+          "tier": 4,
+          "name": "Морской волк",
+          "desc": "Ещё +1 к удаче рыбалки",
+          "attrs": [],
+          "perks": {
+            "FISH_LUCK": 1
+          }
+        },
+        {
+          "id": "fisher.0.5",
+          "branch": 0,
+          "tier": 5,
+          "name": "Любимец Посейдона",
+          "desc": "Ещё +2 к удаче рыбалки",
+          "attrs": [],
+          "perks": {
+            "FISH_LUCK": 2
+          }
+        },
+        {
+          "id": "fisher.1.1",
+          "branch": 1,
+          "tier": 1,
+          "name": "Тихий берег",
+          "desc": "Клюёт на 3 секунды быстрее",
+          "attrs": [],
+          "perks": {
+            "FISH_LURE": 3
+          }
+        },
+        {
+          "id": "fisher.1.2",
+          "branch": 1,
+          "tier": 2,
+          "name": "Прикормка",
+          "desc": "Клюёт ещё на 3 секунды быстрее",
+          "attrs": [],
+          "perks": {
+            "FISH_LURE": 3
+          }
+        },
+        {
+          "id": "fisher.1.3",
+          "branch": 1,
+          "tier": 3,
+          "name": "Знаток наживки",
+          "desc": "Клюёт ещё на 3 секунды быстрее",
+          "attrs": [],
+          "perks": {
+            "FISH_LURE": 3
+          }
+        },
+        {
+          "id": "fisher.1.4",
+          "branch": 1,
+          "tier": 4,
+          "name": "Рыбье чутьё",
+          "desc": "Клюёт ещё на 3 секунды быстрее",
+          "attrs": [],
+          "perks": {
+            "FISH_LURE": 3
+          }
+        },
+        {
+          "id": "fisher.1.5",
+          "branch": 1,
+          "tier": 5,
+          "name": "Заклинатель рыб",
+          "desc": "Клюёт ещё на 5 секунд быстрее",
+          "attrs": [],
+          "perks": {
+            "FISH_LURE": 5
+          }
+        },
+        {
+          "id": "fisher.2.1",
+          "branch": 2,
+          "tier": 1,
+          "name": "Глубокий вдох",
+          "desc": "Дольше без воздуха под водой",
+          "attrs": [
+            {
+              "attribute": "minecraft:oxygen_bonus",
+              "amount": 1,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "fisher.2.2",
+          "branch": 2,
+          "tier": 2,
+          "name": "Пловец",
+          "desc": "Быстрее плаваете",
+          "attrs": [
+            {
+              "attribute": "minecraft:water_movement_efficiency",
+              "amount": 0.15,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "fisher.2.3",
+          "branch": 2,
+          "tier": 3,
+          "name": "Ныряльщик",
+          "desc": "Под водой копаете быстрее",
+          "attrs": [
+            {
+              "attribute": "minecraft:submerged_mining_speed",
+              "amount": 0.3,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "fisher.2.4",
+          "branch": 2,
+          "tier": 4,
+          "name": "Дельфин",
+          "desc": "Ещё быстрее плаваете",
+          "attrs": [
+            {
+              "attribute": "minecraft:water_movement_efficiency",
+              "amount": 0.15,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "fisher.2.5",
+          "branch": 2,
+          "tier": 5,
+          "name": "Дитя моря",
+          "desc": "Ещё дольше без воздуха и +1 сердце",
+          "attrs": [
+            {
+              "attribute": "minecraft:oxygen_bonus",
+              "amount": 2,
+              "operation": "add_value"
+            },
+            {
+              "attribute": "minecraft:max_health",
+              "amount": 2,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        }
+      ]
+    },
+    {
+      "id": "lumberjack",
+      "name": "Лесоруб",
+      "icon": "minecraft:iron_axe",
+      "color": 9329454,
+      "xp_from": "рубка деревьев",
+      "branches": [
+        "Сила удара",
+        "Щедрый лес",
+        "Боевой топор"
+      ],
+      "nodes": [
+        {
+          "id": "lumberjack.0.1",
+          "branch": 0,
+          "tier": 1,
+          "name": "Острый топор",
+          "desc": "Брёвна рубятся на 15% быстрее",
+          "attrs": [],
+          "perks": {
+            "WOOD_SPEED": 0.15
+          }
+        },
+        {
+          "id": "lumberjack.0.2",
+          "branch": 0,
+          "tier": 2,
+          "name": "Широкий замах",
+          "desc": "Брёвна рубятся ещё на 15% быстрее",
+          "attrs": [],
+          "perks": {
+            "WOOD_SPEED": 0.15
+          }
+        },
+        {
+          "id": "lumberjack.0.3",
+          "branch": 0,
+          "tier": 3,
+          "name": "Дровосек",
+          "desc": "Брёвна рубятся ещё на 20% быстрее",
+          "attrs": [],
+          "perks": {
+            "WOOD_SPEED": 0.2
+          }
+        },
+        {
+          "id": "lumberjack.0.4",
+          "branch": 0,
+          "tier": 4,
+          "name": "Гроза лесов",
+          "desc": "Брёвна рубятся ещё на 20% быстрее",
+          "attrs": [],
+          "perks": {
+            "WOOD_SPEED": 0.2
+          }
+        },
+        {
+          "id": "lumberjack.0.5",
+          "branch": 0,
+          "tier": 5,
+          "name": "Вихрь стали",
+          "desc": "Брёвна рубятся ещё на 30% быстрее",
+          "attrs": [],
+          "perks": {
+            "WOOD_SPEED": 0.3
+          }
+        },
+        {
+          "id": "lumberjack.1.1",
+          "branch": 1,
+          "tier": 1,
+          "name": "Сборщик",
+          "desc": "Шанс 10% на двойное бревно",
+          "attrs": [],
+          "perks": {
+            "LOG_EXTRA": 0.1
+          }
+        },
+        {
+          "id": "lumberjack.1.2",
+          "branch": 1,
+          "tier": 2,
+          "name": "Лесник",
+          "desc": "Ещё +10% к двойным брёвнам",
+          "attrs": [],
+          "perks": {
+            "LOG_EXTRA": 0.1
+          }
+        },
+        {
+          "id": "lumberjack.1.3",
+          "branch": 1,
+          "tier": 3,
+          "name": "Хранитель рощи",
+          "desc": "Ещё +10% к двойным брёвнам",
+          "attrs": [],
+          "perks": {
+            "LOG_EXTRA": 0.1
+          }
+        },
+        {
+          "id": "lumberjack.1.4",
+          "branch": 1,
+          "tier": 4,
+          "name": "Дух леса",
+          "desc": "Ещё +10% к двойным брёвнам",
+          "attrs": [],
+          "perks": {
+            "LOG_EXTRA": 0.1
+          }
+        },
+        {
+          "id": "lumberjack.1.5",
+          "branch": 1,
+          "tier": 5,
+          "name": "Древний лес",
+          "desc": "Ещё +20% к двойным брёвнам (всего 60%)",
+          "attrs": [],
+          "perks": {
+            "LOG_EXTRA": 0.2
+          }
+        },
+        {
+          "id": "lumberjack.2.1",
+          "branch": 2,
+          "tier": 1,
+          "name": "Тяжёлое лезвие",
+          "desc": "+5% к урону топором",
+          "attrs": [],
+          "perks": {
+            "AXE_DAMAGE": 0.05
+          }
+        },
+        {
+          "id": "lumberjack.2.2",
+          "branch": 2,
+          "tier": 2,
+          "name": "Рубака",
+          "desc": "Ещё +5% к урону топором",
+          "attrs": [],
+          "perks": {
+            "AXE_DAMAGE": 0.05
+          }
+        },
+        {
+          "id": "lumberjack.2.3",
+          "branch": 2,
+          "tier": 3,
+          "name": "Крепкие плечи",
+          "desc": "+1 к броне",
+          "attrs": [
+            {
+              "attribute": "minecraft:armor",
+              "amount": 1,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "lumberjack.2.4",
+          "branch": 2,
+          "tier": 4,
+          "name": "Раскол",
+          "desc": "Ещё +10% к урону топором",
+          "attrs": [],
+          "perks": {
+            "AXE_DAMAGE": 0.1
+          }
+        },
+        {
+          "id": "lumberjack.2.5",
+          "branch": 2,
+          "tier": 5,
+          "name": "Палач",
+          "desc": "Ещё +15% к урону топором и +1 сердце",
+          "attrs": [
+            {
+              "attribute": "minecraft:max_health",
+              "amount": 2,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {
+            "AXE_DAMAGE": 0.15
+          }
+        }
+      ]
+    },
+    {
+      "id": "hunter",
+      "name": "Охотник",
+      "icon": "minecraft:crossbow",
+      "color": 8207512,
+      "xp_from": "убийство мобов",
+      "branches": [
+        "Следопыт",
+        "Трофеи",
+        "Истребитель"
+      ],
+      "nodes": [
+        {
+          "id": "hunter.0.1",
+          "branch": 0,
+          "tier": 1,
+          "name": "Чуткий слух",
+          "desc": "Враждебные мобы в 8 блоках подсвечиваются",
+          "attrs": [],
+          "perks": {
+            "HUNTER_SENSE": 8
+          }
+        },
+        {
+          "id": "hunter.0.2",
+          "branch": 0,
+          "tier": 2,
+          "name": "Острый глаз",
+          "desc": "Подсветка мобов дальше на 4 блока",
+          "attrs": [],
+          "perks": {
+            "HUNTER_SENSE": 4
+          }
+        },
+        {
+          "id": "hunter.0.3",
+          "branch": 0,
+          "tier": 3,
+          "name": "Нюх",
+          "desc": "Подсветка мобов дальше на 4 блока",
+          "attrs": [],
+          "perks": {
+            "HUNTER_SENSE": 4
+          }
+        },
+        {
+          "id": "hunter.0.4",
+          "branch": 0,
+          "tier": 4,
+          "name": "Ночной охотник",
+          "desc": "Подсветка мобов дальше на 4 блока",
+          "attrs": [],
+          "perks": {
+            "HUNTER_SENSE": 4
+          }
+        },
+        {
+          "id": "hunter.0.5",
+          "branch": 0,
+          "tier": 5,
+          "name": "Всевидящий",
+          "desc": "Подсветка мобов дальше на 8 блоков (всего 28)",
+          "attrs": [],
+          "perks": {
+            "HUNTER_SENSE": 8
+          }
+        },
+        {
+          "id": "hunter.1.1",
+          "branch": 1,
+          "tier": 1,
+          "name": "Добытчик",
+          "desc": "Шанс 10% на двойную добычу с мобов",
+          "attrs": [],
+          "perks": {
+            "MOB_LOOT_EXTRA": 0.1
+          }
+        },
+        {
+          "id": "hunter.1.2",
+          "branch": 1,
+          "tier": 2,
+          "name": "Свежевальщик",
+          "desc": "Ещё +10% к двойной добыче",
+          "attrs": [],
+          "perks": {
+            "MOB_LOOT_EXTRA": 0.1
+          }
+        },
+        {
+          "id": "hunter.1.3",
+          "branch": 1,
+          "tier": 3,
+          "name": "Собиратель трофеев",
+          "desc": "Ещё +10% к двойной добыче",
+          "attrs": [],
+          "perks": {
+            "MOB_LOOT_EXTRA": 0.1
+          }
+        },
+        {
+          "id": "hunter.1.4",
+          "branch": 1,
+          "tier": 4,
+          "name": "Мастер охоты",
+          "desc": "Ещё +10% к двойной добыче",
+          "attrs": [],
+          "perks": {
+            "MOB_LOOT_EXTRA": 0.1
+          }
+        },
+        {
+          "id": "hunter.1.5",
+          "branch": 1,
+          "tier": 5,
+          "name": "Король трофеев",
+          "desc": "Ещё +20% к двойной добыче (всего 60%)",
+          "attrs": [],
+          "perks": {
+            "MOB_LOOT_EXTRA": 0.2
+          }
+        },
+        {
+          "id": "hunter.2.1",
+          "branch": 2,
+          "tier": 1,
+          "name": "Охотник на нечисть",
+          "desc": "+5% к урону по враждебным мобам",
+          "attrs": [],
+          "perks": {
+            "MONSTER_DAMAGE": 0.05
+          }
+        },
+        {
+          "id": "hunter.2.2",
+          "branch": 2,
+          "tier": 2,
+          "name": "Ловчий",
+          "desc": "Ещё +5% к урону по враждебным мобам",
+          "attrs": [],
+          "perks": {
+            "MONSTER_DAMAGE": 0.05
+          }
+        },
+        {
+          "id": "hunter.2.3",
+          "branch": 2,
+          "tier": 3,
+          "name": "Зверобой",
+          "desc": "Ещё +10% к урону по враждебным мобам",
+          "attrs": [],
+          "perks": {
+            "MONSTER_DAMAGE": 0.1
+          }
+        },
+        {
+          "id": "hunter.2.4",
+          "branch": 2,
+          "tier": 4,
+          "name": "Каратель",
+          "desc": "Ещё +10% к урону по враждебным мобам",
+          "attrs": [],
+          "perks": {
+            "MONSTER_DAMAGE": 0.1
+          }
+        },
+        {
+          "id": "hunter.2.5",
+          "branch": 2,
+          "tier": 5,
+          "name": "Гроза чудовищ",
+          "desc": "Ещё +15% к урону по враждебным мобам (всего 45%)",
+          "attrs": [],
+          "perks": {
+            "MONSTER_DAMAGE": 0.15
+          }
+        }
+      ]
+    },
+    {
+      "id": "builder",
+      "name": "Строитель",
+      "icon": "minecraft:bricks",
+      "color": 15105570,
+      "xp_from": "установка блоков",
+      "branches": [
+        "Дальняя рука",
+        "Скорость",
+        "Лёгкость"
+      ],
+      "nodes": [
+        {
+          "id": "builder.0.1",
+          "branch": 0,
+          "tier": 1,
+          "name": "Длинные руки",
+          "desc": "+0,5 блока к дальности установки",
+          "attrs": [
+            {
+              "attribute": "minecraft:block_interaction_range",
+              "amount": 0.5,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "builder.0.2",
+          "branch": 0,
+          "tier": 2,
+          "name": "Размах",
+          "desc": "Ещё +0,5 блока к дальности",
+          "attrs": [
+            {
+              "attribute": "minecraft:block_interaction_range",
+              "amount": 0.5,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "builder.0.3",
+          "branch": 0,
+          "tier": 3,
+          "name": "Подмости",
+          "desc": "Ещё +1 блок к дальности",
+          "attrs": [
+            {
+              "attribute": "minecraft:block_interaction_range",
+              "amount": 1.0,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "builder.0.4",
+          "branch": 0,
+          "tier": 4,
+          "name": "Прораб",
+          "desc": "Ещё +1 блок к дальности",
+          "attrs": [
+            {
+              "attribute": "minecraft:block_interaction_range",
+              "amount": 1.0,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "builder.0.5",
+          "branch": 0,
+          "tier": 5,
+          "name": "Архитектор",
+          "desc": "Ещё +1 блок к дальности (всего +4)",
+          "attrs": [
+            {
+              "attribute": "minecraft:block_interaction_range",
+              "amount": 1.0,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "builder.1.1",
+          "branch": 1,
+          "tier": 1,
+          "name": "Ловкие руки",
+          "desc": "Быстрее ходите крадучись",
+          "attrs": [
+            {
+              "attribute": "minecraft:sneaking_speed",
+              "amount": 0.1,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "builder.1.2",
+          "branch": 1,
+          "tier": 2,
+          "name": "Широкий шаг",
+          "desc": "Шагаете на блок вверх без прыжка",
+          "attrs": [
+            {
+              "attribute": "minecraft:step_height",
+              "amount": 0.5,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "builder.1.3",
+          "branch": 1,
+          "tier": 3,
+          "name": "Каменщик",
+          "desc": "Блоки ставятся быстрее",
+          "attrs": [],
+          "perks": {
+            "PLACE_SPEED": 1
+          }
+        },
+        {
+          "id": "builder.1.4",
+          "branch": 1,
+          "tier": 4,
+          "name": "Бригадир",
+          "desc": "+3% к скорости передвижения",
+          "attrs": [
+            {
+              "attribute": "minecraft:movement_speed",
+              "amount": 0.03,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "builder.1.5",
+          "branch": 1,
+          "tier": 5,
+          "name": "Стройка века",
+          "desc": "Блоки ставятся ещё быстрее",
+          "attrs": [],
+          "perks": {
+            "PLACE_SPEED": 1
+          }
+        },
+        {
+          "id": "builder.2.1",
+          "branch": 2,
+          "tier": 1,
+          "name": "Страховка",
+          "desc": "Падение до 2 блоков выше обычного не ранит",
+          "attrs": [
+            {
+              "attribute": "minecraft:safe_fall_distance",
+              "amount": 2,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "builder.2.2",
+          "branch": 2,
+          "tier": 2,
+          "name": "Канатоходец",
+          "desc": "Ещё +2 блока безопасного падения",
+          "attrs": [
+            {
+              "attribute": "minecraft:safe_fall_distance",
+              "amount": 2,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "builder.2.3",
+          "branch": 2,
+          "tier": 3,
+          "name": "Лёгкие кости",
+          "desc": "Урон от падения −20%",
+          "attrs": [
+            {
+              "attribute": "minecraft:fall_damage_multiplier",
+              "amount": -0.2,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "builder.2.4",
+          "branch": 2,
+          "tier": 4,
+          "name": "Монтажник",
+          "desc": "Ещё +3 блока безопасного падения",
+          "attrs": [
+            {
+              "attribute": "minecraft:safe_fall_distance",
+              "amount": 3,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "builder.2.5",
+          "branch": 2,
+          "tier": 5,
+          "name": "Пёрышко",
+          "desc": "Урон от падения ещё −30%",
+          "attrs": [
+            {
+              "attribute": "minecraft:fall_damage_multiplier",
+              "amount": -0.3,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        }
+      ]
+    },
+    {
+      "id": "blacksmith",
+      "name": "Кузнец",
+      "icon": "minecraft:anvil",
+      "color": 6122878,
+      "xp_from": "создание и починка снаряжения",
+      "branches": [
+        "Подмастерье",
+        "Закалка",
+        "Бронник"
+      ],
+      "nodes": [
+        {
+          "id": "blacksmith.0.1",
+          "branch": 0,
+          "tier": 1,
+          "name": "Ученик",
+          "desc": "Наковальня на 5% дешевле",
+          "attrs": [],
+          "perks": {
+            "ANVIL_DISCOUNT": 0.05
+          }
+        },
+        {
+          "id": "blacksmith.0.2",
+          "branch": 0,
+          "tier": 2,
+          "name": "Подручный",
+          "desc": "Наковальня ещё на 5% дешевле",
+          "attrs": [],
+          "perks": {
+            "ANVIL_DISCOUNT": 0.05
+          }
+        },
+        {
+          "id": "blacksmith.0.3",
+          "branch": 0,
+          "tier": 3,
+          "name": "Ремесленник",
+          "desc": "Наковальня ещё на 10% дешевле",
+          "attrs": [],
+          "perks": {
+            "ANVIL_DISCOUNT": 0.1
+          }
+        },
+        {
+          "id": "blacksmith.0.4",
+          "branch": 0,
+          "tier": 4,
+          "name": "Мастеровой",
+          "desc": "Наковальня ещё на 10% дешевле",
+          "attrs": [],
+          "perks": {
+            "ANVIL_DISCOUNT": 0.1
+          }
+        },
+        {
+          "id": "blacksmith.0.5",
+          "branch": 0,
+          "tier": 5,
+          "name": "Мастер наковальни",
+          "desc": "Наковальня ещё на 20% дешевле (всего −50%)",
+          "attrs": [],
+          "perks": {
+            "ANVIL_DISCOUNT": 0.2
+          }
+        },
+        {
+          "id": "blacksmith.1.1",
+          "branch": 1,
+          "tier": 1,
+          "name": "Добрая сталь",
+          "desc": "Созданное вами снаряжение на 5% прочнее",
+          "attrs": [],
+          "perks": {
+            "CRAFT_DURABILITY": 0.05
+          }
+        },
+        {
+          "id": "blacksmith.1.2",
+          "branch": 1,
+          "tier": 2,
+          "name": "Двойная ковка",
+          "desc": "Ещё +5% прочности созданному",
+          "attrs": [],
+          "perks": {
+            "CRAFT_DURABILITY": 0.05
+          }
+        },
+        {
+          "id": "blacksmith.1.3",
+          "branch": 1,
+          "tier": 3,
+          "name": "Закалённый металл",
+          "desc": "Ещё +10% прочности созданному",
+          "attrs": [],
+          "perks": {
+            "CRAFT_DURABILITY": 0.1
+          }
+        },
+        {
+          "id": "blacksmith.1.4",
+          "branch": 1,
+          "tier": 4,
+          "name": "Булат",
+          "desc": "Ещё +10% прочности созданному",
+          "attrs": [],
+          "perks": {
+            "CRAFT_DURABILITY": 0.1
+          }
+        },
+        {
+          "id": "blacksmith.1.5",
+          "branch": 1,
+          "tier": 5,
+          "name": "Вечная работа",
+          "desc": "Ещё +20% прочности созданному (всего +50%)",
+          "attrs": [],
+          "perks": {
+            "CRAFT_DURABILITY": 0.2
+          }
+        },
+        {
+          "id": "blacksmith.2.1",
+          "branch": 2,
+          "tier": 1,
+          "name": "Подгонка",
+          "desc": "+1 к броне",
+          "attrs": [
+            {
+              "attribute": "minecraft:armor",
+              "amount": 1,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "blacksmith.2.2",
+          "branch": 2,
+          "tier": 2,
+          "name": "Кольчужник",
+          "desc": "+1 к прочности брони",
+          "attrs": [
+            {
+              "attribute": "minecraft:armor_toughness",
+              "amount": 1,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "blacksmith.2.3",
+          "branch": 2,
+          "tier": 3,
+          "name": "Латник",
+          "desc": "+1 к броне",
+          "attrs": [
+            {
+              "attribute": "minecraft:armor",
+              "amount": 1,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "blacksmith.2.4",
+          "branch": 2,
+          "tier": 4,
+          "name": "Тяжёлая броня",
+          "desc": "+10% к сопротивлению отбрасыванию",
+          "attrs": [
+            {
+              "attribute": "minecraft:knockback_resistance",
+              "amount": 0.1,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "blacksmith.2.5",
+          "branch": 2,
+          "tier": 5,
+          "name": "Живая крепость",
+          "desc": "+2 к броне и +1 к прочности брони",
+          "attrs": [
+            {
+              "attribute": "minecraft:armor",
+              "amount": 2,
+              "operation": "add_value"
+            },
+            {
+              "attribute": "minecraft:armor_toughness",
+              "amount": 1,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        }
+      ]
+    },
+    {
+      "id": "alchemist",
+      "name": "Алхимик",
+      "icon": "minecraft:brewing_stand",
+      "color": 11500229,
+      "xp_from": "варка зелий",
+      "branches": [
+        "Долгожитель",
+        "Иммунитет",
+        "Стойкость"
+      ],
+      "nodes": [
+        {
+          "id": "alchemist.0.1",
+          "branch": 0,
+          "tier": 1,
+          "name": "Настойка",
+          "desc": "Ваши зелья действуют на 10% дольше",
+          "attrs": [],
+          "perks": {
+            "POTION_DURATION": 0.1
+          }
+        },
+        {
+          "id": "alchemist.0.2",
+          "branch": 0,
+          "tier": 2,
+          "name": "Отвар",
+          "desc": "Ещё +10% к длительности зелий",
+          "attrs": [],
+          "perks": {
+            "POTION_DURATION": 0.1
+          }
+        },
+        {
+          "id": "alchemist.0.3",
+          "branch": 0,
+          "tier": 3,
+          "name": "Эликсир",
+          "desc": "Ещё +10% к длительности зелий",
+          "attrs": [],
+          "perks": {
+            "POTION_DURATION": 0.1
+          }
+        },
+        {
+          "id": "alchemist.0.4",
+          "branch": 0,
+          "tier": 4,
+          "name": "Магистерий",
+          "desc": "Ещё +10% к длительности зелий",
+          "attrs": [],
+          "perks": {
+            "POTION_DURATION": 0.1
+          }
+        },
+        {
+          "id": "alchemist.0.5",
+          "branch": 0,
+          "tier": 5,
+          "name": "Вечный эликсир",
+          "desc": "Ещё +20% к длительности зелий (всего +60%)",
+          "attrs": [],
+          "perks": {
+            "POTION_DURATION": 0.2
+          }
+        },
+        {
+          "id": "alchemist.1.1",
+          "branch": 1,
+          "tier": 1,
+          "name": "Противоядие",
+          "desc": "Негативные эффекты на 10% короче",
+          "attrs": [],
+          "perks": {
+            "HARMFUL_REDUCTION": 0.1
+          }
+        },
+        {
+          "id": "alchemist.1.2",
+          "branch": 1,
+          "tier": 2,
+          "name": "Крепкое здоровье",
+          "desc": "Ещё −10% к длительности негативных эффектов",
+          "attrs": [],
+          "perks": {
+            "HARMFUL_REDUCTION": 0.1
+          }
+        },
+        {
+          "id": "alchemist.1.3",
+          "branch": 1,
+          "tier": 3,
+          "name": "Очищение",
+          "desc": "Ещё −10% к длительности негативных эффектов",
+          "attrs": [],
+          "perks": {
+            "HARMFUL_REDUCTION": 0.1
+          }
+        },
+        {
+          "id": "alchemist.1.4",
+          "branch": 1,
+          "tier": 4,
+          "name": "Невосприимчивость",
+          "desc": "Ещё −10% к длительности негативных эффектов",
+          "attrs": [],
+          "perks": {
+            "HARMFUL_REDUCTION": 0.1
+          }
+        },
+        {
+          "id": "alchemist.1.5",
+          "branch": 1,
+          "tier": 5,
+          "name": "Панацея",
+          "desc": "Ещё −20% к длительности негативных эффектов (всего −60%)",
+          "attrs": [],
+          "perks": {
+            "HARMFUL_REDUCTION": 0.2
+          }
+        },
+        {
+          "id": "alchemist.2.1",
+          "branch": 2,
+          "tier": 1,
+          "name": "Крепкий организм",
+          "desc": "+1 сердце",
+          "attrs": [
+            {
+              "attribute": "minecraft:max_health",
+              "amount": 2,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "alchemist.2.2",
+          "branch": 2,
+          "tier": 2,
+          "name": "Огнеупорность",
+          "desc": "Горите на 15% меньше",
+          "attrs": [
+            {
+              "attribute": "minecraft:burning_time",
+              "amount": -0.15,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "alchemist.2.3",
+          "branch": 2,
+          "tier": 3,
+          "name": "Закалённый",
+          "desc": "+1 к броне",
+          "attrs": [
+            {
+              "attribute": "minecraft:armor",
+              "amount": 1,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "alchemist.2.4",
+          "branch": 2,
+          "tier": 4,
+          "name": "Живучесть",
+          "desc": "+1 сердце",
+          "attrs": [
+            {
+              "attribute": "minecraft:max_health",
+              "amount": 2,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "alchemist.2.5",
+          "branch": 2,
+          "tier": 5,
+          "name": "Философский камень",
+          "desc": "Зелья ещё на 10% дольше, негатив ещё на 10% короче",
+          "attrs": [],
+          "perks": {
+            "POTION_DURATION": 0.1,
+            "HARMFUL_REDUCTION": 0.1
+          }
+        }
+      ]
+    },
+    {
+      "id": "wanderer",
+      "name": "Странник",
+      "icon": "minecraft:compass",
+      "color": 1482885,
+      "xp_from": "путешествия и открытие новых биомов",
+      "branches": [
+        "Скороход",
+        "Выносливость",
+        "Картограф"
+      ],
+      "nodes": [
+        {
+          "id": "wanderer.0.1",
+          "branch": 0,
+          "tier": 1,
+          "name": "Бодрый шаг",
+          "desc": "+3% к скорости передвижения",
+          "attrs": [
+            {
+              "attribute": "minecraft:movement_speed",
+              "amount": 0.03,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "wanderer.0.2",
+          "branch": 0,
+          "tier": 2,
+          "name": "Ходок",
+          "desc": "Ещё +3% к скорости",
+          "attrs": [
+            {
+              "attribute": "minecraft:movement_speed",
+              "amount": 0.03,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "wanderer.0.3",
+          "branch": 0,
+          "tier": 3,
+          "name": "Путник",
+          "desc": "Ещё +3% к скорости",
+          "attrs": [
+            {
+              "attribute": "minecraft:movement_speed",
+              "amount": 0.03,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "wanderer.0.4",
+          "branch": 0,
+          "tier": 4,
+          "name": "Гонец",
+          "desc": "Ещё +3% к скорости",
+          "attrs": [
+            {
+              "attribute": "minecraft:movement_speed",
+              "amount": 0.03,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "wanderer.0.5",
+          "branch": 0,
+          "tier": 5,
+          "name": "Ветер странствий",
+          "desc": "Ещё +6% к скорости (всего +18%)",
+          "attrs": [
+            {
+              "attribute": "minecraft:movement_speed",
+              "amount": 0.06,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "wanderer.1.1",
+          "branch": 1,
+          "tier": 1,
+          "name": "Сытый путник",
+          "desc": "Голод расходуется на 10% медленнее",
+          "attrs": [],
+          "perks": {
+            "HUNGER_SAVE": 0.1
+          }
+        },
+        {
+          "id": "wanderer.1.2",
+          "branch": 1,
+          "tier": 2,
+          "name": "Запас сил",
+          "desc": "Ещё −10% к расходу голода",
+          "attrs": [],
+          "perks": {
+            "HUNGER_SAVE": 0.1
+          }
+        },
+        {
+          "id": "wanderer.1.3",
+          "branch": 1,
+          "tier": 3,
+          "name": "Бывалый путешественник",
+          "desc": "Ещё −10% к расходу голода",
+          "attrs": [],
+          "perks": {
+            "HUNGER_SAVE": 0.1
+          }
+        },
+        {
+          "id": "wanderer.1.4",
+          "branch": 1,
+          "tier": 4,
+          "name": "Неутомимый",
+          "desc": "Ещё −10% к расходу голода",
+          "attrs": [],
+          "perks": {
+            "HUNGER_SAVE": 0.1
+          }
+        },
+        {
+          "id": "wanderer.1.5",
+          "branch": 1,
+          "tier": 5,
+          "name": "Аскет",
+          "desc": "Ещё −20% к расходу голода (всего −60%)",
+          "attrs": [],
+          "perks": {
+            "HUNGER_SAVE": 0.2
+          }
+        },
+        {
+          "id": "wanderer.2.1",
+          "branch": 2,
+          "tier": 1,
+          "name": "Лёгкий прыжок",
+          "desc": "Прыжок немного выше",
+          "attrs": [
+            {
+              "attribute": "minecraft:jump_strength",
+              "amount": 0.05,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "wanderer.2.2",
+          "branch": 2,
+          "tier": 2,
+          "name": "Горный шаг",
+          "desc": "Шагаете на блок вверх без прыжка",
+          "attrs": [
+            {
+              "attribute": "minecraft:step_height",
+              "amount": 0.5,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "wanderer.2.3",
+          "branch": 2,
+          "tier": 3,
+          "name": "Счастливая звезда",
+          "desc": "+1 к удаче (лучше добыча из сундуков)",
+          "attrs": [
+            {
+              "attribute": "minecraft:luck",
+              "amount": 1,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "wanderer.2.4",
+          "branch": 2,
+          "tier": 4,
+          "name": "Скалолаз",
+          "desc": "Падение до 3 блоков выше обычного не ранит",
+          "attrs": [
+            {
+              "attribute": "minecraft:safe_fall_distance",
+              "amount": 3,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        },
+        {
+          "id": "wanderer.2.5",
+          "branch": 2,
+          "tier": 5,
+          "name": "Странник миров",
+          "desc": "Песок душ, снег и паутина меньше замедляют",
+          "attrs": [
+            {
+              "attribute": "minecraft:movement_efficiency",
+              "amount": 0.3,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
+        }
+      ]
+    }
+  ]
+}

@@ -5,7 +5,13 @@ import com.suchki.enchant.Ench;
 import com.suchki.enchant.SuchkiEnchantments;
 import java.util.ArrayList;
 import java.util.List;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalBlockTags;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
+import com.suchki.skill.Perk;
+import com.suchki.skill.Skills;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -23,6 +29,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 /**
  * Автоплавка: руда и сырые металлы выпадают сразу переплавленными (Удача тоже учитывается).
+ * Навыки: шанс двойной руды, брёвен и урожая.
  * Магнит: добыча сразу кладётся в инвентарь; что не влезло — выпадает как обычно.
  */
 @Mixin(Block.class)
@@ -34,6 +41,14 @@ public abstract class BlockDropsMixin {
 			BlockEntity be, Entity entity, ItemStack tool) {
 		if (entity == null || tool.isEmpty()) return drops;
 		if (Ench.level(level.registryAccess(), SuchkiEnchantments.SMELTING, tool) > 0) drops = smelt(drops, level);
+		if (entity instanceof Player p && skillDouble(p, state, level, tool)) {
+			List<ItemStack> doubled = new ArrayList<>(drops.size() * 2);
+			for (ItemStack stack : drops) {
+				doubled.add(stack);
+				doubled.add(stack.copy());
+			}
+			drops = doubled;
+		}
 		if (entity instanceof Player player && Ench.level(level.registryAccess(), SuchkiEnchantments.MAGNET, tool) > 0) {
 			List<ItemStack> left = new ArrayList<>(drops.size());
 			boolean picked = false;
@@ -50,6 +65,16 @@ public abstract class BlockDropsMixin {
 			drops = left;
 		}
 		return drops;
+	}
+
+	/** Навыки Шахтёра, Лесоруба и Фермера: шанс удвоить добычу руды, брёвен и созревшего урожая. */
+	private static boolean skillDouble(Player player, BlockState state, ServerLevel level, ItemStack tool) {
+		if (state.is(ConventionalBlockTags.ORES)) {
+			return Ench.level(level.registryAccess(), Enchantments.SILK_TOUCH, tool) == 0 && Skills.roll(player, Perk.ORE_EXTRA);
+		}
+		if (state.is(BlockTags.LOGS)) return Skills.roll(player, Perk.LOG_EXTRA);
+		if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state)) return Skills.roll(player, Perk.CROP_EXTRA);
+		return false;
 	}
 
 	private static List<ItemStack> smelt(List<ItemStack> drops, ServerLevel level) {

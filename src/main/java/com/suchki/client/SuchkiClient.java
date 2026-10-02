@@ -25,6 +25,7 @@ public class SuchkiClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		SpringJumpClient.register();
+		SkillsClient.register();
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.INGREDIENTS).register(entries -> {
 			HolderLookup.RegistryLookup<Enchantment> lookup =
 					entries.getContext().holders().lookupOrThrow(Registries.ENCHANTMENT);

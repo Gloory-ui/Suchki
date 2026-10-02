@@ -53,6 +53,7 @@ public final class DevTests {
 			grindstone(level, out);
 			magnet(level, out);
 			potions(level, out);
+			skills(level, out);
 		} catch (Exception e) {
 			Suchki.LOGGER.error("suchki_test упал", e);
 			out.add("FAIL исключение: " + e);
@@ -166,6 +167,54 @@ public final class DevTests {
 		int base = net.minecraft.world.item.alchemy.Potions.STRONG_STRENGTH.value().getEffects().getFirst().getDuration();
 		out.add((amp == 2 ? "OK  " : "FAIL") + " Эхо-осколок: Сила " + (amp + 1) + " (нужно III)");
 		out.add((dur == base * 2 ? "OK  " : "FAIL") + " Аметист: длительность " + dur / 20 + " с (было " + base / 20 + " с)");
+	}
+
+	/** Роли и навыки: выбор, опыт, покупка по порядку, атрибуты, перезарядка, отдельный прогресс ролей. */
+	private static void skills(ServerLevel level, List<String> out) {
+		FakePlayer p = player(level, ItemStack.EMPTY, 0);
+		p.setAttached(com.suchki.skill.Skills.DATA, com.suchki.skill.PlayerSkills.EMPTY);
+		com.suchki.skill.Skills.applyAttributes(p);
+		var speed = p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.BLOCK_BREAK_SPEED);
+		double base = speed.getValue();
+
+		com.suchki.skill.Skills.chooseRole(p, "miner");
+		boolean chosen = com.suchki.skill.Skills.get(p).active().filter("miner"::equals).isPresent();
+		out.add((chosen ? "OK  " : "FAIL") + " Роль: выбран Шахтёр");
+
+		com.suchki.skill.Skills.addXp(p, "miner", 500);
+		com.suchki.skill.Skills.addXp(p, "warrior", 500); // не активная роль — опыта быть не должно
+		var miner = com.suchki.skill.Skills.get(p).progress("miner");
+		int warriorLevel = com.suchki.skill.Skills.get(p).progress("warrior").level();
+		out.add((miner.level() > 5 && warriorLevel == 1 ? "OK  " : "FAIL") + " Опыт: Шахтёр ур. " + miner.level()
+				+ ", очков " + miner.freePoints() + "; Воин (неактивный) ур. " + warriorLevel);
+
+		com.suchki.skill.Skills.unlock(p, "miner.0.3"); // без 1 и 2 ступени — нельзя
+		boolean skipped = !com.suchki.skill.Skills.get(p).progress("miner").has("miner.0.3");
+		com.suchki.skill.Skills.unlock(p, "miner.0.1");
+		com.suchki.skill.Skills.unlock(p, "miner.0.2");
+		double boosted = speed.getValue();
+		out.add((skipped && boosted > base * 1.15 ? "OK  " : "FAIL") + " Навыки: ступень 3 без 1–2 не куплена; скорость копания "
+				+ String.format("%.2f → %.2f", base, boosted));
+
+		com.suchki.skill.Skills.chooseRole(p, "warrior"); // перезарядка 10 мин — смена не должна пройти
+		boolean blocked = com.suchki.skill.Skills.get(p).active().filter("miner"::equals).isPresent();
+		int cooldown = com.suchki.SuchkiConfig.INSTANCE.roleSwitchCooldownMinutes;
+		com.suchki.SuchkiConfig.INSTANCE.roleSwitchCooldownMinutes = 0;
+		com.suchki.skill.Skills.chooseRole(p, "warrior");
+		boolean switched = com.suchki.skill.Skills.get(p).active().filter("warrior"::equals).isPresent();
+		double afterSwitch = speed.getValue();
+		com.suchki.skill.Skills.chooseRole(p, "miner");
+		com.suchki.SuchkiConfig.INSTANCE.roleSwitchCooldownMinutes = cooldown;
+		var back = com.suchki.skill.Skills.get(p).progress("miner");
+		boolean kept = back.level() == miner.level() && back.has("miner.0.1") && back.has("miner.0.2")
+				&& Math.abs(speed.getValue() - boosted) < 1e-6;
+		out.add((blocked ? "OK  " : "FAIL") + " Смена роли: перезарядка не дала сменить сразу");
+		out.add((switched && Math.abs(afterSwitch - base) < 1e-6 ? "OK  " : "FAIL")
+				+ " Смена роли: стал Воином, бонусы Шахтёра сняты (" + String.format("%.2f", afterSwitch) + ")");
+		out.add((kept ? "OK  " : "FAIL") + " Смена роли: вернулся Шахтёром — уровень " + back.level()
+				+ " и навыки на месте, скорость " + String.format("%.2f", speed.getValue()));
+		p.setAttached(com.suchki.skill.Skills.DATA, com.suchki.skill.PlayerSkills.EMPTY);
+		com.suchki.skill.Skills.applyAttributes(p);
 	}
 
 	/** Разделение чар: меч с Остротой V и проклятием — на книгу уходит только Острота, цена 5. */
