@@ -1,0 +1,8 @@
+{
+  "item.minecraft.potion.effect.suchki_mix": "Potion Mix",
+  "item.minecraft.splash_potion.effect.suchki_mix": "Splash Potion Mix",
+  "item.minecraft.lingering_potion.effect.suchki_mix": "Lingering Potion Mix",
+  "item.minecraft.tipped_arrow.effect.suchki_mix": "Arrow of Potion Mix",
+  "suchki.spawner.named": "Spawner: %s",
+  "suchki.unbreaking.worn_out": "Worn out — repair it"
+}
