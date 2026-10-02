@@ -2,8 +2,12 @@
 	"required": true,
 	"package": "com.suchki.mixin",
 	"compatibilityLevel": "JAVA_21",
-	"mixins": [],
-	"client": [],
+	"mixins": [
+		"AnvilMenuMixin",
+		"BlockItemMixin",
+		"ItemStackMixin",
+		"LivingEntityMixin"
+	],
 	"injectors": {
 		"defaultRequire": 1
 	},

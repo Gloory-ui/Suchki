@@ -10,6 +10,13 @@ base {
 }
 
 loom {
+	runs {
+		server {
+			// Проверка миксинов при старте: загружает все целевые классы и падает на ошибках.
+			vmArg "-Dsuchki.audit=true"
+		}
+	}
+
 	mods {
 		"suchki" {
 			sourceSet sourceSets.main

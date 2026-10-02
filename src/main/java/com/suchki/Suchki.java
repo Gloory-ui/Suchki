@@ -3,6 +3,8 @@ package com.suchki;
 import com.suchki.enchant.Perks;
 import com.suchki.potion.SuchkiPotions;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +17,12 @@ public class Suchki implements ModInitializer {
 		SuchkiConfig.load();
 		SuchkiPotions.init();
 		Perks.register();
+		if (Boolean.getBoolean("suchki.audit")) {
+			ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+				MixinEnvironment.getCurrentEnvironment().audit();
+				LOGGER.info("Suchki: проверка миксинов пройдена");
+			});
+		}
 		LOGGER.info("Suchki загружен");
 	}
 }
