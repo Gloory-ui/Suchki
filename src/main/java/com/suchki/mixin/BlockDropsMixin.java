@@ -8,7 +8,10 @@ import java.util.List;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
@@ -18,15 +21,38 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-/** Автоплавка: руда и сырые металлы выпадают сразу переплавленными (Удача тоже учитывается). */
+/**
+ * Автоплавка: руда и сырые металлы выпадают сразу переплавленными (Удача тоже учитывается).
+ * Магнит: добыча сразу кладётся в инвентарь; что не влезло — выпадает как обычно.
+ */
 @Mixin(Block.class)
 public abstract class BlockDropsMixin {
 	@ModifyReturnValue(
 			method = "getDrops(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/item/ItemStack;)Ljava/util/List;",
 			at = @At("RETURN"))
-	private static List<ItemStack> suchki$smelt(List<ItemStack> drops, BlockState state, ServerLevel level, BlockPos pos,
+	private static List<ItemStack> suchki$enchantedDrops(List<ItemStack> drops, BlockState state, ServerLevel level, BlockPos pos,
 			BlockEntity be, Entity entity, ItemStack tool) {
-		if (entity == null || tool.isEmpty() || Ench.level(level.registryAccess(), SuchkiEnchantments.SMELTING, tool) <= 0) return drops;
+		if (entity == null || tool.isEmpty()) return drops;
+		if (Ench.level(level.registryAccess(), SuchkiEnchantments.SMELTING, tool) > 0) drops = smelt(drops, level);
+		if (entity instanceof Player player && Ench.level(level.registryAccess(), SuchkiEnchantments.MAGNET, tool) > 0) {
+			List<ItemStack> left = new ArrayList<>(drops.size());
+			boolean picked = false;
+			for (ItemStack stack : drops) {
+				int before = stack.getCount();
+				player.getInventory().add(stack);
+				picked |= stack.getCount() < before;
+				if (!stack.isEmpty()) left.add(stack);
+			}
+			if (picked) {
+				level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2F,
+						(level.random.nextFloat() - level.random.nextFloat()) * 1.4F + 2.0F);
+			}
+			drops = left;
+		}
+		return drops;
+	}
+
+	private static List<ItemStack> smelt(List<ItemStack> drops, ServerLevel level) {
 		List<ItemStack> out = new ArrayList<>(drops.size());
 		for (ItemStack stack : drops) {
 			if (!stack.is(ConventionalItemTags.RAW_MATERIALS) && !stack.is(ConventionalItemTags.ORES)) {

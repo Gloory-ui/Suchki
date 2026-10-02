@@ -51,6 +51,8 @@ public final class DevTests {
 			timber(level, out);
 			beacon(level, out);
 			grindstone(level, out);
+			magnet(level, out);
+			potions(level, out);
 		} catch (Exception e) {
 			Suchki.LOGGER.error("suchki_test упал", e);
 			out.add("FAIL исключение: " + e);
@@ -133,6 +135,37 @@ public final class DevTests {
 		m.setAccessible(true);
 		int tiers = (int) m.invoke(null, level, top.getX(), top.getY(), top.getZ());
 		out.add((tiers == 5 ? "OK  " : "FAIL") + " Маяк: ярусов " + tiers + " (нужно 5)");
+	}
+
+	/** Магнит: ломаем камень — булыжник должен оказаться в инвентаре, а не на земле. */
+	private static void magnet(ServerLevel level, List<String> out) {
+		BlockPos c = new BlockPos(20, 100, 0);
+		clearItems(level, c, 4);
+		level.setBlock(c, Blocks.STONE.defaultBlockState(), 3);
+		FakePlayer p = player(level, tool(level, Items.IRON_PICKAXE, SuchkiEnchantments.MAGNET, 1), 90);
+		p.getInventory().clearContent();
+		p.setItemInHand(InteractionHand.MAIN_HAND, tool(level, Items.IRON_PICKAXE, SuchkiEnchantments.MAGNET, 1));
+		p.gameMode.destroyBlock(c);
+		int inInv = p.getInventory().countItem(Items.COBBLESTONE);
+		int onGround = count(level, c, 4, Items.COBBLESTONE);
+		out.add((inInv == 1 && onGround == 0 ? "OK  " : "FAIL") + " Магнит: в инвентаре " + inInv + ", на земле " + onGround);
+		p.getInventory().clearContent();
+	}
+
+	/** Сильные зелья: Сила II + эхо-осколок → Сила III; + аметист → вдвое дольше. */
+	private static void potions(ServerLevel level, List<String> out) {
+		var brewing = level.potionBrewing();
+		ItemStack strong = net.minecraft.world.item.alchemy.PotionContents.createItemStack(Items.POTION,
+				net.minecraft.world.item.alchemy.Potions.STRONG_STRENGTH);
+		ItemStack third = brewing.mix(new ItemStack(Items.ECHO_SHARD), strong);
+		ItemStack longer = brewing.mix(new ItemStack(Items.AMETHYST_SHARD), strong);
+		var e3 = third.getOrDefault(DataComponents.POTION_CONTENTS, net.minecraft.world.item.alchemy.PotionContents.EMPTY).getAllEffects();
+		var eL = longer.getOrDefault(DataComponents.POTION_CONTENTS, net.minecraft.world.item.alchemy.PotionContents.EMPTY).getAllEffects();
+		int amp = e3.iterator().hasNext() ? e3.iterator().next().getAmplifier() : -1;
+		int dur = eL.iterator().hasNext() ? eL.iterator().next().getDuration() : -1;
+		int base = net.minecraft.world.item.alchemy.Potions.STRONG_STRENGTH.value().getEffects().getFirst().getDuration();
+		out.add((amp == 2 ? "OK  " : "FAIL") + " Эхо-осколок: Сила " + (amp + 1) + " (нужно III)");
+		out.add((dur == base * 2 ? "OK  " : "FAIL") + " Аметист: длительность " + dur / 20 + " с (было " + base / 20 + " с)");
 	}
 
 	/** Разделение чар: меч с Остротой V и проклятием — на книгу уходит только Острота, цена 5. */

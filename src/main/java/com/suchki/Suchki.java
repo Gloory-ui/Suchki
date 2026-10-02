@@ -16,6 +16,7 @@ public class Suchki implements ModInitializer {
 	public void onInitialize() {
 		SuchkiConfig.load();
 		SuchkiPotions.init();
+		com.suchki.potion.StrongPotions.init();
 		Perks.register();
 		com.suchki.enchant.AreaBreaking.register();
 		com.suchki.enchant.SpringJump.register();

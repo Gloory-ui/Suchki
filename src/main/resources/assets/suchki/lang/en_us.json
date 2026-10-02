@@ -40,5 +40,7 @@
   "suchki.perk.timber": "Fells the whole tree; sneak to cut a single block",
   "suchki.perk.spring": "Air jumps: %s",
   "suchki.perk.deflect": "%s%% chance to send projectiles back at the shooter",
-  "suchki.perk.stun": "%s%% chance to slow and stun the target"
+  "suchki.perk.stun": "%s%% chance to slow and stun the target",
+  "enchantment.suchki.magnet": "Magnet",
+  "suchki.perk.magnet": "Drops go straight into your inventory"
 }

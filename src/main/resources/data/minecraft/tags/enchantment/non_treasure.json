@@ -36,6 +36,7 @@
     "minecraft:lunge",
     "suchki:spring",
     "suchki:deflect",
-    "suchki:stun"
+    "suchki:stun",
+    "suchki:magnet"
   ]
 }

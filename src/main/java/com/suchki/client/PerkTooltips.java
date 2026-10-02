@@ -47,6 +47,7 @@ final class PerkTooltips {
 			case "suchki:drill" -> passive(out, "suchki.perk.drill");
 			case "suchki:smelting" -> passive(out, "suchki.perk.smelting");
 			case "suchki:timber" -> passive(out, "suchki.perk.timber");
+			case "suchki:magnet" -> passive(out, "suchki.perk.magnet");
 			case "suchki:spring" -> passive(out, "suchki.perk.spring", level);
 			case "suchki:deflect" -> passive(out, "suchki.perk.deflect", 6 * level);
 			case "suchki:stun" -> passive(out, "suchki.perk.stun", 8 * level);

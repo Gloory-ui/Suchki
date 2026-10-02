@@ -14,6 +14,7 @@ public final class SuchkiEnchantments {
 	public static final ResourceKey<Enchantment> SPRING = key("spring");
 	public static final ResourceKey<Enchantment> DEFLECT = key("deflect");
 	public static final ResourceKey<Enchantment> STUN = key("stun");
+	public static final ResourceKey<Enchantment> MAGNET = key("magnet");
 
 	private SuchkiEnchantments() {}
 

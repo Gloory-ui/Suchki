@@ -40,5 +40,7 @@
   "suchki.perk.timber": "Рубит всё дерево целиком; присядьте, чтобы срубить один блок",
   "suchki.perk.spring": "Прыжков в воздухе: %s",
   "suchki.perk.deflect": "Шанс %s%% отбить снаряд обратно в стрелка",
-  "suchki.perk.stun": "Шанс %s%% замедлить и оглушить цель"
+  "suchki.perk.stun": "Шанс %s%% замедлить и оглушить цель",
+  "enchantment.suchki.magnet": "Магнит",
+  "suchki.perk.magnet": "Добыча сразу попадает в инвентарь"
 }
