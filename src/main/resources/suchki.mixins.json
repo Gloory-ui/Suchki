@@ -6,8 +6,6 @@
 		"AnvilMenuMixin",
 		"BlockItemMixin",
 		"CombatRulesMixin",
-		"ExperienceOrbAccessor",
-		"ExperienceOrbMixin",
 		"ItemStackMixin",
 		"LivingEntityMixin"
 	],

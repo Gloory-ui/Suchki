@@ -45,11 +45,6 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = "UTF-8"
 }
 
-jar {
-	// Уведомления лицензий стороннего кода (Clumps и др.) должны лежать внутри jar.
-	from("THIRD_PARTY_LICENSES.md")
-}
-
 java {
 	sourceCompatibility = JavaVersion.VERSION_21
 	targetCompatibility = JavaVersion.VERSION_21
