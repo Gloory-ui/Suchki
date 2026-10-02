@@ -18,7 +18,8 @@
 		]
 	},
 	"mixins": [
-		"suchki.mixins.json"
+		"suchki.mixins.json",
+		"suchki.appleskin.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.19.5",

@@ -28,5 +28,8 @@
   "suchki.tooltip.damage_power": "+%s к урону стрелы",
   "suchki.tooltip.damage_impaling": "+%s урона водным мобам",
   "suchki.tooltip.protection_set": "Комплект: −%s%% урона (от огня, взрывов, снарядов −%s%%)",
-  "suchki.tooltip.feather_set": "−%s%% урона от падения"
+  "suchki.tooltip.feather_set": "−%s%% урона от падения",
+  "suchki.food.chance": "С шансом %s%%:",
+  "suchki.food.full": "Вы сыты",
+  "suchki.food.to_full": "До полной сытости: %s шт."
 }

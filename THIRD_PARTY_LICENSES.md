@@ -31,3 +31,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## AppleSkin
+
+- Источник: https://github.com/squeek502/AppleSkin (ветка 1.21.11-fabric)
+- Где в Suchki: пакет `com.suchki.appleskin`, текстуры `assets/appleskin/textures`
+- Изменения: исходники переведены с маппингов Yarn на Mojang, настройки перенесены в config/suchki.json
+  (без Cloth Config/Jankson), убраны интеграции с REI/JEI/Mod Menu, сетевые id перенесены в пространство `suchki`.
+- Лицензия: Unlicense (общественное достояние) — указание авторства не требуется, оставлено из уважения.
