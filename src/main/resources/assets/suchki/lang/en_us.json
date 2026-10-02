@@ -28,8 +28,5 @@
   "suchki.tooltip.damage_power": "+%s arrow damage",
   "suchki.tooltip.damage_impaling": "+%s damage to aquatic mobs",
   "suchki.tooltip.protection_set": "Full set: −%s%% damage (fire, explosions, projectiles −%s%%)",
-  "suchki.tooltip.feather_set": "−%s%% fall damage",
-  "suchki.food.chance": "%s%% chance:",
-  "suchki.food.full": "You are full",
-  "suchki.food.to_full": "To full hunger: %s pcs"
+  "suchki.tooltip.feather_set": "−%s%% fall damage"
 }

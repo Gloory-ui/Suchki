@@ -61,9 +61,6 @@ public class SuchkiConfig {
 	/** Во сколько раз сильнее тянет опыт к игроку, чем в ванили. */
 	public double xpPullStrength = 3.0;
 
-	// --- AppleSkin (интерфейс еды; код AppleSkin, Unlicense) ---
-	public com.suchki.appleskin.ModConfig appleskin = new com.suchki.appleskin.ModConfig();
-
 	// --- Зелья ---
 	/** Сколько исходных зелий можно смешать в одном. */
 	public int maxPotionsInMix = 3;
