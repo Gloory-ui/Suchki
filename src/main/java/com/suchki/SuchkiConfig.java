@@ -64,10 +64,6 @@ public class SuchkiConfig {
 	// --- AppleSkin (интерфейс еды; код AppleSkin, Unlicense) ---
 	public com.suchki.appleskin.ModConfig appleskin = new com.suchki.appleskin.ModConfig();
 
-	// --- Инвентарь ---
-	/** Автопополнение руки: кончился стак — подтягивается такой же из инвентаря. */
-	public boolean autoRefill = true;
-
 	// --- Зелья ---
 	/** Сколько исходных зелий можно смешать в одном. */
 	public int maxPotionsInMix = 3;

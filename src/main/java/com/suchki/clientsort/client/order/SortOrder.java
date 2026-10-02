@@ -68,11 +68,6 @@ public abstract class SortOrder {
      */
     public static final SortOrder CREATIVE;
     /**
-     * Suchki: категории (блоки → руды и материалы → еда → инструменты/оружие/броня → прочее),
-     * внутри категории — порядок творческого меню.
-     */
-    public static final SortOrder CATEGORY;
-    /**
      * Groups: total item quantity (desc)
      * <p>
      * Slots: stack size (desc)
@@ -275,33 +270,6 @@ public abstract class SortOrder {
                 }
 
                 // Sort by reference array
-                SortOrder.sortByValues(slotIds, sortValues, stacks, context);
-                return slotIds;
-            }
-        });
-
-        CATEGORY = register(new SortOrder("category") {
-            @Override
-            public int[] sort(int[] slotIds, ItemStack[] stacks, SortContext context) {
-                boolean creativeReady = options().optimizeCreativeSorting && ClientSort.searchOrderUpdated;
-                int[] sortValues = new int[slotIds.length];
-                Lock lock = creativeReady ? CreativeSearchOrder.getReadLock() : null;
-                if (lock != null) lock.lock();
-                try {
-                    for (int i = 0; i < stacks.length; i++) {
-                        ItemStack stack = stacks[i];
-                        if (stack.isEmpty()) {
-                            sortValues[i] = Integer.MAX_VALUE;
-                            continue;
-                        }
-                        int inCategory = creativeReady
-                                ? Math.min(CreativeSearchOrder.getPosition(stack), 9_999_999)
-                                : net.minecraft.core.registries.BuiltInRegistries.ITEM.getId(stack.getItem());
-                        sortValues[i] = com.suchki.clientsort.client.order.ItemCategory.of(stack) * 10_000_000 + inCategory;
-                    }
-                } finally {
-                    if (lock != null) lock.unlock();
-                }
                 SortOrder.sortByValues(slotIds, sortValues, stacks, context);
                 return slotIds;
             }

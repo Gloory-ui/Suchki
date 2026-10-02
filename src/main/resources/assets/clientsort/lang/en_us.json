@@ -1,6 +1,8 @@
 {
   "clientsort.name": "ClientSort",
+
   "resourcepack.clientsort.dark-mode": "ClientSort Dark Mode",
+
   "key.category.clientsort.main": "ClientSort",
   "key.clientsort.edit": "Open Editor",
   "key.clientsort.cancelAuto": "Cancel Auto Operation",
@@ -8,21 +10,29 @@
   "key.clientsort.op.stackFill": "Fill Stacks",
   "key.clientsort.op.matchTransfer": "Restock",
   "key.clientsort.op.transfer": "Transfer",
+
   "message.clientsort.installCloth": "Install Cloth Config API to access mod options.",
   "message.clientsort.viewModrinth": "View on Modrinth",
   "message.clientsort.configReloaded": "Server configuration reloaded from '%s'!",
   "message.clientsort.checkLogs": "Check game logs for more info.",
+
   "title.clientsort.groupSelector": "ClientSort Editor - Select a Widget to Edit",
+
   "title.clientsort.positionEditor": "ClientSort Editor",
+
   "title.clientsort.confirm.saveAsDefault": "Save Button Position as Default",
   "message.clientsort.confirm.saveAsDefault": "Are you sure you want to save this button position as the default? If you want to reset the default position in future, you must do so via the main options menu.",
+
   "title.clientsort.confirm.splitPolicyClass": "Split this Policy on Class",
   "message.clientsort.confirm.splitPolicyClass": "This policy is currently specified by class '%s'. Are you sure you want to create a separate policy for class '%s'? If you want to revert this change in future, you must delete the new policy in the main options menu.",
+
   "title.clientsort.confirm.splitPolicyTitle": "Split this Policy on Title",
   "message.clientsort.confirm.splitPolicyTitle": "This policy is currently specified by class '%s', with no title. Are you sure you want to create a separate policy with title '%s'? If you want to revert this change in future, you must delete the new policy in the main options menu.",
+
   "title.clientsort.confirm.disableButtons": "Disable Inventory Trigger Buttons",
   "message.clientsort.confirm.disableButtons.1": "If you want to re-enable the buttons later, you must either use the %s keybind while viewing an inventory, or visit the %s tab in mod configuration.",
   "message.clientsort.confirm.disableButtons.2": "Are you sure you want to disable all buttons?",
+
   "editor.clientsort.buttons": "Buttons",
   "editor.clientsort.enabled": "Enabled",
   "editor.clientsort.disabled": "Disabled",
@@ -65,6 +75,7 @@
   "editor.clientsort.policyKey.current": "Policy Key: %s",
   "editor.clientsort.policyKey.menu": "Active Menu: %s",
   "editor.clientsort.policyKey.unset": "Not set",
+
   "option.clientsort.general": "General",
   "option.clientsort.interactionInterval": "Interaction Interval",
   "option.clientsort.interactionInterval.tooltip": "The minimum time, in milliseconds, between interaction events when server acceleration is not in use.",
@@ -86,6 +97,7 @@
   "option.clientsort.transferReverseOrder.tooltip": "Whether to scan the source inventory backwards in transfer operations.",
   "option.clientsort.showDebugInfo": "Show Debug Info",
   "option.clientsort.showDebugInfo.tooltip": "Whether to show debug info on the GUI and enable debug logging. Value will reset when you restart the game.",
+
   "option.clientsort.sorting": "Sorting",
   "option.clientsort.sortOrder": "Default Sort Order",
   "option.clientsort.shiftSortOrder": "Shift Sort Order",
@@ -102,6 +114,7 @@
   "option.clientsort.endOverrideItems.tooltip": "When sorting, items in this list will always be sorted to the end.",
   "option.clientsort.overrideItems.tooltip.2": "Accepts item identifiers such as '%s'.",
   "option.clientsort.overrideItems.tooltip.2.item": "minecraft:red_shulker_box",
+
   "option.clientsort.matching": "Matching",
   "option.clientsort.alwaysMatchByType": "Always Match by Type",
   "option.clientsort.alwaysMatchByType.tooltip": "Item-matching operations will always match items with the same type.",
@@ -109,6 +122,7 @@
   "option.clientsort.typeMatchTags.tooltip.1": "Items with any of the tags in this list will be matched by type only.",
   "option.clientsort.typeMatchTags.tooltip.2": "Only used if 'Always Match by Type' is disabled.",
   "option.clientsort.typeMatchTags.tooltip.3": "See %s for a list of tags.",
+
   "option.clientsort.sounds": "Sounds",
   "option.clientsort.playSoundSort": "Play Sorting Sounds",
   "option.clientsort.playSoundSort.tooltip": "Whether to play sounds when sorting without server acceleration.",
@@ -124,7 +138,9 @@
   "option.clientsort.soundVolume": "Volume",
   "option.clientsort.allowSoundOverlap": "Allow Overlap",
   "option.clientsort.allowSoundOverlap.tooltip": "Whether to allow the previous sound to continue when starting a new sound.",
+
   "option.clientsort.keybinds": "Keybinds",
+
   "option.clientsort.buttons": "Buttons",
   "option.clientsort.showButtons": "Show Buttons",
   "option.clientsort.showButtons.tooltip": "Whether to show extra buttons on the GUI for inventory operations.",
@@ -144,6 +160,7 @@
   "option.clientsort.layoutDefaults.tooltip": "These values are used by policies that have the respective value unset.",
   "option.clientsort.layoutOffset.x": "Offset X",
   "option.clientsort.layoutOffset.y": "Offset Y",
+
   "option.clientsort.policies": "Policies",
   "option.clientsort.policies.instructions": "Instructions",
   "option.clientsort.policies.description.1": "The policy list below allows you to configure the keybind and trigger button operations for each inventory type.",
@@ -161,12 +178,14 @@
   "option.clientsort.policies.description.13": "Note: fill, restock and transfer buttons are only shown if enabled on both the player inventory and the container.",
   "option.clientsort.classPolicies": "Class Policies",
   "option.clientsort.classPolicies.tooltip": "Each of the entries below corresponds to a particular type of inventory.",
+
   "hotbarScope.clientsort.HOTBAR": "Hotbar",
   "hotbarScope.clientsort.HOTBAR.tooltip": "Hotbar will be processed as a separate inventory.",
   "hotbarScope.clientsort.INVENTORY": "Inventory",
   "hotbarScope.clientsort.INVENTORY.tooltip": "Hotbar will be processed as part of the main inventory.",
   "hotbarScope.clientsort.NONE": "None",
   "hotbarScope.clientsort.NONE.tooltip": "Hotbar will not be processed.",
+
   "extraSlotScope.clientsort.EXTRA": "Extra",
   "extraSlotScope.clientsort.EXTRA.tooltip": "Extra slots will be processed as a separate inventory.",
   "extraSlotScope.clientsort.HOTBAR": "Hotbar",
@@ -175,22 +194,26 @@
   "extraSlotScope.clientsort.INVENTORY.tooltip": "Extra slots will be processed as part of the main inventory.",
   "extraSlotScope.clientsort.NONE": "None",
   "extraSlotScope.clientsort.NONE.tooltip": "Extra slots will not be processed.",
+
   "sortOrder.clientsort.none": "None",
   "sortOrder.clientsort.alphabet": "Alphabet",
   "sortOrder.clientsort.creative": "Creative",
   "sortOrder.clientsort.quantity": "Quantity",
   "sortOrder.clientsort.rawId": "Raw ID",
+
   "triggerButton.clientsort.SORT": "Sort",
   "triggerButton.clientsort.STACK_FILL": "Fill Stacks",
   "triggerButton.clientsort.MATCH_TRANSFER": "Restock",
   "triggerButton.clientsort.TRANSFER": "Transfer",
   "triggerButton.clientsort.NONE": "None",
+
   "payloadResult.clientsort.success": "Operation succeeded.",
   "payloadResult.clientsort.unknown": "Server returned an unrecognized failure code.",
   "payloadResult.clientsort.failure": "Server encountered an unexpected error.",
   "payloadResult.clientsort.failure.unsupportedOp": "Server does not support this operation in this inventory.",
   "payloadResult.clientsort.failure.invalidData": "Server rejected this operation due to invalid payload data.",
   "payloadResult.clientsort.failure.inconsistentState": "Server aborted and disabled this operation due to inconsistent inventory state.",
+
   "error.clientsort.low": "Too low",
   "error.clientsort.high": "Too high",
   "error.clientsort.resourceLocation.parse": "Invalid resource location",
@@ -198,6 +221,5 @@
   "error.clientsort.classPolicy.pattern": "Data does not match required pattern: %s",
   "error.clientsort.classPolicy.classNotFound": "Could not find a class matching name: %s",
   "error.clientsort.classPolicy.parseOffset": "Could not parse an offset from data: (%s,%s)",
-  "error.clientsort.triggerButton.duplicate": "Each button can only appear once",
-  "sortOrder.clientsort.category": "Category"
+  "error.clientsort.triggerButton.duplicate": "Each button can only appear once"
 }
