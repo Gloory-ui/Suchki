@@ -127,6 +127,7 @@ public final class DevTests {
 		tests.put("Библиотекарь", DevTests::librarian);
 		tests.put("Роли", DevTests::roles);
 		tests.put("Навыки: эффекты", DevTests::skillPerks);
+		tests.put("Пружина: урон от падения", DevTests::springFall);
 		Skills.testChanceOverride = -1;
 		for (Map.Entry<String, Test> t : tests.entrySet()) {
 			try {
@@ -789,8 +790,10 @@ public final class DevTests {
 		Mob tooFar = spawn(level, EntityType.ZOMBIE, cave.offset(20, 0, 0));
 		p.snapTo(cave.getX() + 0.5, cave.getY(), cave.getZ() + 0.5, 0, 0);
 		tick.invoke(null, p);
-		r.check(far.hasEffect(MobEffects.GLOWING) && !tooFar.hasEffect(MobEffects.GLOWING),
+		List<Integer> sensed = com.suchki.skill.SkillEffects.hunterTargets(p);
+		r.check(sensed.contains(far.getId()) && !sensed.contains(tooFar.getId()),
 				"Охотник «Чуткий слух»: моб в 5 блоках подсвечен, в 20 — нет");
+		r.check(!far.hasEffect(MobEffects.GLOWING), "Охотник «Чуткий слух»: подсветка только у охотника (без эффекта свечения)");
 
 		skills(p, "farmer", "farmer.2.1", "farmer.2.2", "farmer.2.3", "farmer.2.4", "farmer.2.5");
 		BlockPos field = o.offset(-20, 0, 20);
@@ -808,5 +811,41 @@ public final class DevTests {
 			if (s.getBlock() instanceof CropBlock cb && cb.getAge(s) > 0) grown++;
 		}
 		r.check(grown > 0, "Фермер «Садовник»: посевы рядом подрастают (" + grown + " из " + planted + ")");
+	}
+
+	// --- Пружина ---
+
+	/** Высота, набранная прыжками в воздухе, не ранит; падение ниже точки отрыва от земли — как в ванили. */
+	private static void springFall(ServerLevel level, BlockPos o, Report r) {
+		FakePlayer p = player(level, o, ItemStack.EMPTY, 0);
+		p.setItemSlot(EquipmentSlot.FEET, enchanted(level, Items.IRON_BOOTS, SuchkiEnchantments.SPRING, 3));
+		p.resetCurrentImpulseContext();
+		double ground = o.getY();
+
+		// Ровная земля: три прыжка в воздухе (4-й не даётся), вершина ≈5,5 блока, приземление туда же.
+		p.setOnGround(true);
+		com.suchki.enchant.SpringJump.track(p);
+		p.setOnGround(false);
+		boolean jumps = true;
+		for (int i = 0; i < 3; i++) {
+			p.snapTo(o.getX() + 0.5, ground + 1.2 + i * 1.4, o.getZ() + 0.5, 0, 0);
+			jumps &= com.suchki.enchant.SpringJump.onJump(p);
+		}
+		r.check(jumps && !com.suchki.enchant.SpringJump.onJump(p), "Пружина III: три прыжка в воздухе, четвёртого нет");
+		p.snapTo(o.getX() + 0.5, ground, o.getZ() + 0.5, 0, 0);
+		r.check(!p.causeFallDamage(5.5, 1.0F, level.damageSources().fall()),
+				"Пружина III: падение с вершины прыжка (5,5 блока) на ту же высоту без урона");
+
+		// Обрыв: оторвался от земли на 10 блоков выше, прыгнул в воздухе и упал вниз — урон за 10 блоков.
+		p.resetCurrentImpulseContext();
+		p.snapTo(o.getX() + 0.5, ground + 10, o.getZ() + 0.5, 0, 0);
+		p.setOnGround(true);
+		com.suchki.enchant.SpringJump.track(p);
+		p.setOnGround(false);
+		p.snapTo(o.getX() + 0.5, ground + 11, o.getZ() + 0.5, 0, 0);
+		com.suchki.enchant.SpringJump.onJump(p);
+		p.snapTo(o.getX() + 0.5, ground, o.getZ() + 0.5, 0, 0);
+		r.check(p.causeFallDamage(12.4, 1.0F, level.damageSources().fall()), "Пружина III: падение с обрыва ниже точки прыжка ранит");
+		p.resetCurrentImpulseContext();
 	}
 }

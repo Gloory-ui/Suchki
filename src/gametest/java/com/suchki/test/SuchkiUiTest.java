@@ -211,6 +211,7 @@ public class SuchkiUiTest implements FabricClientGameTest {
 			double single = jumpHeight(context, sp, 0);
 			double triple = jumpHeight(context, sp, 3);
 			if (!(triple > single + 0.8)) failures.add("Пружина III: прыжок " + triple + " не выше обычного " + single);
+			springAndHunter(context, sp, failures);
 
 			// 9. Прочность X: изношенный предмет — удар отменён и есть надпись над хотбаром.
 			boolean[] cancelled = new boolean[1];
@@ -296,6 +297,53 @@ public class SuchkiUiTest implements FabricClientGameTest {
 		var lookup = level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
 		for (int i = 0; i < enchants.length; i += 2) m.set(lookup.getOrThrow((ResourceKey<Enchantment>) enchants[i]), (Integer) enchants[i + 1]);
 		return m.toImmutable();
+	}
+
+	/**
+	 * Пружина III: после тройного прыжка на ту же землю — без урона (по статистике «получено урона»: её не прячет
+	 * регенерация). Охотник: моб рядом светится контуром у охотника, но эффекта свечения (видного всем) у моба нет.
+	 */
+	private static void springAndHunter(ClientGameTestContext context, TestSingleplayerContext sp, List<String> failures) {
+		var damageTaken = net.minecraft.stats.Stats.CUSTOM.get(net.minecraft.stats.Stats.DAMAGE_TAKEN);
+		int before = sp.getServer().computeOnServer(server -> player(server).getStats().getValue(damageTaken));
+		double h = jumpHeight(context, sp, 3);
+		int after = sp.getServer().computeOnServer(server -> player(server).getStats().getValue(damageTaken));
+		if (after > before) failures.add("Пружина III: урон от падения после прыжка на " + String.format("%.2f", h) + " блока");
+		System.out.println("[suchki-test] Пружина III: прыжок " + String.format("%.2f", h) + ", урон " + (after - before) / 10.0);
+
+		int[] id = new int[1];
+		var difficulty = sp.getServer().computeOnServer(server -> server.getWorldData().getDifficulty());
+		var saved = sp.getServer().computeOnServer(server -> {
+			ServerPlayer p = player(server);
+			var old = p.getAttached(Skills.DATA);
+			p.setAttached(Skills.DATA, new com.suchki.skill.PlayerSkills(java.util.Optional.of("hunter"),
+					java.util.Map.of("hunter", new com.suchki.skill.PlayerSkills.Progress(50, 0, List.of("hunter.0.1"))), 0L));
+			server.setDifficulty(net.minecraft.world.Difficulty.EASY, true);
+			var husk = net.minecraft.world.entity.EntityType.HUSK.create(p.level(), net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+			var ahead = p.position().add(p.getLookAngle().multiply(5, 0, 5));
+			husk.snapTo(ahead.x, p.getY(), ahead.z, p.getYRot() + 180, 0);
+			husk.setNoAi(true);
+			p.level().addFreshEntity(husk);
+			id[0] = husk.getId();
+			return java.util.Optional.ofNullable(old);
+		});
+		context.waitTicks(50);
+		boolean glows = context.computeOnClient(mc -> {
+			var e = mc.level.getEntity(id[0]);
+			return e != null && mc.shouldEntityAppearGlowing(e);
+		});
+		context.takeScreenshot("hunter_glow");
+		boolean effect = sp.getServer().computeOnServer(server -> {
+			var e = player(server).level().getEntity(id[0]);
+			boolean has = e instanceof net.minecraft.world.entity.LivingEntity le && le.hasEffect(net.minecraft.world.effect.MobEffects.GLOWING);
+			if (e != null) e.discard();
+			ServerPlayer p = player(server);
+			saved.ifPresentOrElse(s -> p.setAttached(Skills.DATA, s), () -> p.removeAttached(Skills.DATA));
+			server.setDifficulty(difficulty, true);
+			return has;
+		});
+		if (!glows) failures.add("Охотник: моб рядом не подсвечен у охотника");
+		if (effect) failures.add("Охотник: у моба эффект свечения — подсветку видят все игроки");
 	}
 
 	/** Высота прыжка (блоков над землёй): прыжок, затем повторные нажатия в воздухе. */

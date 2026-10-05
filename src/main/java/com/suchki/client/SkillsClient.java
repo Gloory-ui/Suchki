@@ -22,6 +22,7 @@ final class SkillsClient {
 		openSkills = KeyBindingHelper.registerKeyBinding(
 				new KeyMapping("key.suchki.skills", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, CATEGORY));
 		ClientTickEvents.END_CLIENT_TICK.register(SkillsClient::tick);
+		HunterSenseClient.register();
 	}
 
 	private static void tick(Minecraft mc) {
