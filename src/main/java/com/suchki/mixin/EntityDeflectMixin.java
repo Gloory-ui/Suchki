@@ -27,6 +27,9 @@ public abstract class EntityDeflectMixin {
 		Vec3 dir = shooter.getEyePosition().subtract(projectile.position()).normalize();
 		projectile.setDeltaMovement(dir.scale(speed));
 		projectile.needsSync = true;
+		if (projectile.level() instanceof net.minecraft.server.level.ServerLevel level) {
+			com.suchki.fx.Fx.deflected(level, projectile.position());
+		}
 	};
 
 	@ModifyReturnValue(method = "deflection", at = @At("RETURN"))

@@ -40,8 +40,13 @@ public abstract class BlockDropsMixin {
 	private static List<ItemStack> suchki$enchantedDrops(List<ItemStack> drops, BlockState state, ServerLevel level, BlockPos pos,
 			BlockEntity be, Entity entity, ItemStack tool) {
 		if (entity == null) return drops;
-		if (!tool.isEmpty() && Ench.level(level.registryAccess(), SuchkiEnchantments.SMELTING, tool) > 0) drops = smelt(drops, level);
+		if (!tool.isEmpty() && Ench.level(level.registryAccess(), SuchkiEnchantments.SMELTING, tool) > 0) {
+			List<ItemStack> smelted = smelt(drops, level);
+			if (entity instanceof Player p && !smelted.equals(drops)) com.suchki.fx.Fx.smelted(level, p, pos);
+			drops = smelted;
+		}
 		if (entity instanceof Player p && skillDouble(p, state, level, tool)) {
+			com.suchki.fx.Fx.skillProc(level, p, pos);
 			List<ItemStack> doubled = new ArrayList<>(drops.size() * 2);
 			for (ItemStack stack : drops) {
 				doubled.add(stack);
@@ -90,6 +95,6 @@ public abstract class BlockDropsMixin {
 					.orElse(ItemStack.EMPTY);
 			out.add(smelted.isEmpty() ? stack : smelted.copyWithCount(smelted.getCount() * stack.getCount()));
 		}
-		return out;
+		return out.equals(drops) ? drops : out;
 	}
 }

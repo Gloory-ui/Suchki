@@ -29,6 +29,7 @@ public final class SkillEffects {
 			if (source.getEntity() instanceof ServerPlayer sp && entity instanceof Mob mob
 					&& entity.level() instanceof ServerLevel level && Skills.roll(sp, Perk.MOB_LOOT_EXTRA)) {
 				((com.suchki.mixin.LivingEntityInvoker) mob).suchki$dropFromLootTable(level, source, true);
+				com.suchki.fx.Fx.skillProc(level, sp, mob.position().add(0, 0.5, 0));
 			}
 		});
 	}
@@ -64,15 +65,17 @@ public final class SkillEffects {
 		}
 
 		// Фермер: несколько посевов в радиусе 4 блоков подрастают на одну стадию.
-		int attempts = (int) s.perk(Perk.CROP_AURA);
-		for (int i = 0; i < attempts * 3; i++) {
+		// Делаем до wanted×3 попыток найти посев, пока не подрастёт wanted штук.
+		int wanted = (int) s.perk(Perk.CROP_AURA);
+		int grown = 0;
+		for (int i = 0; i < wanted * 3 && grown < wanted; i++) {
 			BlockPos pos = player.blockPosition().offset(level.random.nextInt(9) - 4, level.random.nextInt(3) - 1,
 					level.random.nextInt(9) - 4);
 			BlockState state = level.getBlockState(pos);
 			if (state.getBlock() instanceof CropBlock crop && !crop.isMaxAge(state)) {
 				level.setBlock(pos, crop.getStateForAge(crop.getAge(state) + 1), 2);
-				attempts--;
-				if (attempts <= 0) break;
+				com.suchki.fx.Fx.cropGrew(level, pos);
+				grown++;
 			}
 		}
 	}

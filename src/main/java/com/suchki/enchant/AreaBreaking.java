@@ -29,34 +29,41 @@ public final class AreaBreaking {
 
 	public static void register() {
 		PlayerBlockBreakEvents.AFTER.register(AreaBreaking::afterBreak);
+		TreeFall.register();
+	}
+
+	/** Сломать блоки как игрок. false — инструмент на исходе, дальше нельзя. */
+	private static boolean breakAll(ServerPlayer player, List<BlockPos> blocks, float centerHardness) {
+		Level level = player.level();
+		BUSY.set(true);
+		try {
+			for (BlockPos p : blocks) {
+				ItemStack held = player.getMainHandItem();
+				// Не ломаем инструмент до конца и не трогаем то, что этим инструментом не добывается.
+				if (held.isEmpty() || held.isDamageableItem() && held.getDamageValue() >= held.getMaxDamage() - 1) return false;
+				BlockState other = level.getBlockState(p);
+				float hardness = other.getDestroySpeed(level, p);
+				if (other.isAir() || hardness < 0 || hardness > centerHardness + 2.0F || !held.isCorrectToolForDrops(other)) continue;
+				player.gameMode.destroyBlock(p);
+			}
+			return true;
+		} finally {
+			BUSY.set(false);
+		}
 	}
 
 	private static void afterBreak(Level level, Player player, BlockPos pos, BlockState state,
 			net.minecraft.world.level.block.entity.BlockEntity be) {
 		if (BUSY.get() || !(level instanceof ServerLevel) || !(player instanceof ServerPlayer sp) || player.isShiftKeyDown()) return;
 		ItemStack tool = player.getMainHandItem();
-		List<BlockPos> extra = new ArrayList<>();
-		if (Ench.level(player, SuchkiEnchantments.DRILL, tool) > 0 && tool.isCorrectToolForDrops(state)) {
-			extra.addAll(drillArea(player, pos));
-		} else if (Ench.level(player, SuchkiEnchantments.TIMBER, tool) > 0 && state.is(BlockTags.LOGS)) {
-			extra.addAll(tree(level, pos, state));
-		}
-		if (extra.isEmpty()) return;
-
 		float centerHardness = state.getDestroySpeed(level, pos);
-		BUSY.set(true);
-		try {
-			for (BlockPos p : extra) {
-				ItemStack held = player.getMainHandItem();
-				// Не ломаем инструмент до конца и не трогаем то, что этим инструментом не добывается.
-				if (held.isEmpty() || held.isDamageableItem() && held.getDamageValue() >= held.getMaxDamage() - 1) break;
-				BlockState other = level.getBlockState(p);
-				float hardness = other.getDestroySpeed(level, p);
-				if (other.isAir() || hardness < 0 || hardness > centerHardness + 2.0F || !held.isCorrectToolForDrops(other)) continue;
-				sp.gameMode.destroyBlock(p);
-			}
-		} finally {
-			BUSY.set(false);
+		if (Ench.level(player, SuchkiEnchantments.DRILL, tool) > 0 && tool.isCorrectToolForDrops(state)) {
+			breakAll(sp, drillArea(player, pos), centerHardness); // Бур — сразу, это один удар
+		} else if (Ench.level(player, SuchkiEnchantments.TIMBER, tool) > 0 && state.is(BlockTags.LOGS)) {
+			List<BlockPos> logs = tree(level, pos, state);
+			if (logs.isEmpty()) return;
+			// Дерево падает (анимация). Если не вышло (не хватает прочности топора) — рубим как раньше.
+			if (!SuchkiConfig.INSTANCE.timberAnimated || !TreeFall.start(sp, pos, logs)) breakAll(sp, logs, centerHardness);
 		}
 	}
 

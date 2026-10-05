@@ -41,10 +41,15 @@ public final class Perks {
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> lootingHeads(entity, source.getEntity()));
 		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, base, taken, blocked) -> baneWeakness(entity, source));
 		// Прочность X: изношенный инструмент не бьёт и не копает, пока его не починят.
-		AttackBlockCallback.EVENT.register((player, level, hand, pos, dir) ->
-				wornOut(player, player.getItemInHand(hand)) ? InteractionResult.FAIL : InteractionResult.PASS);
-		AttackEntityCallback.EVENT.register((player, level, hand, target, hit) ->
-				wornOut(player, player.getItemInHand(hand)) ? InteractionResult.FAIL : InteractionResult.PASS);
+		AttackBlockCallback.EVENT.register((player, level, hand, pos, dir) -> blockWornOut(player, hand));
+		AttackEntityCallback.EVENT.register((player, level, hand, target, hit) -> blockWornOut(player, hand));
+	}
+
+	/** Изношенным предметом не бьём и не копаем — и объясняем почему (надпись над хотбаром). */
+	private static InteractionResult blockWornOut(Player player, net.minecraft.world.InteractionHand hand) {
+		if (!wornOut(player, player.getItemInHand(hand))) return InteractionResult.PASS;
+		if (player instanceof net.minecraft.server.level.ServerPlayer sp) com.suchki.fx.Fx.wornOut(sp.level(), sp);
+		return InteractionResult.FAIL;
 	}
 
 	/** Предмет с Прочностью на максимуме, у которого осталась последняя единица прочности. */
@@ -64,6 +69,7 @@ public final class Perks {
 				&& server.random.nextDouble() < cfg.fortuneGemChance) {
 			ItemStack gem = new ItemStack(server.random.nextInt(3) == 0 ? Items.DIAMOND : Items.EMERALD);
 			net.minecraft.world.level.block.Block.popResource(server, pos, gem);
+			com.suchki.fx.Fx.gem(server, pos);
 		}
 
 		// Шёлковое касание: спавнер выпадает предметом и помнит своего моба.
@@ -119,5 +125,6 @@ public final class Perks {
 		else if (type == EntityType.PIGLIN) head = new ItemStack(Items.PIGLIN_HEAD);
 		else return;
 		victim.spawnAtLocation(server, head);
+		com.suchki.fx.Fx.gem(server, victim.blockPosition());
 	}
 }

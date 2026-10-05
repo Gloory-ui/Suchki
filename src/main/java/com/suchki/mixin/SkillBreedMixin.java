@@ -36,5 +36,6 @@ public abstract class SkillBreedMixin {
 		twin.setBaby(true);
 		twin.snapTo(self.getX(), self.getY(), self.getZ(), 0.0F, 0.0F);
 		level.addFreshEntityWithPassengers(twin);
+		com.suchki.fx.Fx.skillProc(level, player, twin.position().add(0, 0.5, 0));
 	}
 }

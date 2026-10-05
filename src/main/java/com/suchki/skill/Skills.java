@@ -133,6 +133,7 @@ public final class Skills {
 			player.sendSystemMessage(Component.translatable("suchki.skill.level_up", r.name(), level)
 					.withStyle(ChatFormatting.GOLD));
 			player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.6F, 1.3F);
+			com.suchki.fx.Fx.levelUp(player.level(), player);
 		}
 	}
 
@@ -169,6 +170,7 @@ public final class Skills {
 		set(player, s.with(node.role(), p.withNode(nodeId)));
 		applyAttributes(player);
 		player.level().playSound(null, player.blockPosition(), SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.7F, 1.2F);
+		com.suchki.fx.Fx.skillLearned(player.level(), player);
 	}
 
 	/** Сброс навыков активной роли за опыт: очки возвращаются, уровень роли остаётся. */
