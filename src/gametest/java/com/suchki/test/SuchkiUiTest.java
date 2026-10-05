@@ -212,48 +212,7 @@ public class SuchkiUiTest implements FabricClientGameTest {
 			double triple = jumpHeight(context, sp, 3);
 			if (!(triple > single + 0.8)) failures.add("Пружина III: прыжок " + triple + " не выше обычного " + single);
 
-			// 9. Лесоруб: дерево перед игроком падает по слоям (кадр в середине падения).
-			BlockPos[] tree = new BlockPos[1];
-			sp.getServer().runOnServer(server -> {
-				ServerPlayer p = player(server);
-				ServerLevel level = p.level();
-				p.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
-				p.setYRot(0);
-				p.setXRot(-10);
-				p.connection.teleport(p.getX(), p.getY(), p.getZ(), 0, -10);
-				BlockPos base = p.blockPosition().offset(0, 0, 4);
-				tree[0] = base;
-				for (int y = 0; y < 10; y++) level.setBlock(base.above(y), Blocks.OAK_LOG.defaultBlockState(), 3);
-				for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) for (int dy = 8; dy <= 10; dy++) {
-					if (dx != 0 || dz != 0) level.setBlock(base.offset(dx, dy, dz), Blocks.OAK_LEAVES.defaultBlockState(), 3);
-				}
-				p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,
-						enchanted(level, Items.DIAMOND_AXE, SuchkiEnchantments.TIMBER, 1));
-			});
-			context.waitTicks(20);
-			sp.getServer().runOnServer(server -> player(server).gameMode.destroyBlock(tree[0]));
-			context.waitTicks(3);
-			context.takeScreenshot("timber_falling_1");
-			context.waitTicks(4);
-			context.takeScreenshot("timber_falling_2");
-			context.waitTicks(4);
-			context.takeScreenshot("timber_falling_3");
-			int midFall = context.computeOnClient(mc -> mc.level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,
-					new net.minecraft.world.phys.AABB(tree[0]).inflate(16)).size());
-			context.waitTicks(30);
-			context.takeScreenshot("timber_landed");
-			int[] after = context.computeOnClient(mc -> new int[] {
-				mc.level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,
-						new net.minecraft.world.phys.AABB(tree[0]).inflate(16)).size(),
-				mc.level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
-						new net.minecraft.world.phys.AABB(tree[0]).inflate(16), e -> e.getItem().is(Items.OAK_LOG)).stream()
-						.mapToInt(e -> e.getItem().getCount()).sum()});
-			if (!(midFall >= 9 && after[0] == 0 && after[1] >= 9)) {
-				failures.add("Лесоруб: падение дерева (во время падения блоков " + midFall + ", после — " + after[0]
-						+ ", брёвен на земле " + after[1] + ")");
-			}
-
-			// 10. Прочность X: изношенный предмет — удар отменён и есть надпись над хотбаром.
+			// 9. Прочность X: изношенный предмет — удар отменён и есть надпись над хотбаром.
 			boolean[] cancelled = new boolean[1];
 			sp.getServer().runOnServer(server -> {
 				ServerPlayer p = player(server);
@@ -281,7 +240,7 @@ public class SuchkiUiTest implements FabricClientGameTest {
 				failures.add("Прочность X: удар не отменён или нет надписи (отменён " + cancelled[0] + ", надпись «" + overlay + "»)");
 			}
 
-			// 11. Полная серверная самопроверка — теперь с настоящим игроком (маяк и др.).
+			// 10. Полная серверная самопроверка — теперь с настоящим игроком (маяк и др.).
 			List<String> report = new ArrayList<>();
 			sp.getServer().runOnServer(server -> {
 				ServerPlayer p = player(server);

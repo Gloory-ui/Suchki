@@ -249,30 +249,6 @@ public final class DevTests {
 	}
 
 	private static void timber(ServerLevel level, BlockPos o, Report r) {
-		boolean animated = SuchkiConfig.INSTANCE.timberAnimated;
-		try {
-			SuchkiConfig.INSTANCE.timberAnimated = false;
-			timberInstant(level, o, r);
-			SuchkiConfig.INSTANCE.timberAnimated = true;
-			BlockPos base = o.offset(34, 0, 0);
-			for (int y = 0; y < 6; y++) level.setBlock(base.above(y), Blocks.OAK_LOG.defaultBlockState(), 3);
-			level.setBlock(base.above(6), Blocks.OAK_LEAVES.defaultBlockState(), 3);
-			FakePlayer p = player(level, base.offset(-3, 0, 0), enchanted(level, Items.DIAMOND_AXE, SuchkiEnchantments.TIMBER, 1), 0);
-			int before = com.suchki.enchant.TreeFall.active();
-			p.gameMode.destroyBlock(base);
-			int standing = 0;
-			for (int y = 1; y < 6; y++) if (level.getBlockState(base.above(y)).is(Blocks.OAK_LOG)) standing++;
-			int pieces = level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class, new AABB(base).inflate(12)).size();
-			r.check(standing == 0 && pieces == 6 && com.suchki.enchant.TreeFall.active() == before + 1
-					&& count(level, base, 8, Items.OAK_LOG) == 1, // сразу выпадает только срубленное нижнее бревно
-					"Лесоруб: дерево падает (стоит " + standing + ", падающих блоков " + pieces + " из 6, падений "
-							+ com.suchki.enchant.TreeFall.active() + " (было " + before + "), брёвен на земле сразу " + count(level, base, 8, Items.OAK_LOG) + ")");
-		} finally {
-			SuchkiConfig.INSTANCE.timberAnimated = animated;
-		}
-	}
-
-	private static void timberInstant(ServerLevel level, BlockPos o, Report r) {
 		BlockPos base = o.offset(10, 0, 0);
 		for (int y = 0; y < 6; y++) level.setBlock(base.above(y), Blocks.OAK_LOG.defaultBlockState(), 3);
 		level.setBlock(base.above(6), Blocks.OAK_LEAVES.defaultBlockState(), 3);

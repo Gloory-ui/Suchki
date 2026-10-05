@@ -29,7 +29,6 @@ public final class AreaBreaking {
 
 	public static void register() {
 		PlayerBlockBreakEvents.AFTER.register(AreaBreaking::afterBreak);
-		TreeFall.register();
 	}
 
 	/** Сломать блоки как игрок. false — инструмент на исходе, дальше нельзя. */
@@ -62,8 +61,7 @@ public final class AreaBreaking {
 		} else if (Ench.level(player, SuchkiEnchantments.TIMBER, tool) > 0 && state.is(BlockTags.LOGS)) {
 			List<BlockPos> logs = tree(level, pos, state);
 			if (logs.isEmpty()) return;
-			// Дерево падает (анимация). Если не вышло (не хватает прочности топора) — рубим как раньше.
-			if (!SuchkiConfig.INSTANCE.timberAnimated || !TreeFall.start(sp, pos, logs)) breakAll(sp, logs, centerHardness);
+			breakAll(sp, logs, centerHardness);
 		}
 	}
 
