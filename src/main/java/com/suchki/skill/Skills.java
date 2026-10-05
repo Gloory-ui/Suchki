@@ -100,8 +100,12 @@ public final class Skills {
 		return get(player).perk(perk);
 	}
 
+	/** Только для самопроверки (/suchki_test): если ≥ 0, все шансовые навыки срабатывают с этой вероятностью. */
+	public static double testChanceOverride = -1;
+
 	public static boolean roll(Player player, Perk perk) {
 		double chance = perk(player, perk);
+		if (chance > 0 && testChanceOverride >= 0) chance = testChanceOverride;
 		return chance > 0 && player.getRandom().nextDouble() < chance;
 	}
 

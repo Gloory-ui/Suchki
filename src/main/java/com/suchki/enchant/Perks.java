@@ -39,6 +39,7 @@ public final class Perks {
 			return true;
 		});
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> lootingHeads(entity, source.getEntity()));
+		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, base, taken, blocked) -> baneWeakness(entity, source));
 		// Прочность X: изношенный инструмент не бьёт и не копает, пока его не починят.
 		AttackBlockCallback.EVENT.register((player, level, hand, pos, dir) ->
 				wornOut(player, player.getItemInHand(hand)) ? InteractionResult.FAIL : InteractionResult.PASS);
@@ -89,6 +90,18 @@ public final class Perks {
 				.getOrDefault("minecraft:fire_aspect", 5)) {
 			victim.igniteForSeconds(1);
 		}
+	}
+
+	/**
+	 * Бич членистоногих X: прямой удар по членистоногому накладывает Слабость II на 4–6 секунд
+	 * (вместо яда из первого варианта — пауки к яду невосприимчивы).
+	 */
+	private static void baneWeakness(LivingEntity victim, net.minecraft.world.damagesource.DamageSource source) {
+		if (!(source.getEntity() instanceof Player player) || source.getDirectEntity() != player) return;
+		if (!victim.getType().is(net.minecraft.tags.EntityTypeTags.SENSITIVE_TO_BANE_OF_ARTHROPODS)) return;
+		if (Ench.level(player, Enchantments.BANE_OF_ARTHROPODS, player.getMainHandItem()) < 10) return;
+		int ticks = 80 + victim.getRandom().nextInt(41);
+		victim.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, ticks, 1), player);
 	}
 
 	/** Добыча V: шанс выпадения головы моба. */

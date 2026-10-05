@@ -49,6 +49,10 @@ public final class SkillXp {
 				Skills.addXp(sp, "hunter", Math.max(1.0, entity.getMaxHealth() / 2.0));
 			}
 		});
+		net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+			LAST_POS.remove(handler.player.getUUID());
+			WALKED.remove(handler.player.getUUID());
+		});
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
 			if (server.getTickCount() % 20 != 0) return;
 			for (ServerPlayer p : server.getPlayerList().getPlayers()) wander(p);

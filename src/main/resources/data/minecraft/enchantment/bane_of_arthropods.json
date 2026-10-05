@@ -30,97 +30,13 @@
           "type": "minecraft:apply_mob_effect",
           "max_amplifier": 3.0,
           "max_duration": {
-            "type": "minecraft:lookup",
-            "values": [
-              1.5,
-              2.0,
-              2.5,
-              3.0,
-              3.5,
-              4.0,
-              4.5,
-              5.0,
-              5.5
-            ],
-            "fallback": 0.0
+            "type": "minecraft:linear",
+            "base": 1.5,
+            "per_level_above_first": 0.5
           },
           "min_amplifier": 3.0,
-          "min_duration": {
-            "type": "minecraft:lookup",
-            "values": [
-              1.5,
-              1.5,
-              1.5,
-              1.5,
-              1.5,
-              1.5,
-              1.5,
-              1.5,
-              1.5
-            ],
-            "fallback": 0.0
-          },
+          "min_duration": 1.5,
           "to_apply": "minecraft:slowness"
-        },
-        "enchanted": "attacker",
-        "requirements": {
-          "condition": "minecraft:all_of",
-          "terms": [
-            {
-              "condition": "minecraft:entity_properties",
-              "entity": "this",
-              "predicate": {
-                "type": "#minecraft:sensitive_to_bane_of_arthropods"
-              }
-            },
-            {
-              "condition": "minecraft:damage_source_properties",
-              "predicate": {
-                "is_direct": true
-              }
-            }
-          ]
-        }
-      },
-      {
-        "affected": "victim",
-        "effect": {
-          "type": "minecraft:apply_mob_effect",
-          "max_amplifier": 1.0,
-          "max_duration": {
-            "type": "minecraft:lookup",
-            "values": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              6.0
-            ],
-            "fallback": 6.0
-          },
-          "min_amplifier": 1.0,
-          "min_duration": {
-            "type": "minecraft:lookup",
-            "values": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              4.0
-            ],
-            "fallback": 4.0
-          },
-          "to_apply": "minecraft:poison"
         },
         "enchanted": "attacker",
         "requirements": {

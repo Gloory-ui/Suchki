@@ -34,7 +34,9 @@ public abstract class EntityDeflectMixin {
 		if (original != ProjectileDeflection.NONE || !((Object) this instanceof LivingEntity self)) return original;
 		if (self.level().isClientSide() || projectile.getOwner() == self) return original;
 		int level = Ench.level(self, SuchkiEnchantments.DEFLECT, self.getItemBySlot(EquipmentSlot.CHEST));
-		if (level > 0 && self.getRandom().nextFloat() < 0.06F * level) return SUCHKI_BACK_TO_SHOOTER;
+		if (level > 0 && self.getRandom().nextDouble() < com.suchki.SuchkiConfig.INSTANCE.deflectChancePerLevel * level) {
+			return SUCHKI_BACK_TO_SHOOTER;
+		}
 		return original;
 	}
 }

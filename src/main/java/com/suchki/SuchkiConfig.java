@@ -48,6 +48,8 @@ public class SuchkiConfig {
 	public boolean silkTouchSpawners = true;
 
 	// --- Новые чары и улучшения ---
+	/** Отражение: шанс отбить снаряд за каждый уровень чар (V уровень = ×5). */
+	public double deflectChancePerLevel = 0.06;
 	/** Лесоруб: сколько брёвен максимум рубится за раз. */
 	public int timberMaxLogs = 128;
 	/** Маяк 5-го яруса: радиус действия (в ванили на 4-м ярусе — 50). */

@@ -39,8 +39,8 @@ public abstract class BlockDropsMixin {
 			at = @At("RETURN"))
 	private static List<ItemStack> suchki$enchantedDrops(List<ItemStack> drops, BlockState state, ServerLevel level, BlockPos pos,
 			BlockEntity be, Entity entity, ItemStack tool) {
-		if (entity == null || tool.isEmpty()) return drops;
-		if (Ench.level(level.registryAccess(), SuchkiEnchantments.SMELTING, tool) > 0) drops = smelt(drops, level);
+		if (entity == null) return drops;
+		if (!tool.isEmpty() && Ench.level(level.registryAccess(), SuchkiEnchantments.SMELTING, tool) > 0) drops = smelt(drops, level);
 		if (entity instanceof Player p && skillDouble(p, state, level, tool)) {
 			List<ItemStack> doubled = new ArrayList<>(drops.size() * 2);
 			for (ItemStack stack : drops) {
@@ -49,7 +49,7 @@ public abstract class BlockDropsMixin {
 			}
 			drops = doubled;
 		}
-		if (entity instanceof Player player && Ench.level(level.registryAccess(), SuchkiEnchantments.MAGNET, tool) > 0) {
+		if (entity instanceof Player player && !tool.isEmpty() && Ench.level(level.registryAccess(), SuchkiEnchantments.MAGNET, tool) > 0) {
 			List<ItemStack> left = new ArrayList<>(drops.size());
 			boolean picked = false;
 			for (ItemStack stack : drops) {

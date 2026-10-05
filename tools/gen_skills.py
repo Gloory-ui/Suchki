@@ -283,6 +283,32 @@ ROLES = [
     ]),
 ]
 
+# Описание роли (окно выбора) и иконки веток (дерево навыков) — по порядку веток.
+ROLE_INFO = {
+    "miner": ("Мастер подземелий: быстрее копает, находит больше руды и уверенно чувствует себя в пещерах.",
+              ["minecraft:golden_pickaxe", "minecraft:diamond", "minecraft:lantern"]),
+    "warrior": ("Боец ближнего боя: ярость при ранении, крепкая защита и мастерство клинка.",
+                ["minecraft:redstone", "minecraft:shield", "minecraft:diamond_sword"]),
+    "archer": ("Стрелок: больше урона снарядами, экономия стрел и ловкость в движении.",
+               ["minecraft:spectral_arrow", "minecraft:arrow", "minecraft:feather"]),
+    "farmer": ("Хозяин полей: богатый урожай, двойняшки у животных и посевы, растущие на глазах.",
+               ["minecraft:wheat", "minecraft:lead", "minecraft:bone_meal"]),
+    "fisher": ("Рыболов: больше сокровищ, быстрый клёв и свобода под водой.",
+               ["minecraft:nautilus_shell", "minecraft:cod", "minecraft:heart_of_the_sea"]),
+    "lumberjack": ("Человек леса: рубит быстро, получает больше брёвен и опасен с топором.",
+                   ["minecraft:diamond_axe", "minecraft:oak_log", "minecraft:netherite_axe"]),
+    "hunter": ("Охотник на чудовищ: видит врагов издалека, собирает трофеи и бьёт нечисть сильнее.",
+               ["minecraft:spyglass", "minecraft:zombie_head", "minecraft:iron_sword"]),
+    "builder": ("Зодчий: дальняя рука, быстрая стройка и безопасность на высоте.",
+                ["minecraft:scaffolding", "minecraft:sugar", "minecraft:hay_block"]),
+    "blacksmith": ("Мастер металла: дешёвая наковальня, прочное снаряжение и тяжёлая броня.",
+                   ["minecraft:iron_ingot", "minecraft:blast_furnace", "minecraft:iron_chestplate"]),
+    "alchemist": ("Знаток зелий: эффекты дольше, яды короче, тело крепче.",
+                  ["minecraft:clock", "minecraft:milk_bucket", "minecraft:golden_apple"]),
+    "wanderer": ("Путешественник: быстрые ноги, малый голод и лёгкость в любом краю.",
+                 ["minecraft:leather_boots", "minecraft:bread", "minecraft:map"]),
+}
+
 
 def main():
     roles = []
@@ -293,8 +319,9 @@ def main():
             assert len(tiers) == 5, (rid, bname)
             for t, n in enumerate(tiers, start=1):
                 nodes.append({"id": f"{rid}.{b}.{t}", "branch": b, "tier": t, **n})
-        roles.append({"id": rid, "name": name, "icon": icon, "color": color, "xp_from": xp_from,
-                      "branches": [b[0] for b in branches], "nodes": nodes})
+        desc, branch_icons = ROLE_INFO[rid]
+        roles.append({"id": rid, "name": name, "icon": icon, "color": color, "xp_from": xp_from, "desc": desc,
+                      "branches": [b[0] for b in branches], "branch_icons": branch_icons, "nodes": nodes})
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps({"max_level": 50, "roles": roles}, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"ролей: {len(roles)}, навыков: {sum(len(r['nodes']) for r in roles)}")

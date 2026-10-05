@@ -1,0 +1,13 @@
+{
+	"schemaVersion": 1,
+	"id": "suchki-test",
+	"version": "1.0.0",
+	"name": "Suchki UI tests",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-client-gametest": ["com.suchki.test.SuchkiUiTest"]
+	},
+	"depends": {
+		"suchki": "*"
+	}
+}

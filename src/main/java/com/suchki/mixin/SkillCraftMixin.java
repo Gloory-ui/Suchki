@@ -20,6 +20,9 @@ public abstract class SkillCraftMixin {
 		if (!(player instanceof ServerPlayer sp) || !self.isDamageableItem()) return;
 		Skills.addXp(sp, "blacksmith", 10.0 * Math.max(1, amount));
 		double bonus = Skills.perk(sp, Perk.CRAFT_DURABILITY);
-		if (bonus > 0) self.set(DataComponents.MAX_DAMAGE, (int) Math.round(self.getMaxDamage() * (1.0 + bonus)));
+		// От базовой прочности предмета (а не текущей): повторный крафт/улучшение не накапливает бонус,
+		// а незерит после кузнечного стола получает бонус от незеритовой прочности, а не алмазной.
+		Integer base = self.getItem().components().get(DataComponents.MAX_DAMAGE);
+		if (bonus > 0 && base != null) self.set(DataComponents.MAX_DAMAGE, (int) Math.round(base * (1.0 + bonus)));
 	}
 }

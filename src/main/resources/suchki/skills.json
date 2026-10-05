@@ -7,10 +7,16 @@
       "icon": "minecraft:iron_pickaxe",
       "color": 10134704,
       "xp_from": "добыча камня и руды",
+      "desc": "Мастер подземелий: быстрее копает, находит больше руды и уверенно чувствует себя в пещерах.",
       "branches": [
         "Скорость копания",
         "Богатая жила",
         "Подземник"
+      ],
+      "branch_icons": [
+        "minecraft:golden_pickaxe",
+        "minecraft:diamond",
+        "minecraft:lantern"
       ],
       "nodes": [
         {
@@ -218,10 +224,16 @@
       "icon": "minecraft:iron_sword",
       "color": 12597547,
       "xp_from": "урон в ближнем бою",
+      "desc": "Боец ближнего боя: ярость при ранении, крепкая защита и мастерство клинка.",
       "branches": [
         "Берсерк",
         "Страж",
         "Мастер оружия"
+      ],
+      "branch_icons": [
+        "minecraft:redstone",
+        "minecraft:shield",
+        "minecraft:diamond_sword"
       ],
       "nodes": [
         {
@@ -443,10 +455,16 @@
       "icon": "minecraft:bow",
       "color": 2600544,
       "xp_from": "попадания из лука и арбалета",
+      "desc": "Стрелок: больше урона снарядами, экономия стрел и ловкость в движении.",
       "branches": [
         "Снайпер",
         "Экономия",
         "Ловкость"
+      ],
+      "branch_icons": [
+        "minecraft:spectral_arrow",
+        "minecraft:arrow",
+        "minecraft:feather"
       ],
       "nodes": [
         {
@@ -647,10 +665,16 @@
       "icon": "minecraft:iron_hoe",
       "color": 13937677,
       "xp_from": "сбор урожая и разведение животных",
+      "desc": "Хозяин полей: богатый урожай, двойняшки у животных и посевы, растущие на глазах.",
       "branches": [
         "Урожай",
         "Скотовод",
         "Садовник"
+      ],
+      "branch_icons": [
+        "minecraft:wheat",
+        "minecraft:lead",
+        "minecraft:bone_meal"
       ],
       "nodes": [
         {
@@ -826,10 +850,16 @@
       "icon": "minecraft:fishing_rod",
       "color": 3049153,
       "xp_from": "улов",
+      "desc": "Рыболов: больше сокровищ, быстрый клёв и свобода под водой.",
       "branches": [
         "Удачливый",
         "Терпеливый",
         "Морской"
+      ],
+      "branch_icons": [
+        "minecraft:nautilus_shell",
+        "minecraft:cod",
+        "minecraft:heart_of_the_sea"
       ],
       "nodes": [
         {
@@ -1030,10 +1060,16 @@
       "icon": "minecraft:iron_axe",
       "color": 9329454,
       "xp_from": "рубка деревьев",
+      "desc": "Человек леса: рубит быстро, получает больше брёвен и опасен с топором.",
       "branches": [
         "Сила удара",
         "Щедрый лес",
         "Боевой топор"
+      ],
+      "branch_icons": [
+        "minecraft:diamond_axe",
+        "minecraft:oak_log",
+        "minecraft:netherite_axe"
       ],
       "nodes": [
         {
@@ -1219,10 +1255,16 @@
       "icon": "minecraft:crossbow",
       "color": 8207512,
       "xp_from": "убийство мобов",
+      "desc": "Охотник на чудовищ: видит врагов издалека, собирает трофеи и бьёт нечисть сильнее.",
       "branches": [
         "Следопыт",
         "Трофеи",
         "Истребитель"
+      ],
+      "branch_icons": [
+        "minecraft:spyglass",
+        "minecraft:zombie_head",
+        "minecraft:iron_sword"
       ],
       "nodes": [
         {
@@ -1398,10 +1440,16 @@
       "icon": "minecraft:bricks",
       "color": 15105570,
       "xp_from": "установка блоков",
+      "desc": "Зодчий: дальняя рука, быстрая стройка и безопасность на высоте.",
       "branches": [
         "Дальняя рука",
         "Скорость",
         "Лёгкость"
+      ],
+      "branch_icons": [
+        "minecraft:scaffolding",
+        "minecraft:sugar",
+        "minecraft:hay_block"
       ],
       "nodes": [
         {
@@ -1629,10 +1677,16 @@
       "icon": "minecraft:anvil",
       "color": 6122878,
       "xp_from": "создание и починка снаряжения",
+      "desc": "Мастер металла: дешёвая наковальня, прочное снаряжение и тяжёлая броня.",
       "branches": [
         "Подмастерье",
         "Закалка",
         "Бронник"
+      ],
+      "branch_icons": [
+        "minecraft:iron_ingot",
+        "minecraft:blast_furnace",
+        "minecraft:iron_chestplate"
       ],
       "nodes": [
         {
@@ -1833,10 +1887,16 @@
       "icon": "minecraft:brewing_stand",
       "color": 11500229,
       "xp_from": "варка зелий",
+      "desc": "Знаток зелий: эффекты дольше, яды короче, тело крепче.",
       "branches": [
         "Долгожитель",
         "Иммунитет",
         "Стойкость"
+      ],
+      "branch_icons": [
+        "minecraft:clock",
+        "minecraft:milk_bucket",
+        "minecraft:golden_apple"
       ],
       "nodes": [
         {
@@ -2029,10 +2089,16 @@
       "icon": "minecraft:compass",
       "color": 1482885,
       "xp_from": "путешествия и открытие новых биомов",
+      "desc": "Путешественник: быстрые ноги, малый голод и лёгкость в любом краю.",
       "branches": [
         "Скороход",
         "Выносливость",
         "Картограф"
+      ],
+      "branch_icons": [
+        "minecraft:leather_boots",
+        "minecraft:bread",
+        "minecraft:map"
       ],
       "nodes": [
         {

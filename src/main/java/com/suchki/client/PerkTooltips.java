@@ -11,9 +11,9 @@ import net.minecraft.network.chat.Component;
 final class PerkTooltips {
 	private PerkTooltips() {}
 
+	/** Доля → проценты: целое число или один знак после точки (без хвостов вроде 94.69999999). */
 	private static String pct(double fraction) {
-		double v = fraction * 100.0;
-		return v == Math.rint(v) ? String.valueOf((int) v) : String.valueOf(v);
+		return num(fraction * 100.0);
 	}
 
 	static List<Component> lines(String id, int level, int vanillaMax, boolean book) {
@@ -49,7 +49,8 @@ final class PerkTooltips {
 			case "suchki:timber" -> passive(out, "suchki.perk.timber");
 			case "suchki:magnet" -> passive(out, "suchki.perk.magnet");
 			case "suchki:spring" -> passive(out, "suchki.perk.spring", level);
-			case "suchki:deflect" -> passive(out, "suchki.perk.deflect", 6 * level);
+			case "suchki:deflect" -> passive(out, "suchki.perk.deflect",
+					Math.round(cfg.deflectChancePerLevel * 100 * level));
 			case "suchki:stun" -> passive(out, "suchki.perk.stun", 8 * level);
 			default -> {}
 		}
@@ -99,7 +100,8 @@ final class PerkTooltips {
 	}
 
 	private static String num(double v) {
-		return v == Math.rint(v) ? String.valueOf((long) v) : String.valueOf(v);
+		double r = Math.round(v * 10.0) / 10.0;
+		return r == Math.rint(r) ? String.valueOf((long) r) : String.format(java.util.Locale.ROOT, "%.1f", r);
 	}
 
 	private static void stat(List<Component> out, String key, Object... args) {

@@ -31,9 +31,12 @@ public abstract class GrindstoneCostLabelMixin {
 		int cost = GrindstoneSplit.cost(src == 0 ? a : b);
 		Player player = Minecraft.getInstance().player;
 		boolean enough = player != null && (player.hasInfiniteMaterials() || player.experienceLevel >= cost);
-		Component text = Component.translatable("container.repair.cost", cost);
-		int x = this.imageWidth - 8 - Minecraft.getInstance().font.width(text) - 2;
-		g.fill(x - 2, 67, this.imageWidth - 8, 79, 0x4F000000);
-		g.drawString(Minecraft.getInstance().font, text, x, 69, enough ? 0xFF80FF20 : 0xFFFF6060);
+		// Под стрелкой и ячейкой результата: свободное место между ними и надписью «Инвентарь».
+		Component text = Component.translatable("suchki.grindstone.cost", cost);
+		int w = Minecraft.getInstance().font.width(text);
+		int x = 137 - w / 2;
+		int y = 56;
+		g.fill(x - 3, y - 2, x + w + 3, y + 10, 0x60000000);
+		g.drawString(Minecraft.getInstance().font, text, x, y, enough ? 0xFF80FF20 : 0xFFFF6060);
 	}
 }

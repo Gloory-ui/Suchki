@@ -31,8 +31,8 @@ public final class SkillTree {
 		}
 	}
 
-	public record Role(String id, String name, Identifier icon, int color, String xpFrom, List<String> branches,
-			List<Node> nodes) {
+	public record Role(String id, String name, Identifier icon, int color, String xpFrom, String desc,
+			List<String> branches, List<Identifier> branchIcons, List<Node> nodes) {
 		public Node node(int branch, int tier) {
 			for (Node n : nodes) if (n.branch == branch && n.tier == tier) return n;
 			return null;
@@ -63,8 +63,11 @@ public final class SkillTree {
 				}
 				List<String> branches = new ArrayList<>();
 				for (JsonElement b : ro.getAsJsonArray("branches")) branches.add(b.getAsString());
+				List<Identifier> branchIcons = new ArrayList<>();
+				for (JsonElement b : ro.getAsJsonArray("branch_icons")) branchIcons.add(Identifier.parse(b.getAsString()));
 				r.put(roleId, new Role(roleId, ro.get("name").getAsString(), Identifier.parse(ro.get("icon").getAsString()),
-						ro.get("color").getAsInt(), ro.get("xp_from").getAsString(), List.copyOf(branches), List.copyOf(list)));
+						ro.get("color").getAsInt(), ro.get("xp_from").getAsString(), ro.get("desc").getAsString(),
+						List.copyOf(branches), List.copyOf(branchIcons), List.copyOf(list)));
 			}
 			roles = Collections.unmodifiableMap(r);
 			nodes = Collections.unmodifiableMap(n);

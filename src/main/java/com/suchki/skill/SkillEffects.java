@@ -15,6 +15,9 @@ import net.minecraft.world.phys.AABB;
 
 /** Постоянные эффекты навыков: ночное зрение в пещерах, подсветка мобов, рост посевов, двойная добыча с мобов. */
 public final class SkillEffects {
+	/** Ночное зрение Шахтёра держим чуть дольше 10 с — тогда ванильное мерцание (последние 10 с) не появляется. */
+	private static final int NIGHT_VISION_TICKS = 15 * 20;
+
 	private SkillEffects() {}
 
 	static void register() {
@@ -30,15 +33,25 @@ public final class SkillEffects {
 		});
 	}
 
+	/** Нужно ли ночное зрение Шахтёру: ниже Y=40, включается при свете < 8, держится до света 11. */
+	public static boolean wantsNightVision(int y, int light, boolean alreadyOn) {
+		return y < 40 && (light < 8 || alreadyOn && light < 11);
+	}
+
 	private static void tick(ServerPlayer player) {
 		PlayerSkills s = Skills.get(player);
 		if (s.current() == null) return;
 		ServerLevel level = player.level();
 
-		// Шахтёр: ночное зрение в тёмных пещерах ниже Y=40 (обновляется, пока условие выполняется).
-		if (s.perk(Perk.NIGHT_VISION_UNDERGROUND) > 0 && player.getBlockY() < 40
-				&& level.getMaxLocalRawBrightness(player.blockPosition()) < 8) {
-			player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 15 * 20, 0, true, false, true));
+		// Шахтёр: ночное зрение в тёмных пещерах ниже Y=40. Включается в темноте (свет < 8), выключается
+		// на свету (≥ 11) — без дёрганья на границе. При выходе снимается сразу, без ванильного мерцания.
+		MobEffectInstance nv = player.getEffect(MobEffects.NIGHT_VISION);
+		boolean ours = nv != null && nv.isAmbient() && nv.getDuration() <= NIGHT_VISION_TICKS;
+		int light = level.getMaxLocalRawBrightness(player.blockPosition());
+		if (s.perk(Perk.NIGHT_VISION_UNDERGROUND) > 0 && wantsNightVision(player.getBlockY(), light, ours)) {
+			player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, NIGHT_VISION_TICKS, 0, true, false, true));
+		} else if (ours) {
+			player.removeEffect(MobEffects.NIGHT_VISION);
 		}
 
 		// Охотник: враждебные мобы рядом подсвечиваются.
