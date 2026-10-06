@@ -1,5 +1,5 @@
 {
-  "parent": "minecraft:item/generated",
+  "parent": "suchki:item/book_focus",
   "textures": {
     "layer0": "suchki:item/grimoire"
   }

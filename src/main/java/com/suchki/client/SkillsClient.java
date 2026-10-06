@@ -12,7 +12,7 @@ import org.lwjgl.glfw.GLFW;
 
 /** Клавиша K — окно навыков; без роли — обязательное окно выбора роли. */
 final class SkillsClient {
-	private static final KeyMapping.Category CATEGORY =
+	static final KeyMapping.Category CATEGORY =
 			KeyMapping.Category.register(Identifier.fromNamespaceAndPath(Suchki.MOD_ID, "main"));
 	private static KeyMapping openSkills;
 
@@ -23,6 +23,7 @@ final class SkillsClient {
 				new KeyMapping("key.suchki.skills", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, CATEGORY));
 		ClientTickEvents.END_CLIENT_TICK.register(SkillsClient::tick);
 		HunterSenseClient.register();
+		com.suchki.client.magic.MagicClient.register(CATEGORY);
 	}
 
 	private static void tick(Minecraft mc) {

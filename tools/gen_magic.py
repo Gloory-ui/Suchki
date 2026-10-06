@@ -228,6 +228,7 @@ LANG = {
     "suchki.magic.focus_too_weak": ("Этот фокус не выдерживает заклинания круга %s", "This focus can't handle circle %s spells"),
     "suchki.magic.cooldown": ("Заклинание восстанавливается: %s с", "The spell is recovering: %s s"),
     "suchki.magic.no_mana": ("Не хватает маны", "Not enough mana"),
+    "suchki.magic.mana_dry": ("Мана иссякла — сила больше не растёт, отпустите", "Out of mana — power won't grow, release"),
     "suchki.magic.no_target": ("Нет цели — заклинание рассеялось", "No target — the spell dissipated"),
     "suchki.magic.starter": ("Вы стали Магом! Получен Посох ученика и три заклинания. Зажмите R, чтобы выбрать заклинание, и ПКМ посохом, чтобы колдовать. Чем дольше держите — тем сильнее.",
                              "You are a Mage now! You got an Apprentice Staff and three spells. Hold R to choose a spell and right click with the staff to cast. The longer you hold, the stronger it gets."),
@@ -241,6 +242,9 @@ LANG = {
     "suchki.wheel.hint": ("Отпустите R, чтобы выбрать", "Release R to choose"),
     "suchki.hud.mana": ("%s / %s", "%s / %s"),
     "suchki.power": ("Сила ×%s", "Power ×%s"),
+    "suchki.magic.cmd.learned": ("Изучены все заклинания: %s", "Learned all spells: %s"),
+    "suchki.magic.cmd.mana": ("Мана восполнена", "Mana restored"),
+    "suchki.magic.cmd.reset": ("Перезарядки сброшены, мана восполнена", "Cooldowns reset, mana restored"),
 }
 
 DEATH = {
@@ -349,6 +353,30 @@ DAMAGE_TYPES = {
 }
 
 
+SOUND_DIR = ASSETS / "sounds" / "magic"
+# Громкость выравниваем по RMS к этому уровню (dBFS): громкие звуки тише, тихие — как есть.
+TARGET_RMS = -15.0
+
+
+def own_sounds(event):
+    """Свои синтезированные звуки (tools/gen_sounds.py) для события: [(имя, громкость)], или [] — тогда ванильные."""
+    base = event.removeprefix("magic.").replace(".", "_")
+    files = sorted(SOUND_DIR.glob(f"{base}.ogg")) + sorted(SOUND_DIR.glob(f"{base}_[0-9].ogg"))
+    out = []
+    for f in files:
+        vol = 1.0
+        try:
+            import numpy as np
+            import soundfile as sf
+            data, _ = sf.read(str(f), dtype="float32")
+            rms = 20 * np.log10(max(1e-9, float(np.sqrt(np.mean(np.square(data))))))
+            vol = round(float(min(1.0, max(0.45, 10 ** ((TARGET_RMS - rms) / 20)))), 2)
+        except ImportError:
+            pass
+        out.append((f.stem, vol))
+    return out
+
+
 def write(path: Path, obj):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -404,7 +432,12 @@ def main():
         "firstperson_lefthand": {"rotation": [0, 90, -20], "translation": [1.13, 4.2, 1.13], "scale": [0.85, 0.85, 0.85]},
     }
     write(ASSETS / "models" / "item" / "staff.json", {"parent": "minecraft:item/handheld", "display": staff_display})
-    items = {"apprentice_staff": "suchki:item/staff", "archmage_staff": "suchki:item/staff", "grimoire": "minecraft:item/generated"}
+    write(ASSETS / "models" / "item" / "book_focus.json", {"parent": "minecraft:item/generated", "display": {
+        "firstperson_righthand": {"rotation": [0, -90, 25], "translation": [1.13, 2.6, 1.13], "scale": [0.48, 0.48, 0.48]},
+        "firstperson_lefthand": {"rotation": [0, 90, -25], "translation": [1.13, 2.6, 1.13], "scale": [0.48, 0.48, 0.48]},
+        "thirdperson_righthand": {"rotation": [0, 0, 0], "translation": [0, 3, 1], "scale": [0.6, 0.6, 0.6]},
+        "thirdperson_lefthand": {"rotation": [0, 0, 0], "translation": [0, 3, 1], "scale": [0.6, 0.6, 0.6]}}})
+    items = {"apprentice_staff": "suchki:item/staff", "archmage_staff": "suchki:item/staff", "grimoire": "suchki:item/book_focus"}
     items.update({f"tome_{s}": "minecraft:item/generated" for s in SCHOOLS})
     items.update({f"spectral_{t}": "minecraft:item/handheld" for t in ("blade", "pickaxe", "axe", "shovel")})
     for name, parent in items.items():
@@ -420,8 +453,12 @@ def main():
         write(ASSETS / "particles" / f"{name}.json", {"textures": textures})
     sounds = {}
     for event, entries in SOUNDS.items():
-        sounds[event] = {"subtitle": f"subtitles.suchki.{event}", "sounds": [
-            {"name": f"minecraft:{n}", "volume": v, "pitch": p} for n, v, p in entries]}
+        own = own_sounds(event)
+        if own:
+            items = [{"name": f"suchki:magic/{name}", "volume": vol} for name, vol in own]
+        else:
+            items = [{"name": f"minecraft:{n}", "volume": v, "pitch": p} for n, v, p in entries]
+        sounds[event] = {"subtitle": f"subtitles.suchki.{event}", "sounds": items}
     write(ASSETS / "sounds.json", sounds)
     subtitles = {
         "magic.charge": ("Магия копится", "Magic charges"), "magic.ready": ("Заклинание готово", "Spell ready"),

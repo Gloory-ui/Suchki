@@ -202,7 +202,10 @@ public final class Cast {
 	}
 
 	public List<LivingEntity> alliesAround(Vec3 center, double radius) {
-		return around(center, radius, e -> isAlly(e) && !(e instanceof ArmorStand) && !(e instanceof Mannequin));
+		List<LivingEntity> out = around(center, radius, e -> isAlly(e) && !(e instanceof ArmorStand) && !(e instanceof Mannequin));
+		// Сам маг — всегда союзник (даже если его нет в списке существ мира, как у «ненастоящего» игрока).
+		if (!out.contains(caster) && center(caster).distanceToSqr(center) <= radius * radius) out.add(caster);
+		return out;
 	}
 
 	/** Середина тела. */

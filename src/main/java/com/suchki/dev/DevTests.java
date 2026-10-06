@@ -92,7 +92,7 @@ public final class DevTests {
 	}
 
 	/** Отчёт: строки «OK  …» и «FAIL …». */
-	private static final class Report {
+	static final class Report {
 		final List<String> lines = new ArrayList<>();
 
 		void check(boolean ok, String what) {
@@ -100,7 +100,7 @@ public final class DevTests {
 		}
 	}
 
-	private interface Test {
+	interface Test {
 		void run(ServerLevel level, BlockPos origin, Report r) throws Exception;
 	}
 
@@ -128,6 +128,7 @@ public final class DevTests {
 		tests.put("Роли", DevTests::roles);
 		tests.put("Навыки: эффекты", DevTests::skillPerks);
 		tests.put("Пружина: урон от падения", DevTests::springFall);
+		MagicTests.addTo(tests);
 		Skills.testChanceOverride = -1;
 		for (Map.Entry<String, Test> t : tests.entrySet()) {
 			try {
@@ -171,7 +172,7 @@ public final class DevTests {
 		return level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(key);
 	}
 
-	private static FakePlayer player(ServerLevel level, BlockPos at, ItemStack held, float pitch) {
+	static FakePlayer player(ServerLevel level, BlockPos at, ItemStack held, float pitch) {
 		FakePlayer p = FakePlayer.get(level);
 		p.setGameMode(GameType.SURVIVAL);
 		p.getInventory().clearContent();
@@ -184,14 +185,14 @@ public final class DevTests {
 	}
 
 	/** Задать роль и навыки напрямую (минуя порядок покупки) — чтобы проверить эффект конкретного навыка. */
-	private static void skills(FakePlayer p, String role, String... nodes) {
+	static void skills(FakePlayer p, String role, String... nodes) {
 		PlayerSkills s = role == null ? PlayerSkills.EMPTY : new PlayerSkills(Optional.of(role),
 				Map.of(role, new PlayerSkills.Progress(50, 0, List.of(nodes))), 0L);
 		p.setAttached(Skills.DATA, s);
 		Skills.applyAttributes(p);
 	}
 
-	private static <T extends Entity> T spawn(ServerLevel level, EntityType<T> type, BlockPos at) {
+	static <T extends Entity> T spawn(ServerLevel level, EntityType<T> type, BlockPos at) {
 		T e = type.create(level, EntitySpawnReason.COMMAND);
 		e.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0, 0);
 		if (e instanceof Mob mob) mob.setNoAi(true);
@@ -199,7 +200,7 @@ public final class DevTests {
 		return e;
 	}
 
-	private static int count(ServerLevel level, BlockPos center, int r, Item item) {
+	static int count(ServerLevel level, BlockPos center, int r, Item item) {
 		int n = 0;
 		for (ItemEntity e : level.getEntitiesOfClass(ItemEntity.class, new AABB(center).inflate(r))) {
 			if (e.getItem().is(item)) n += e.getItem().getCount();

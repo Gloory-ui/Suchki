@@ -179,6 +179,34 @@ public final class Magic {
 			LAST_SPEND.remove(id);
 			XP_LEFT.remove(id);
 		});
+		registerCommand();
+	}
+
+	/** /suchki_magic learn_all | mana | reset — для операторов (проверить магию, не собирая книги). */
+	private static void registerCommand() {
+		net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback.EVENT.register((dispatcher, ctx, env) -> dispatcher.register(
+				net.minecraft.commands.Commands.literal("suchki_magic")
+						.requires(net.minecraft.commands.Commands.hasPermission(net.minecraft.commands.Commands.LEVEL_GAMEMASTERS))
+						.then(net.minecraft.commands.Commands.literal("learn_all").executes(c -> {
+							ServerPlayer p = c.getSource().getPlayerOrException();
+							for (Spell s : Spells.all()) teach(p, s);
+							c.getSource().sendSuccess(() -> Component.translatable("suchki.magic.cmd.learned", Spells.all().size()), false);
+							return 1;
+						}))
+						.then(net.minecraft.commands.Commands.literal("mana").executes(c -> {
+							ServerPlayer p = c.getSource().getPlayerOrException();
+							setMana(p, maxMana(p));
+							c.getSource().sendSuccess(() -> Component.translatable("suchki.magic.cmd.mana"), false);
+							return 1;
+						}))
+						.then(net.minecraft.commands.Commands.literal("reset").executes(c -> {
+							ServerPlayer p = c.getSource().getPlayerOrException();
+							MagicData d = data(p);
+							setData(p, new MagicData(d.known(), d.selected(), Map.of(), d.starter()));
+							setMana(p, maxMana(p));
+							c.getSource().sendSuccess(() -> Component.translatable("suchki.magic.cmd.reset"), false);
+							return 1;
+						}))));
 	}
 
 	// --- Кто и сколько ---
@@ -350,7 +378,10 @@ public final class Magic {
 				float take = Math.min(base * (c.cap - 1.0F) / c.over, base * c.cap - c.invested);
 				if (!free) take = Math.min(take, mana);
 				if (take <= 0.0001F) {
-					starve(player, c);
+					if (!c.starved) {
+						c.starved = true;
+						player.displayClientMessage(Component.translatable("suchki.magic.mana_dry").withStyle(ChatFormatting.GOLD), true);
+					}
 					c.peakTicks++;
 				} else {
 					spend(player, take, free);
@@ -368,7 +399,11 @@ public final class Magic {
 			} else {
 				c.peakTicks++;
 			}
-			if (c.peakTicks >= HOLD_TICKS) player.releaseUsingItem();
+			if (c.peakTicks >= HOLD_TICKS) {
+				player.releaseUsingItem();
+				// Если предмет на самом деле не использовался (самопроверка), отпускаем напрямую.
+				if (CHARGES.get(player.getUUID()) == c) release(player);
+			}
 		} else {
 			float take = c.cost / 20.0F;
 			if (!free && mana < take) {
@@ -448,9 +483,38 @@ public final class Magic {
 		if (xp > 0) Skills.addXp(player, ROLE, xp);
 	}
 
-	/** Сколько маны осталось вложить, чтобы заклинание было готово (для самопроверки). */
-	static Charge charge(Player player) {
-		return CHARGES.get(player.getUUID());
+	// --- Для самопроверки (/suchki_test и клиентский тест) ---
+
+	/** Сразу сотворить заряженное заклинание с силой {@code power} (без маны и зарядки). */
+	public static boolean castNow(ServerPlayer p, Spell s, float power) {
+		return s.action.cast(new Cast(p.level(), p, s, power, spellBonus(p)));
+	}
+
+	/** Прогнать поток {@code ticks} тиков с силой {@code power}. */
+	public static void channelNow(ServerPlayer p, Spell s, int ticks, float power) {
+		for (int t = 1; t <= ticks; t++) s.channel.tick(new Cast(p.level(), p, s, power, spellBonus(p)), t);
+	}
+
+	/** Попадание снаряда заклинания (как будто он долетел). */
+	public static void hitNow(ServerPlayer p, Spell s, net.minecraft.world.phys.HitResult hit, float power) {
+		SpellProjectile proj = new SpellProjectile(MagicEntities.SPELL_PROJECTILE, p.level());
+		proj.setOwner(p);
+		proj.setPos(hit.getLocation());
+		s.hit.hit(new Cast(p.level(), p, s, power, spellBonus(p)), proj, hit);
+	}
+
+	/**
+	 * Зарядка как у игрока: начать каст выбранного заклинания, держать {@code ticks} тиков, отпустить.
+	 * Возвращает силу выпуска; 0 — заклинание не было готово (срыв) или сорвалось само раньше.
+	 */
+	public static float chargeNow(ServerPlayer p, FocusItem focus, int ticks) {
+		start(p, focus);
+		Charge c = CHARGES.get(p.getUUID());
+		if (c == null) return -1;
+		for (int i = 0; i < ticks && CHARGES.get(p.getUUID()) == c; i++) tick(p, focus);
+		float power = c.ready ? c.power() : 0.0F;
+		if (CHARGES.get(p.getUUID()) == c) release(p);
+		return power;
 	}
 
 	public static float chargePower(Player player) {

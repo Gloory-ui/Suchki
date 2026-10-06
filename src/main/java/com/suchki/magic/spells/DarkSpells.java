@@ -94,14 +94,21 @@ public final class DarkSpells {
 					HitResult hit = c.aim(20, e -> e instanceof LivingEntity l && c.canHit(l) && !c.isAlly(l));
 					Vec3 dest = null;
 					if (hit instanceof EntityHitResult eh) {
-						// За спину цели.
-						Vec3 behind = eh.getEntity().position().subtract(eh.getEntity().getLookAngle().multiply(1, 0, 1).normalize().scale(1.4));
-						dest = c.safeSpot(behind);
+						// За спину цели; если там стена — сбоку, иначе перед ней.
+						Vec3 at = eh.getEntity().position();
+						Vec3 face = eh.getEntity().getLookAngle().multiply(1, 0, 1);
+						if (face.lengthSqr() < 1.0E-4) face = c.look().multiply(-1, 0, -1);
+						face = face.normalize();
+						Vec3 side = new Vec3(-face.z, 0, face.x);
+						for (Vec3 off : new Vec3[] {face.scale(-1.4), side.scale(1.4), side.scale(-1.4), face.scale(1.4)}) {
+							dest = c.safeSpot(at.add(off));
+							if (dest != null) break;
+						}
 					}
 					if (dest == null && hit instanceof BlockHitResult bh && hit.getType() != HitResult.Type.MISS) {
 						dest = c.safeSpot(Vec3.atBottomCenterOf(bh.getBlockPos().relative(bh.getDirection())));
 					}
-					if (dest == null) dest = c.safeSpot(hit.getLocation().subtract(c.look().scale(0.8)));
+					// В пустоту (в небо) шаг не делается — только к блоку или существу.
 					if (dest == null) return false;
 					c.teleport(dest, VIOLET);
 					c.caster.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, c.duration(40), 0, false, false, true), c.caster);

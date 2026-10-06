@@ -299,5 +299,9 @@
   "subtitles.suchki.magic.loop.ward": "Magic flows",
   "subtitles.suchki.magic.loop.wind": "Magic flows",
   "subtitles.suchki.magic.vanish": "Spectral fades",
-  "subtitles.suchki.magic.ward_hit": "Ward blocks"
+  "subtitles.suchki.magic.ward_hit": "Ward blocks",
+  "suchki.magic.mana_dry": "Out of mana — power won't grow, release",
+  "suchki.magic.cmd.learned": "Learned all spells: %s",
+  "suchki.magic.cmd.mana": "Mana restored",
+  "suchki.magic.cmd.reset": "Cooldowns reset, mana restored"
 }

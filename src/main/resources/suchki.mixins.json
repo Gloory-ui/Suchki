@@ -39,8 +39,14 @@
 		"requireAnnotations": true
 	},
 	"client": [
+		"client.CastCameraMixin",
+		"client.CastFovMixin",
+		"client.CastHandMixin",
+		"client.CastModelMixin",
+		"client.CastPoseMixin",
 		"client.GrindstoneCostLabelMixin",
 		"client.HunterGlowMixin",
+		"client.ItemInHandRendererInvoker",
 		"client.PlaceSpeedMixin"
 	]
 }

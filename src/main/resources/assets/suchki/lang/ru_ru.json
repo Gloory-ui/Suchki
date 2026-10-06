@@ -299,5 +299,9 @@
   "subtitles.suchki.magic.loop.ward": "Поток магии",
   "subtitles.suchki.magic.loop.wind": "Поток магии",
   "subtitles.suchki.magic.vanish": "Призрак исчез",
-  "subtitles.suchki.magic.ward_hit": "Оберег гасит удар"
+  "subtitles.suchki.magic.ward_hit": "Оберег гасит удар",
+  "suchki.magic.mana_dry": "Мана иссякла — сила больше не растёт, отпустите",
+  "suchki.magic.cmd.learned": "Изучены все заклинания: %s",
+  "suchki.magic.cmd.mana": "Мана восполнена",
+  "suchki.magic.cmd.reset": "Перезарядки сброшены, мана восполнена"
 }

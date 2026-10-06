@@ -107,6 +107,15 @@ public final class Minions {
 
 	private static void tick(MinecraftServer server) {
 		if (LOADED.isEmpty() || server.getTickCount() % 10 != 0) return;
+		process();
+	}
+
+	/** Для самопроверки: обработать призванных прямо сейчас (исчезновение по времени). */
+	public static void processNow() {
+		process();
+	}
+
+	private static void process() {
 		for (Entity e : Set.copyOf(LOADED)) {
 			if (e.isRemoved() || !(e.level() instanceof ServerLevel level)) {
 				LOADED.remove(e);
