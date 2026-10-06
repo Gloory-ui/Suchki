@@ -11,59 +11,20 @@
 """
 
 import argparse
-import colorsys
 import math
 from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw
 
-from gen_textures import TEX, dilate, medallion, rgb, save_png, sheet, shift
+from gen_textures import (BLACK, SCHOOL_HEX, TEX, WHITE, dilate, medallion, mix, rgb, save_png, sheet, shift,
+                          tone_ramp)
 
 SS = 8                      # суперсэмплинг
 C = 16.5                    # центр медальона в пикселях (центр пикселя 16); координаты символов — от него
 SYMBOL_R = 10.4             # символ не выходит за тёмное внутреннее кольцо диска
 
-SCHOOL_HEX = {
-    "destruction": "#FF7A2E", "restoration": "#52E07F", "light": "#FFD84A", "dark": "#9A4DFF",
-    "alteration": "#4DA6FF", "illusion": "#E76BFF", "conjuration": "#3FE0D0",
-}
 ELEMENT_HEX = {"fire": "#FF7A2E", "ice": "#8FD8FF", "lightning": "#B9A8FF"}
-
-WHITE = np.ones(3)
-BLACK = np.zeros(3)
-
-
-def mix(a, b, k):
-    return np.asarray(a) * (1 - k) + np.asarray(b) * k
-
-
-def luminance(c):
-    lin = np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
-    return float(lin @ np.array([0.2126, 0.7152, 0.0722]))
-
-
-def tone_ramp(hexc):
-    """6 тонов диска из цвета школы. Яркость подбирается по восприятию (жёлтый не светлее синего),
-    тёмные тона уходят оттенком к фиолетово-синему, как в пиксель-арте."""
-    h, _, s = colorsys.rgb_to_hls(*rgb(hexc))
-    out = []
-    for k, grey in enumerate([0.10, 0.17, 0.25, 0.34, 0.44, 0.58]):
-        dark = 1 - k / 5
-        delta = ((0.72 - h + 0.5) % 1) - 0.5
-        hh = (h + delta * 0.14 * dark) % 1
-        ss = min(1.0, s * (0.85 + 0.15 * (1 - dark)))
-        target = luminance(np.full(3, grey))
-        lo, hi = 0.0, 1.0
-        for _ in range(30):
-            mid = (lo + hi) / 2
-            if luminance(np.array(colorsys.hls_to_rgb(hh, mid, ss))) < target:
-                lo = mid
-            else:
-                hi = mid
-        out.append(colorsys.hls_to_rgb(hh, lo, ss))
-    return np.array(out)
-
 
 FIRE = {"a": rgb("#FF7A2E"), "m": rgb("#FFC447"), "h": rgb("#FFF5CF")}
 

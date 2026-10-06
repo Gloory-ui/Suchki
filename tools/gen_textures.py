@@ -12,6 +12,7 @@
 """
 
 import argparse
+import colorsys
 import math
 import zlib
 from pathlib import Path
@@ -692,6 +693,45 @@ def mana_bar(full):
     return Image.fromarray(np.round(img * 255).astype(np.uint8), "RGBA")
 
 
+SCHOOL_HEX = {
+    "destruction": "#FF7A2E", "restoration": "#52E07F", "light": "#FFD84A", "dark": "#9A4DFF",
+    "alteration": "#4DA6FF", "illusion": "#E76BFF", "conjuration": "#3FE0D0",
+}
+WHITE = np.ones(3)
+BLACK = np.zeros(3)
+
+
+def mix(a, b, k):
+    return np.asarray(a) * (1 - k) + np.asarray(b) * k
+
+
+def luminance(c):
+    lin = np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+    return float(lin @ np.array([0.2126, 0.7152, 0.0722]))
+
+
+def tone_ramp(hexc):
+    """6 тонов диска медальона из цвета школы (значки школ и заклинаний). Яркость подбирается по восприятию
+    (жёлтый не светлее синего), тёмные тона уходят оттенком к фиолетово-синему, как в пиксель-арте."""
+    h, _, s = colorsys.rgb_to_hls(*rgb(hexc))
+    out = []
+    for k, grey in enumerate([0.10, 0.17, 0.25, 0.34, 0.44, 0.58]):
+        dark = 1 - k / 5
+        delta = ((0.72 - h + 0.5) % 1) - 0.5
+        hh = (h + delta * 0.14 * dark) % 1
+        ss = min(1.0, s * (0.85 + 0.15 * (1 - dark)))
+        target = luminance(np.full(3, grey))
+        lo, hi = 0.0, 1.0
+        for _ in range(30):
+            mid = (lo + hi) / 2
+            if luminance(np.array(colorsys.hls_to_rgb(hh, mid, ss))) < target:
+                lo = mid
+            else:
+                hi = mid
+        out.append(colorsys.hls_to_rgb(hh, lo, ss))
+    return np.array(out)
+
+
 def medallion(pal):
     """Круглый медальон 32×32: золотой обод, диск в цвете pal (6 тонов) с бликом. Центр — пиксель 16."""
     cv = Canvas(32)
@@ -711,15 +751,20 @@ def medallion(pal):
 
 
 def school_icon(school):
-    pal, sym = SCHOOLS[school]
+    """Значок школы — в тех же тонах и с той же отделкой символа, что значки заклинаний (gen_spell_icons.py)."""
+    base = rgb(SCHOOL_HEX[school])
+    pal = tone_ramp(SCHOOL_HEX[school])
     cv, rim, disc = medallion(pal)
-    g = SYMBOLS[sym]()
-    light_main = pal[5] * 0.45 + 0.55
-    colors = {"#": light_main, "+": np.ones(3), "-": pal[2]}
-    if school == "light":
-        colors = {"#": GOLD[4], "+": GOLD[6], "-": GOLD[2]}
-    stamp(cv, g, 10, 10, colors, shadow=pal[0])
-    cv.glow(rim | disc, pal[5] * 0.6 + 0.4, [(1, 0.3), (2, 0.12)])
+    g = SYMBOLS[SCHOOLS[school][1]]()
+    colors = {"#": mix(base, WHITE, 0.58), "+": mix(base, WHITE, 0.87), "-": base}
+    if school == "destruction":                # пламя — как огонь в значках заклинаний
+        colors = {"#": rgb("#FFC447"), "+": rgb("#FFF5CF"), "-": base}
+    stamp(cv, g, 10, 10, colors)
+    sym = np.zeros((32, 32), dtype=bool)
+    sym[10:23, 10:23] = g != "."
+    cv.rgb[dilate(sym, 1) & ~sym & disc] = mix(pal[0], BLACK, 0.3)
+    cv.tint(dilate(sym, 2) & ~dilate(sym, 1) & disc, base, 0.24)
+    cv.glow(rim | disc, mix(base, WHITE, 0.4), [(1, 0.3), (2, 0.12)])
     return cv.image()
 
 
