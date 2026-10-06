@@ -252,17 +252,6 @@
           "branch": 0,
           "tier": 2,
           "name": "Жажда боя",
-          "desc": "Ещё +10% урона при низком здоровье",
-          "attrs": [],
-          "perks": {
-            "LOW_HP_DAMAGE": 0.1
-          }
-        },
-        {
-          "id": "warrior.0.3",
-          "branch": 0,
-          "tier": 3,
-          "name": "Кровожадность",
           "desc": "+1 к урону атаки",
           "attrs": [
             {
@@ -274,15 +263,35 @@
           "perks": {}
         },
         {
-          "id": "warrior.0.4",
+          "id": "warrior.0.3",
           "branch": 0,
-          "tier": 4,
-          "name": "Неистовство",
+          "tier": 3,
+          "name": "Кровожадность",
           "desc": "Ещё +15% урона при низком здоровье",
           "attrs": [],
           "perks": {
             "LOW_HP_DAMAGE": 0.15
           }
+        },
+        {
+          "id": "warrior.0.4",
+          "branch": 0,
+          "tier": 4,
+          "name": "Неистовство",
+          "desc": "Ещё +1 к урону атаки и +10% к скорости атаки",
+          "attrs": [
+            {
+              "attribute": "minecraft:attack_damage",
+              "amount": 1,
+              "operation": "add_value"
+            },
+            {
+              "attribute": "minecraft:attack_speed",
+              "amount": 0.1,
+              "operation": "add_multiplied_base"
+            }
+          ],
+          "perks": {}
         },
         {
           "id": "warrior.0.5",
@@ -306,11 +315,11 @@
           "branch": 1,
           "tier": 1,
           "name": "Крепкий щит",
-          "desc": "+1 к броне",
+          "desc": "+2 к броне",
           "attrs": [
             {
               "attribute": "minecraft:armor",
-              "amount": 1,
+              "amount": 2,
               "operation": "add_value"
             }
           ],
@@ -321,11 +330,11 @@
           "branch": 1,
           "tier": 2,
           "name": "Стойкость",
-          "desc": "+10% к сопротивлению отбрасыванию",
+          "desc": "+20% к сопротивлению отбрасыванию",
           "attrs": [
             {
               "attribute": "minecraft:knockback_resistance",
-              "amount": 0.1,
+              "amount": 0.2,
               "operation": "add_value"
             }
           ],
@@ -336,11 +345,11 @@
           "branch": 1,
           "tier": 3,
           "name": "Закалка тела",
-          "desc": "+1 к прочности брони",
+          "desc": "+2 к прочности брони",
           "attrs": [
             {
               "attribute": "minecraft:armor_toughness",
-              "amount": 1,
+              "amount": 2,
               "operation": "add_value"
             }
           ],
@@ -351,10 +360,10 @@
           "branch": 1,
           "tier": 4,
           "name": "Бывалый",
-          "desc": "Получаемый урон −5%",
+          "desc": "Получаемый урон −10%",
           "attrs": [],
           "perks": {
-            "INCOMING_DAMAGE": 0.05
+            "INCOMING_DAMAGE": 0.1
           }
         },
         {
@@ -362,16 +371,16 @@
           "branch": 1,
           "tier": 5,
           "name": "Несокрушимый",
-          "desc": "+2 сердца и ещё −5% получаемого урона",
+          "desc": "+3 сердца и ещё −10% получаемого урона (всего −20%)",
           "attrs": [
             {
               "attribute": "minecraft:max_health",
-              "amount": 4,
+              "amount": 6,
               "operation": "add_value"
             }
           ],
           "perks": {
-            "INCOMING_DAMAGE": 0.05
+            "INCOMING_DAMAGE": 0.1
           }
         },
         {
@@ -394,10 +403,10 @@
           "branch": 2,
           "tier": 2,
           "name": "Точный удар",
-          "desc": "+5% к урону в ближнем бою",
+          "desc": "+10% к урону в ближнем бою",
           "attrs": [],
           "perks": {
-            "MELEE_DAMAGE": 0.05
+            "MELEE_DAMAGE": 0.1
           }
         },
         {
@@ -409,7 +418,7 @@
           "attrs": [
             {
               "attribute": "minecraft:sweeping_damage_ratio",
-              "amount": 0.2,
+              "amount": 0.3,
               "operation": "add_value"
             }
           ],
@@ -420,7 +429,7 @@
           "branch": 2,
           "tier": 4,
           "name": "Фехтовальщик",
-          "desc": "+5% к скорости атаки",
+          "desc": "+5% к скорости атаки и ещё +10% к урону вблизи",
           "attrs": [
             {
               "attribute": "minecraft:attack_speed",
@@ -428,14 +437,16 @@
               "operation": "add_multiplied_base"
             }
           ],
-          "perks": {}
+          "perks": {
+            "MELEE_DAMAGE": 0.1
+          }
         },
         {
           "id": "warrior.2.5",
           "branch": 2,
           "tier": 5,
           "name": "Мастер клинка",
-          "desc": "+10% к урону в ближнем бою и +0,5 к дальности удара",
+          "desc": "Ещё +20% к урону вблизи (всего +40%), +0,5 к дальности",
           "attrs": [
             {
               "attribute": "minecraft:entity_interaction_range",
@@ -444,7 +455,7 @@
             }
           ],
           "perks": {
-            "MELEE_DAMAGE": 0.1
+            "MELEE_DAMAGE": 0.2
           }
         }
       ]
@@ -455,7 +466,7 @@
       "icon": "minecraft:bow",
       "color": 2600544,
       "xp_from": "попадания из лука и арбалета",
-      "desc": "Стрелок: больше урона снарядами, экономия стрел и ловкость в движении.",
+      "desc": "Стрелок: больше урона снарядами, экономия стрел, ловкость и уклонение.",
       "branches": [
         "Снайпер",
         "Экономия",
@@ -483,10 +494,10 @@
           "branch": 0,
           "tier": 2,
           "name": "Твёрдая рука",
-          "desc": "Ещё +5% к урону снарядов",
+          "desc": "Ещё +10% к урону снарядов",
           "attrs": [],
           "perks": {
-            "PROJECTILE_DAMAGE": 0.05
+            "PROJECTILE_DAMAGE": 0.1
           }
         },
         {
@@ -516,10 +527,10 @@
           "branch": 0,
           "tier": 5,
           "name": "Соколиный глаз",
-          "desc": "Ещё +15% к урону снарядов (всего 45%)",
+          "desc": "Ещё +20% к урону снарядов (всего 55%)",
           "attrs": [],
           "perks": {
-            "PROJECTILE_DAMAGE": 0.15
+            "PROJECTILE_DAMAGE": 0.2
           }
         },
         {
@@ -626,8 +637,8 @@
           "id": "archer.2.4",
           "branch": 2,
           "tier": 4,
-          "name": "Кошачья ловкость",
-          "desc": "Падение до 2 блоков выше обычного не ранит",
+          "name": "Уклонение",
+          "desc": "Урон по вам −10%, падение до 2 блоков не ранит",
           "attrs": [
             {
               "attribute": "minecraft:safe_fall_distance",
@@ -635,14 +646,16 @@
               "operation": "add_value"
             }
           ],
-          "perks": {}
+          "perks": {
+            "INCOMING_DAMAGE": 0.1
+          }
         },
         {
           "id": "archer.2.5",
           "branch": 2,
           "tier": 5,
           "name": "Ветер",
-          "desc": "+5% к скорости и ещё выше прыжок",
+          "desc": "+5% к скорости, ещё выше прыжок и +2 сердца",
           "attrs": [
             {
               "attribute": "minecraft:movement_speed",
@@ -652,6 +665,11 @@
             {
               "attribute": "minecraft:jump_strength",
               "amount": 0.05,
+              "operation": "add_value"
+            },
+            {
+              "attribute": "minecraft:max_health",
+              "amount": 4,
               "operation": "add_value"
             }
           ],
@@ -1255,7 +1273,7 @@
       "icon": "minecraft:crossbow",
       "color": 8207512,
       "xp_from": "убийство мобов",
-      "desc": "Охотник на чудовищ: видит врагов издалека, собирает трофеи и бьёт нечисть сильнее.",
+      "desc": "Охотник на чудовищ: видит врагов издалека, живуч, собирает трофеи и бьёт нечисть сильнее.",
       "branches": [
         "Следопыт",
         "Трофеи",
@@ -1272,10 +1290,10 @@
           "branch": 0,
           "tier": 1,
           "name": "Чуткий слух",
-          "desc": "Враждебные мобы в 8 блоках подсвечиваются",
+          "desc": "Враги в 12 блоках подсвечиваются (видите только вы)",
           "attrs": [],
           "perks": {
-            "HUNTER_SENSE": 8
+            "HUNTER_SENSE": 12
           }
         },
         {
@@ -1283,32 +1301,42 @@
           "branch": 0,
           "tier": 2,
           "name": "Острый глаз",
-          "desc": "Подсветка мобов дальше на 4 блока",
-          "attrs": [],
+          "desc": "Подсветка дальше на 6 блоков и +3% к скорости",
+          "attrs": [
+            {
+              "attribute": "minecraft:movement_speed",
+              "amount": 0.03,
+              "operation": "add_multiplied_base"
+            }
+          ],
           "perks": {
-            "HUNTER_SENSE": 4
+            "HUNTER_SENSE": 6
           }
         },
         {
           "id": "hunter.0.3",
           "branch": 0,
           "tier": 3,
-          "name": "Нюх",
-          "desc": "Подсветка мобов дальше на 4 блока",
-          "attrs": [],
-          "perks": {
-            "HUNTER_SENSE": 4
-          }
+          "name": "Звериная живучесть",
+          "desc": "+2 сердца",
+          "attrs": [
+            {
+              "attribute": "minecraft:max_health",
+              "amount": 4,
+              "operation": "add_value"
+            }
+          ],
+          "perks": {}
         },
         {
           "id": "hunter.0.4",
           "branch": 0,
           "tier": 4,
           "name": "Ночной охотник",
-          "desc": "Подсветка мобов дальше на 4 блока",
+          "desc": "Подсветка мобов дальше на 6 блоков",
           "attrs": [],
           "perks": {
-            "HUNTER_SENSE": 4
+            "HUNTER_SENSE": 6
           }
         },
         {
@@ -1316,10 +1344,11 @@
           "branch": 0,
           "tier": 5,
           "name": "Всевидящий",
-          "desc": "Подсветка мобов дальше на 8 блоков (всего 28)",
+          "desc": "Подсветка ещё на 8 блоков (всего 32), урон по вам −10%",
           "attrs": [],
           "perks": {
-            "HUNTER_SENSE": 8
+            "HUNTER_SENSE": 8,
+            "INCOMING_DAMAGE": 0.1
           }
         },
         {
@@ -1393,10 +1422,10 @@
           "branch": 2,
           "tier": 2,
           "name": "Ловчий",
-          "desc": "Ещё +5% к урону по враждебным мобам",
+          "desc": "Ещё +10% к урону по враждебным мобам",
           "attrs": [],
           "perks": {
-            "MONSTER_DAMAGE": 0.05
+            "MONSTER_DAMAGE": 0.1
           }
         },
         {
@@ -1415,10 +1444,10 @@
           "branch": 2,
           "tier": 4,
           "name": "Каратель",
-          "desc": "Ещё +10% к урону по враждебным мобам",
+          "desc": "Ещё +15% к урону по враждебным мобам",
           "attrs": [],
           "perks": {
-            "MONSTER_DAMAGE": 0.1
+            "MONSTER_DAMAGE": 0.15
           }
         },
         {
@@ -1426,10 +1455,10 @@
           "branch": 2,
           "tier": 5,
           "name": "Гроза чудовищ",
-          "desc": "Ещё +15% к урону по враждебным мобам (всего 45%)",
+          "desc": "Ещё +20% к урону по враждебным мобам (всего 60%)",
           "attrs": [],
           "perks": {
-            "MONSTER_DAMAGE": 0.15
+            "MONSTER_DAMAGE": 0.2
           }
         }
       ]
