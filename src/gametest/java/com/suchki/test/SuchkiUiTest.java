@@ -50,6 +50,7 @@ public class SuchkiUiTest implements FabricClientGameTest {
 
 	@Override
 	public void runTest(ClientGameTestContext context) {
+		if (!TestFilter.enabled("ui")) return;
 		try (TestSingleplayerContext sp = context.worldBuilder().create()) {
 			sp.getClientWorld().waitForChunksRender();
 			context.runOnClient(mc -> {

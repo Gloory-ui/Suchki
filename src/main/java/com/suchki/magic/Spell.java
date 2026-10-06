@@ -1,18 +1,25 @@
 package com.suchki.magic;
 
+import java.util.List;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.phys.HitResult;
 
 /**
- * Заклинание: что оно стоит, как заряжается и что делает. Все заклинания описаны в {@code magic.spells.*}
- * и собраны в {@link Spells}. Одинаковы на сервере и клиенте (клиент берёт отсюда цену, время, цвет, тип).
+ * Заклинание: что оно стоит, как заряжается, где строится круг и что делает. Все заклинания описаны в
+ * {@code magic.spells.*} и собраны в {@link Spells}. Одинаковы на сервере и клиенте (клиент берёт отсюда цену,
+ * время, цвет, тип, якорь круга).
+ *
+ * <p>Ранг ({@link #tier}) — как в «Реинкарнации безработного»: 1 Начальный, 2 Средний, 3 Продвинутый, 4 Святой,
+ * 5 Королевский, 6 Императорский, 7 Божественный.
  */
 public final class Spell {
-	/** Какой уровень Мага нужен для круга I…V (индекс — круг). */
-	public static final int[] TIER_LEVEL = {0, 1, 8, 16, 26, 36};
+	public static final int MAX_TIER = 7;
+	/** Какой уровень Мага нужен для ранга 1…7 (индекс — ранг). */
+	public static final int[] TIER_LEVEL = {0, 1, 6, 12, 20, 28, 38, 46};
 
 	/** Выпуск заряженного заклинания. false — не получилось (нет цели и т. п.): мана частично вернётся. */
 	public interface Action {
@@ -39,14 +46,32 @@ public final class Spell {
 	public final int chargeTicks;
 	public final int cooldownTicks;
 	public final Identifier icon;
-	/** Дальность прицела/луча (для эффектов на клиенте и проверок на сервере). */
+	/** Дальность прицела/луча (сервер и клиент считают точку прицела по ней). */
 	public final double range;
 	/** Предмет, который рисуется внутри снаряда (вращается), или null — только свечение. */
 	public final Identifier projectileModel;
 	/** Размер светящегося ядра снаряда. */
 	public final float projectileSize;
+	/** След снаряда. */
+	public final Trail trail;
 	/** Поток рисуется лучом от руки до цели. */
 	public final boolean beam;
+	/** Где строится круг. */
+	public final Anchor anchor;
+	/** Сколько кругов в стопке (большие заклинания — несколько ярусов). */
+	public final int layers;
+	/** Радиус главного круга в блоках (0 — по рангу и якорю). */
+	public final float circleRadius;
+	/** Высота круга над целью для {@link Anchor#SKY}. */
+	public final float skyHeight;
+	/** Стихии-составляющие для слияния ({@link School#FUSION}); у обычных заклинаний — пусто. */
+	public final List<School> combo;
+	/** Может ломать блоки (если это разрешено в настройках). Для подсказки и самопроверки. */
+	public final boolean destroys;
+	/** Сколько копий можно выпустить мультикастом (1 — нельзя). */
+	public final int maxCopies;
+	/** Звук потока (крутится, пока держишь) или null — общий звук луча. */
+	public final SoundEvent loop;
 	final Action action;
 	final Channel channel;
 	final Hit hit;
@@ -63,10 +88,26 @@ public final class Spell {
 		this.range = b.range;
 		this.projectileModel = b.model == null ? null : Identifier.parse(b.model);
 		this.projectileSize = b.size;
+		this.trail = b.trail;
 		this.beam = b.beam;
+		this.anchor = b.anchor != null ? b.anchor : defaultAnchor(b.style);
+		this.layers = b.layers > 0 ? b.layers : (b.tier >= 6 ? 3 : b.tier >= 4 ? 2 : 1);
+		this.circleRadius = b.circleRadius;
+		this.skyHeight = b.skyHeight;
+		this.combo = List.copyOf(b.combo);
+		this.destroys = b.destroys;
+		this.maxCopies = b.maxCopies > 0 ? b.maxCopies : (b.tier >= MAX_TIER || b.style == CastStyle.SELF ? 1 : 4);
+		this.loop = b.loop;
 		this.action = b.action;
 		this.channel = b.channel;
 		this.hit = b.hit;
+	}
+
+	private static Anchor defaultAnchor(CastStyle style) {
+		return switch (style) {
+			case BOLT, CHANNEL -> Anchor.HAND;
+			case SELF, RITUAL, SUMMON -> Anchor.FEET;
+		};
 	}
 
 	public Component displayName() {
@@ -77,16 +118,66 @@ public final class Spell {
 		return Component.translatable("spell.suchki." + id + ".desc");
 	}
 
+	/** Ключ перевода заклинательной фразы (строки через «|»); у заклинаний первого ранга фразы обычно нет. */
+	public String chantKey() {
+		return "spell.suchki." + id + ".chant";
+	}
+
 	public Item iconItem() {
 		return BuiltInRegistries.ITEM.getValue(icon);
 	}
 
 	public int requiredLevel() {
-		return TIER_LEVEL[tier];
+		return TIER_LEVEL[Math.max(1, Math.min(MAX_TIER, tier))];
 	}
 
 	public boolean charged() {
 		return style.charged();
+	}
+
+	public boolean fusion() {
+		return !combo.isEmpty();
+	}
+
+	/** Радиус главного круга в блоках (свой или по рангу и якорю). */
+	public float circleRadius() {
+		if (circleRadius > 0) return circleRadius;
+		return switch (anchor) {
+			case HAND -> 0.35F + 0.08F * tier;
+			case FEET -> 0.9F + 0.35F * tier;
+			case TARGET -> 1.2F + 0.8F * tier;
+			case SKY -> 2.0F + 1.2F * tier;
+			case LINE -> 0.6F + 0.15F * tier;
+			case BACK -> 0.45F + 0.05F * tier;
+			case ORBIT -> 0.5F + 0.06F * tier;
+		};
+	}
+
+	/** Высота небесного круга над целью. */
+	public float skyHeight() {
+		return skyHeight > 0 ? skyHeight : 10.0F + 2.0F * tier;
+	}
+
+	/** Цвет круга и эффектов: у слияния — смесь стихий-составляющих. */
+	public int color() {
+		if (combo.isEmpty()) return school.color;
+		return blend(combo.stream().mapToInt(s -> s.color).toArray());
+	}
+
+	public int lightColor() {
+		if (combo.isEmpty()) return school.light;
+		return blend(combo.stream().mapToInt(s -> s.light).toArray());
+	}
+
+	static int blend(int[] colors) {
+		int r = 0, g = 0, b = 0;
+		for (int c : colors) {
+			r += (c >> 16) & 0xFF;
+			g += (c >> 8) & 0xFF;
+			b += c & 0xFF;
+		}
+		int n = Math.max(1, colors.length);
+		return (r / n) << 16 | (g / n) << 8 | (b / n);
 	}
 
 	public static Builder of(String id, School school, int tier, CastStyle style) {
@@ -102,15 +193,25 @@ public final class Spell {
 		private int charge = 10;
 		private int cooldown = 10;
 		private String icon = "minecraft:book";
-		private double range = 24;
+		private double range = 32;
 		private String model;
 		private float size = 0.35F;
+		private Trail trail = Trail.PLAIN;
 		private boolean beam;
+		private Anchor anchor;
+		private int layers;
+		private float circleRadius;
+		private float skyHeight;
+		private List<School> combo = List.of();
+		private boolean destroys;
+		private int maxCopies;
+		private SoundEvent loop;
 		private Action action;
 		private Channel channel;
 		private Hit hit;
 
 		private Builder(String id, School school, int tier, CastStyle style) {
+			if (tier < 1 || tier > MAX_TIER) throw new IllegalArgumentException("ранг " + tier + " у заклинания " + id);
 			this.id = id;
 			this.school = school;
 			this.tier = tier;
@@ -121,15 +222,27 @@ public final class Spell {
 		public Builder charge(int ticks) { charge = ticks; return this; }
 		public Builder cooldown(int ticks) { cooldown = ticks; return this; }
 		public Builder icon(String item) { icon = item.contains(":") ? item : "minecraft:" + item; return this; }
-		public Builder range(double v) { range = v; return this; }
+		public Builder range(double v) { range = Math.min(v, Magic.MAX_RANGE); return this; }
 		public Builder model(String item) { model = item.contains(":") ? item : "minecraft:" + item; return this; }
 		public Builder size(float v) { size = v; return this; }
+		public Builder trail(Trail t) { trail = t; return this; }
 		public Builder beam() { beam = true; return this; }
+		public Builder anchor(Anchor a) { anchor = a; return this; }
+		public Builder layers(int n) { layers = n; return this; }
+		public Builder circle(float radius) { circleRadius = radius; return this; }
+		public Builder sky(float height) { skyHeight = height; return this; }
+		public Builder combo(School... parts) { combo = List.of(parts); return this; }
+		public Builder destroys() { destroys = true; return this; }
+		public Builder multicast(int max) { maxCopies = Math.max(1, max); return this; }
+		public Builder noMulticast() { maxCopies = 1; return this; }
+		public Builder loop(SoundEvent sound) { loop = sound; return this; }
 		public Builder action(Action a) { action = a; return this; }
 		public Builder channel(Channel c) { channel = c; return this; }
 		public Builder hit(Hit h) { hit = h; return this; }
 
 		public Spell register() {
+			if (school == School.FUSION && combo.size() < 2) throw new IllegalStateException("у слияния " + id + " нет стихий");
+			if (school != School.FUSION && !combo.isEmpty()) throw new IllegalStateException("стихии у не-слияния " + id);
 			Spell spell = new Spell(this);
 			if (spell.style == CastStyle.CHANNEL ? channel == null : action == null) {
 				throw new IllegalStateException("у заклинания " + id + " нет действия");

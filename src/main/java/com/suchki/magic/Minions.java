@@ -36,7 +36,7 @@ public final class Minions {
 		static final Codec<Summon> CODEC = RecordCodecBuilder.create(i -> i.group(
 				UUIDUtil.CODEC.fieldOf("owner").forGetter(Summon::owner),
 				Codec.LONG.fieldOf("expires").forGetter(Summon::expires),
-				Codec.INT.optionalFieldOf("color", School.CONJURATION.color).forGetter(Summon::color)
+				Codec.INT.optionalFieldOf("color", School.SUMMON.color).forGetter(Summon::color)
 		).apply(i, Summon::new));
 	}
 

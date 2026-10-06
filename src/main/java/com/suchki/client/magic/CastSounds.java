@@ -26,14 +26,7 @@ public final class CastSounds {
 
 	static SoundEvent loopFor(Spell spell) {
 		if (spell.style != CastStyle.CHANNEL) return MagicSounds.CHARGE.get(spell.school);
-		return switch (spell.id) {
-			case "flames" -> MagicSounds.LOOP_FLAMES;
-			case "drain_life" -> MagicSounds.LOOP_DRAIN;
-			case "healing" -> MagicSounds.LOOP_HEAL;
-			case "ward" -> MagicSounds.LOOP_WARD;
-			case "telekinesis" -> MagicSounds.LOOP_WIND;
-			default -> MagicSounds.LOOP_BEAM;
-		};
+		return spell.loop != null ? spell.loop : MagicSounds.LOOP_BEAM;
 	}
 
 	static void tick(ClientLevel level) {

@@ -18,7 +18,12 @@ public enum MagicDamage {
 	HOLY("spell_holy"),
 	DARK("spell_dark"),
 	ARCANE("spell_arcane"),
-	EARTH("spell_earth");
+	EARTH("spell_earth"),
+	WIND("spell_wind"),
+	WATER("spell_water"),
+	VOID("spell_void"),
+	BLOOD("spell_blood"),
+	PSYCHIC("spell_psychic");
 
 	/** Все виды магического урона (чтобы не давать за них опыт Воину/Лучнику). */
 	public static final TagKey<DamageType> TAG = TagKey.create(Registries.DAMAGE_TYPE,

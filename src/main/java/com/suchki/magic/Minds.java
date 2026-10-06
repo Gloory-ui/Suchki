@@ -101,7 +101,7 @@ public final class Minds {
 				case CALM -> {
 					if (mob.getTarget() instanceof Player) force(mob, null);
 					if (t % 30 == 0) MagicFx.burst(level, mob.getEyePosition().add(0, 0.5, 0),
-							MagicParticles.mote(School.ILLUSION.light, 0.12F, 20), 1, 0.2, 0.0);
+							MagicParticles.mote(School.MIND.light, 0.12F, 20), 1, 0.2, 0.0);
 				}
 				case FRENZY -> {
 					LivingEntity target = mob.getTarget();

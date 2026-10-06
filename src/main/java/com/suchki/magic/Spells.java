@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Все заклинания по порядку: школа за школой, внутри — по кругу. */
+/** Все заклинания по порядку: стихия за стихией, внутри — по рангу. */
 public final class Spells {
 	private static final Map<String, Spell> BY_ID = new LinkedHashMap<>();
 	private static List<Spell> sorted = List.of();
@@ -19,13 +19,18 @@ public final class Spells {
 
 	public static void init() {
 		if (!BY_ID.isEmpty()) return;
-		com.suchki.magic.spells.DestructionSpells.register();
-		com.suchki.magic.spells.RestorationSpells.register();
+		com.suchki.magic.spells.FireSpells.register();
+		com.suchki.magic.spells.WaterSpells.register();
+		com.suchki.magic.spells.WindSpells.register();
+		com.suchki.magic.spells.EarthSpells.register();
+		com.suchki.magic.spells.LightningSpells.register();
 		com.suchki.magic.spells.LightSpells.register();
 		com.suchki.magic.spells.DarkSpells.register();
-		com.suchki.magic.spells.AlterationSpells.register();
-		com.suchki.magic.spells.IllusionSpells.register();
-		com.suchki.magic.spells.ConjurationSpells.register();
+		com.suchki.magic.spells.SpaceSpells.register();
+		com.suchki.magic.spells.LifeSpells.register();
+		com.suchki.magic.spells.MindSpells.register();
+		com.suchki.magic.spells.SummonSpells.register();
+		com.suchki.magic.spells.FusionSpells.register();
 		List<Spell> list = new ArrayList<>(BY_ID.values());
 		list.sort((a, b) -> a.school != b.school ? a.school.compareTo(b.school) : Integer.compare(a.tier, b.tier));
 		sorted = Collections.unmodifiableList(list);

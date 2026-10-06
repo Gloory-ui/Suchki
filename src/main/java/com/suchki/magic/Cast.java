@@ -1,6 +1,7 @@
 package com.suchki.magic;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 import net.minecraft.server.level.ServerLevel;
@@ -22,7 +23,6 @@ import net.minecraft.world.entity.decoration.Mannequin;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -32,6 +32,10 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Одно сотворение заклинания на сервере: кто колдует, с какой силой, и помощники для эффектов.
  * Сила {@link #power} — накопление (×1 при «готово», до предела фокуса) или разгон потока (×0,6…×1,5).
+ *
+ * <p>Мультикаст: заклинание выпускается {@link #copies} раз, у каждой копии ({@link #copy}) свой круг — точка вылета
+ * {@link #hand()} — и своя цель {@link #aim()} (следующий враг рядом с прицелом или точка по кольцу вокруг него).
+ * Заклинания пишутся как для одной копии: помощники сами берут точку и цель своей копии.
  */
 public final class Cast {
 	public final ServerLevel level;
@@ -40,13 +44,35 @@ public final class Cast {
 	public final float power;
 	/** Множитель от навыка «Сила чар» (1 + доля). Действует на урон и лечение. */
 	public final float bonus;
+	/** Номер копии (0 — главная) и сколько всего копий. */
+	public final int copy;
+	public final int copies;
+	/** Откуда летит эта копия (центр её круга) или null — от руки мага. */
+	private final Vec3 origin;
+	/** Заранее выбранный прицел этой копии или null — считать по взгляду. */
+	private final Targeting.Aim forced;
+	private Targeting.Aim cached;
 
 	public Cast(ServerLevel level, ServerPlayer caster, Spell spell, float power, float bonus) {
+		this(level, caster, spell, power, bonus, 0, 1, null, null);
+	}
+
+	public Cast(ServerLevel level, ServerPlayer caster, Spell spell, float power, float bonus, int copy, int copies, Vec3 origin,
+			Targeting.Aim forced) {
 		this.level = level;
 		this.caster = caster;
 		this.spell = spell;
 		this.power = power;
 		this.bonus = bonus;
+		this.copy = copy;
+		this.copies = copies;
+		this.origin = origin;
+		this.forced = forced;
+	}
+
+	/** Та же копия, но с другой силой (для волн, затухающих ударов и т. п.). */
+	public Cast withPower(float p) {
+		return new Cast(level, caster, spell, p, bonus, copy, copies, origin, forced);
 	}
 
 	// --- Как сила влияет на заклинание ---
@@ -71,6 +97,14 @@ public final class Cast {
 		return power >= 1.75F;
 	}
 
+	public int color() {
+		return spell.color();
+	}
+
+	public int lightColor() {
+		return spell.lightColor();
+	}
+
 	// --- Где маг и куда смотрит ---
 
 	public Vec3 eye() {
@@ -87,9 +121,9 @@ public final class Cast {
 		return new Vec3(-Mth.cos(yaw), 0, -Mth.sin(yaw));
 	}
 
-	/** Примерное место руки, которой колдуют (откуда летят снаряды и лучи). */
+	/** Откуда колдуют: центр круга этой копии или рука мага. Отсюда летят снаряды и лучи. */
 	public Vec3 hand() {
-		return handOf(caster);
+		return origin != null ? origin : handOf(caster);
 	}
 
 	public static Vec3 handOf(LivingEntity e) {
@@ -99,32 +133,33 @@ public final class Cast {
 		return e.getEyePosition().add(e.getViewVector(1.0F).scale(0.7)).add(right.scale(0.3 * side)).add(0, -0.3, 0);
 	}
 
+	/** Направление полёта снаряда этой копии: по взгляду, а у копий — от их круга к их цели. */
+	public Vec3 direction() {
+		if (copies <= 1 || origin == null) return look();
+		Vec3 d = aimPoint().subtract(hand());
+		return d.lengthSqr() < 1.0E-4 ? look() : d.normalize();
+	}
+
+	/** Прицел этой копии на дальность заклинания. */
+	public Targeting.Aim target() {
+		if (forced != null) return forced;
+		if (cached == null) cached = Targeting.aim(level, caster, eye(), look(), spell.range, Targeting.living(caster));
+		return cached;
+	}
+
 	/** Луч от глаз: первое живое существо (с небольшим запасом по размеру) или блок. */
 	public HitResult aim(double range) {
-		return aim(range, e -> e instanceof LivingEntity l && l.isAlive() && e != caster && !e.isSpectator());
+		return aim(range, Targeting.living(caster));
 	}
 
 	public HitResult aim(double range, Predicate<Entity> filter) {
-		Vec3 eye = eye();
-		Vec3 end = eye.add(look().scale(range));
-		BlockHitResult block = level.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, caster));
-		Vec3 limit = block.getType() == HitResult.Type.MISS ? end : block.getLocation();
-		Entity best = null;
-		Vec3 bestAt = null;
-		double bestDist = Double.MAX_VALUE;
-		AABB box = new AABB(eye, limit).inflate(1.5);
-		for (Entity e : level.getEntities(caster, box, filter::test)) {
-			var hit = e.getBoundingBox().inflate(0.35).clip(eye, limit);
-			if (hit.isEmpty()) continue;
-			double d = eye.distanceToSqr(hit.get());
-			if (d < bestDist) {
-				bestDist = d;
-				best = e;
-				bestAt = hit.get();
-			}
-		}
-		if (best != null) return new EntityHitResult(best, bestAt);
-		return block.getType() == HitResult.Type.MISS ? BlockHitResult.miss(end, caster.getDirection(), caster.blockPosition()) : block;
+		if (forced != null && (forced.entity() == null || filter.test(forced.entity()))) return forced.hit();
+		return Targeting.ray(level, caster, eye(), look(), Math.min(range, Magic.MAX_RANGE), filter);
+	}
+
+	/** Прицел на дальность заклинания. */
+	public HitResult aim() {
+		return aim(spell.range);
 	}
 
 	/** Живая цель под прицелом или null. */
@@ -132,19 +167,31 @@ public final class Cast {
 		return aim(range, filter) instanceof EntityHitResult e && e.getEntity() instanceof LivingEntity l ? l : null;
 	}
 
+	/** Враг (или любая цель, которую можно задеть) под прицелом на дальность заклинания. */
+	public LivingEntity aimFoe() {
+		return aimLiving(spell.range, e -> e instanceof LivingEntity l && canHit(l) && !isAlly(l));
+	}
+
 	/** Точка под прицелом: центр существа, место на блоке или конец луча. */
 	public Vec3 aimPoint(double range) {
+		if (forced != null) return forced.point();
 		HitResult hit = aim(range);
 		if (hit instanceof EntityHitResult e) return e.getEntity().position().add(0, e.getEntity().getBbHeight() * 0.5, 0);
 		return hit.getLocation();
 	}
 
-	/** Точка на земле под прицелом (для ритуалов): блок под прицелом или земля под концом луча. */
+	public Vec3 aimPoint() {
+		return target().point();
+	}
+
+	/** Точка на земле под прицелом (для ударов по месту): блок под прицелом или земля под концом луча. */
 	public Vec3 aimGround(double range) {
-		Vec3 p = aimPoint(range);
-		BlockHitResult down = level.clip(new ClipContext(p.add(0, 0.5, 0), p.add(0, -12, 0), ClipContext.Block.COLLIDER,
-				ClipContext.Fluid.NONE, caster));
-		return down.getType() == HitResult.Type.MISS ? p : down.getLocation();
+		if (forced != null) return forced.ground();
+		return Targeting.ground(level, caster, aimPoint(range).add(0, 0.5, 0));
+	}
+
+	public Vec3 aimGround() {
+		return target().ground();
 	}
 
 	// --- Кто свой, кто чужой ---
@@ -182,6 +229,11 @@ public final class Cast {
 				&& !(e instanceof Mannequin);
 	}
 
+	/** Задевает ли удар по площади: всё, что можно задеть, кроме союзников. */
+	public boolean isFoe(LivingEntity e) {
+		return canHit(e) && !isAlly(e);
+	}
+
 	public static boolean isUndead(LivingEntity e) {
 		return e.getType().is(EntityTypeTags.SENSITIVE_TO_SMITE);
 	}
@@ -201,10 +253,32 @@ public final class Cast {
 		return around(center, radius, this::isEnemy);
 	}
 
+	/** Всё, что задевает удар по площади (враги и нейтральные мобы, но не союзники). */
+	public List<LivingEntity> foesAround(Vec3 center, double radius) {
+		return around(center, radius, this::isFoe);
+	}
+
 	public List<LivingEntity> alliesAround(Vec3 center, double radius) {
 		List<LivingEntity> out = around(center, radius, e -> isAlly(e) && !(e instanceof ArmorStand) && !(e instanceof Mannequin));
 		// Сам маг — всегда союзник (даже если его нет в списке существ мира, как у «ненастоящего» игрока).
 		if (!out.contains(caster) && center(caster).distanceToSqr(center) <= radius * radius) out.add(caster);
+		return out;
+	}
+
+	/** Существа вдоль отрезка (толщина — {@code width} блоков от оси), ближние первыми. */
+	public List<LivingEntity> along(Vec3 from, Vec3 to, double width, Predicate<LivingEntity> filter) {
+		List<LivingEntity> out = new ArrayList<>();
+		Vec3 d = to.subtract(from);
+		double len2 = d.lengthSqr();
+		AABB box = new AABB(from, to).inflate(width + 1);
+		for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, box, LivingEntity::isAlive)) {
+			Vec3 c = center(e);
+			double t = len2 < 1.0E-6 ? 0 : Mth.clamp(c.subtract(from).dot(d) / len2, 0, 1);
+			Vec3 p = from.add(d.scale(t));
+			double r = width + e.getBbWidth() * 0.5;
+			if (p.distanceToSqr(c) <= r * r && filter.test(e)) out.add(e);
+		}
+		out.sort(Comparator.comparingDouble(e -> e.distanceToSqr(from)));
 		return out;
 	}
 
@@ -239,8 +313,8 @@ public final class Cast {
 		caster.resetFallDistance();
 		MagicFx.burst(level, to.add(0, 1, 0), MagicParticles.spark(color, 0.3F, 16), 16, 0.3, 0.05);
 		MagicFx.burst(level, to.add(0, 1, 0), net.minecraft.core.particles.ParticleTypes.PORTAL, 30, 0.3, 0.3);
-		MagicFx.sound(level, from, MagicSounds.CAST_TELEPORT, 0.8F, 1.2F);
-		MagicFx.sound(level, to, MagicSounds.CAST_TELEPORT, 0.8F, 1.4F);
+		MagicFx.sound(level, from, MagicSounds.TELEPORT, 0.8F, 1.2F);
+		MagicFx.sound(level, to, MagicSounds.TELEPORT, 0.8F, 1.4F);
 	}
 
 	/** Оттолкнуть от точки (и подбросить). */
@@ -253,20 +327,73 @@ public final class Cast {
 		e.hurtMarked = true;
 	}
 
+	/** Притянуть к точке (сила — скорость в блоках за тик). */
+	public static void pull(LivingEntity e, Vec3 to, double strength) {
+		Vec3 d = to.subtract(center(e));
+		if (d.lengthSqr() < 0.04) return;
+		double k = strength * (1.0 - e.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE));
+		Vec3 v = d.normalize().scale(k);
+		e.push(v.x, v.y, v.z);
+		e.hurtMarked = true;
+	}
+
 	// --- Урон и лечение ---
 
 	public boolean hurt(LivingEntity target, float amount, MagicDamage kind) {
 		return hurt(target, amount, kind, caster);
 	}
 
+	/**
+	 * Магический урон. Неуязвимость после прошлого удара сбрасывается: у заклинаний свой ритм ударов
+	 * (потоки бьют раз в полсекунды, залпы — каждым снарядом), иначе копии мультикаста и залпы терялись бы.
+	 */
 	public boolean hurt(LivingEntity target, float amount, MagicDamage kind, Entity direct) {
 		if (amount <= 0 || !target.isAlive()) return false;
+		target.invulnerableTime = 0;
 		return target.hurtServer(level, kind.source(level, direct, caster), amount);
 	}
 
-	/** Лечение; нежить вместо лечения получает святой урон (если {@code hurtUndead}). */
+	/** Лечение. */
 	public void heal(LivingEntity target, float amount) {
 		if (amount <= 0 || !target.isAlive()) return;
 		target.heal(amount);
+	}
+
+	// --- Мультикаст: цели копий ---
+
+	/**
+	 * Цели для {@code n} копий: главная — прицел мага; остальные — ближайшие к прицелу враги в радиусе
+	 * {@code spread}, а если врагов не хватает — точки по кольцу вокруг прицела.
+	 */
+	static List<Targeting.Aim> copyTargets(ServerLevel level, ServerPlayer caster, Spell spell, int n) {
+		Targeting.Aim main = Targeting.aim(level, caster, caster.getEyePosition(), caster.getViewVector(1.0F), spell.range,
+				Targeting.living(caster));
+		List<Targeting.Aim> out = new ArrayList<>();
+		out.add(main);
+		if (n <= 1) return out;
+		Cast probe = new Cast(level, caster, spell, 1, 1);
+		double spread = Math.max(8.0, spell.circleRadius() * 2.0);
+		List<LivingEntity> foes = probe.enemiesAround(main.point(), spread);
+		foes.remove(main.entity());
+		foes.sort(Comparator.comparingDouble(e -> e.distanceToSqr(main.point())));
+		Vec3 look = caster.getViewVector(1.0F);
+		for (int i = 1; i < n; i++) {
+			if (i - 1 < foes.size()) {
+				LivingEntity e = foes.get(i - 1);
+				Vec3 c = center(e);
+				out.add(new Targeting.Aim(new EntityHitResult(e, c), c, e, Targeting.ground(level, caster, e.position().add(0, 0.5, 0)), false));
+			} else {
+				Vec3 off = CircleLayout.copyOffset(spell, look, i, n);
+				if (spell.anchor == Anchor.HAND || spell.anchor == Anchor.LINE || spell.anchor == Anchor.BACK
+						|| spell.anchor == Anchor.ORBIT) {
+					off = new Vec3(off.x, 0, off.z).scale(2.5);
+				}
+				Vec3 p = main.point().add(off);
+				Vec3 g = Targeting.ground(level, caster, p.add(0, 1.0, 0));
+				out.add(new Targeting.Aim(BlockHitResult.miss(p, net.minecraft.core.Direction.UP, net.minecraft.core.BlockPos.containing(p)),
+						p, null, g, main.miss()));
+			}
+		}
+		return out;
 	}
 }

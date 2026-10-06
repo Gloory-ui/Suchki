@@ -38,6 +38,10 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class Magic {
 	public static final String ROLE = "mage";
+	/** Дальше этого не бьёт ни одно заклинание (точка прицела, круги у цели). */
+	public static final double MAX_RANGE = 128.0;
+	/** Наибольший мультикаст (копий за раз). */
+	public static final int MAX_COPIES = 4;
 	/** Сколько тиков можно держать заклинание на пике, прежде чем оно сорвётся само. */
 	public static final int HOLD_TICKS = 60;
 	/** Сколько тиков после траты маны она не восстанавливается. */
@@ -63,6 +67,11 @@ public final class Magic {
 	public static final AttachmentType<String> CASTING = AttachmentRegistry.<String>builder()
 			.syncWith(ByteBufCodecs.STRING_UTF8, AttachmentSyncPredicate.all())
 			.buildAndRegister(id("casting"));
+
+	/** Сколько копий (мультикаст) в текущем касте — видят все, чтобы рисовать круги копий. */
+	public static final AttachmentType<Integer> CASTING_COPIES = AttachmentRegistry.<Integer>builder()
+			.syncWith(ByteBufCodecs.VAR_INT, AttachmentSyncPredicate.all())
+			.buildAndRegister(id("casting_copies"));
 
 	// --- Пакеты ---
 
@@ -118,6 +127,8 @@ public final class Magic {
 		final float cap;
 		final int form;
 		final int over;
+		/** Сколько копий выпускается (мультикаст). */
+		final int copies;
 		float invested;
 		int peakTicks;
 		int stage;
@@ -125,13 +136,14 @@ public final class Magic {
 		boolean starved;
 		int channelTicks;
 
-		Charge(Spell spell, FocusItem focus, float cost, float cap, int form, int over) {
+		Charge(Spell spell, FocusItem focus, float cost, float cap, int form, int over, int copies) {
 			this.spell = spell;
 			this.focus = focus;
 			this.cost = cost;
 			this.cap = cap;
 			this.form = form;
 			this.over = over;
+			this.copies = copies;
 		}
 
 		float power() {
@@ -160,11 +172,16 @@ public final class Magic {
 		Minions.init();
 		Minds.init();
 		Zones.init();
+		Terrain.init();
 		MagicLoot.init();
 		PayloadTypeRegistry.playC2S().register(SelectSpell.TYPE, SelectSpell.CODEC);
 		PayloadTypeRegistry.playS2C().register(CastFx.TYPE, CastFx.CODEC);
 		PayloadTypeRegistry.playS2C().register(Shake.TYPE, Shake.CODEC);
+		PayloadTypeRegistry.playS2C().register(FxNet.CircleFx.TYPE, FxNet.CircleFx.CODEC);
+		PayloadTypeRegistry.playS2C().register(FxNet.WorldFx.TYPE, FxNet.WorldFx.CODEC);
+		PayloadTypeRegistry.playC2S().register(FxNet.SetMulticast.TYPE, FxNet.SetMulticast.CODEC);
 		ServerPlayNetworking.registerGlobalReceiver(SelectSpell.TYPE, (p, ctx) -> select(ctx.player(), p.spell()));
+		ServerPlayNetworking.registerGlobalReceiver(FxNet.SetMulticast.TYPE, (p, ctx) -> setMulticast(ctx.player(), p.copies()));
 		ServerTickEvents.END_SERVER_TICK.register(Magic::serverTick);
 		// Выброшенный призрачный предмет сразу тает.
 		net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> {
@@ -201,8 +218,7 @@ public final class Magic {
 						}))
 						.then(net.minecraft.commands.Commands.literal("reset").executes(c -> {
 							ServerPlayer p = c.getSource().getPlayerOrException();
-							MagicData d = data(p);
-							setData(p, new MagicData(d.known(), d.selected(), Map.of(), d.starter()));
+							resetCooldowns(p);
 							setMana(p, maxMana(p));
 							c.getSource().sendSuccess(() -> Component.translatable("suchki.magic.cmd.reset"), false);
 							return 1;
@@ -240,12 +256,12 @@ public final class Magic {
 	}
 
 	public static float maxMana(Player player) {
-		return (float) (100 + mageLevel(player) + perk(player, Perk.MANA_MAX));
+		return (float) (100 + 4 * mageLevel(player) + perk(player, Perk.MANA_MAX));
 	}
 
 	/** Восстановление маны в секунду. */
 	public static float regenPerSecond(Player player) {
-		return (float) ((2.0 + 0.04 * mageLevel(player)) * (1.0 + perk(player, Perk.MANA_REGEN)));
+		return (float) ((2.0 + 0.12 * mageLevel(player)) * (1.0 + perk(player, Perk.MANA_REGEN)));
 	}
 
 	public static float mana(Player player) {
@@ -271,7 +287,36 @@ public final class Magic {
 
 	/** Сколько тиков формируется заклинание (до «готово»). */
 	public static int formTicks(Spell spell, float speed) {
-		return Math.max(2, Math.round(spell.chargeTicks / speed));
+		return formTicks(spell, speed, 1);
+	}
+
+	/** С мультикастом круг строится дольше: каждая лишняя копия — +40%. */
+	public static int formTicks(Spell spell, float speed, int copies) {
+		return Math.max(2, Math.round(spell.chargeTicks / speed * (1.0F + 0.4F * (copies - 1))));
+	}
+
+	// --- Мультикаст ---
+
+	/** Сколько копий доступно магу по уровню: ×2 с 14-го, ×3 с 26-го, ×4 с 40-го. */
+	public static int maxMulticast(Player player) {
+		int lvl = mageLevel(player);
+		return lvl >= 40 ? 4 : lvl >= 26 ? 3 : lvl >= 14 ? 2 : 1;
+	}
+
+	/** Сколько копий реально выйдет у выбранного заклинания. */
+	public static int copiesFor(Player player, Spell spell) {
+		return Math.max(1, Math.min(Math.min(data(player).multicast(), maxMulticast(player)), spell.maxCopies));
+	}
+
+	public static void setMulticast(ServerPlayer player, int copies) {
+		if (CHARGES.containsKey(player.getUUID())) return;
+		int n = Math.max(1, Math.min(copies, maxMulticast(player)));
+		setData(player, data(player).withMulticast(n));
+	}
+
+	/** Для команд и самопроверки: снять все перезарядки. */
+	public static void resetCooldowns(ServerPlayer player) {
+		setData(player, data(player).clearCooldowns());
 	}
 
 	/** Сколько тиков идёт накопление от «готово» до предела. */
@@ -289,15 +334,38 @@ public final class Magic {
 
 	// --- Изучение и выбор ---
 
-	public enum LearnResult { LEARNED, NOT_MAGE, LOW_LEVEL, KNOWN }
+	public enum LearnResult { LEARNED, NOT_MAGE, LOW_LEVEL, KNOWN, MISSING_ELEMENTS }
 
 	public static LearnResult learn(ServerPlayer player, Spell spell) {
 		if (!isMage(player)) return LearnResult.NOT_MAGE;
 		if (mageLevel(player) < spell.requiredLevel() && !free(player)) return LearnResult.LOW_LEVEL;
 		MagicData d = data(player);
 		if (d.knows(spell.id)) return LearnResult.KNOWN;
+		if (!free(player) && !missingElements(player, spell).isEmpty()) return LearnResult.MISSING_ELEMENTS;
 		setData(player, d.learn(spell.id));
 		return LearnResult.LEARNED;
+	}
+
+	/**
+	 * Для слияния нужно владеть каждой стихией-составляющей: знать хотя бы одно её заклинание ранга не ниже
+	 * (ранг слияния − 1). Возвращает стихии, которых не хватает.
+	 */
+	public static List<School> missingElements(Player player, Spell spell) {
+		if (!spell.fusion()) return List.of();
+		MagicData d = data(player);
+		java.util.ArrayList<School> missing = new java.util.ArrayList<>();
+		for (School part : spell.combo) {
+			boolean ok = false;
+			for (String id : d.known()) {
+				Spell k = Spells.get(id);
+				if (k != null && k.school == part && k.tier >= spell.tier - 1) {
+					ok = true;
+					break;
+				}
+			}
+			if (!ok) missing.add(part);
+		}
+		return missing;
 	}
 
 	/** Для команд и самопроверки: выучить без проверок. */
@@ -342,7 +410,8 @@ public final class Magic {
 		if (d.readyAt(spell.id) > now && !free(player)) {
 			return Component.translatable("suchki.magic.cooldown", (d.readyAt(spell.id) - now + 19) / 20);
 		}
-		float need = spell.charged() ? cost(player, spell, focus) : cost(player, spell, focus) * 0.5F;
+		int copies = copiesFor(player, spell);
+		float need = (spell.charged() ? cost(player, spell, focus) : cost(player, spell, focus) * 0.5F) * copies;
 		if (mana(player) + 0.01F < need && !free(player)) return Component.translatable("suchki.magic.no_mana");
 		return null;
 	}
@@ -351,9 +420,11 @@ public final class Magic {
 		Spell spell = data(player).selectedSpell();
 		if (spell == null) return;
 		float speed = castSpeed(player, focus);
-		int form = formTicks(spell, speed);
-		Charge c = new Charge(spell, focus, cost(player, spell, focus), focus.cap, form, overTicks(spell, form));
+		int copies = copiesFor(player, spell);
+		int form = formTicks(spell, speed, copies);
+		Charge c = new Charge(spell, focus, cost(player, spell, focus) * copies, focus.cap, form, overTicks(spell, form), copies);
 		CHARGES.put(player.getUUID(), c);
+		player.setAttached(CASTING_COPIES, copies);
 		player.setAttached(CASTING, spell.id);
 		MagicFx.castStart(player.level(), player, spell);
 	}
@@ -423,7 +494,7 @@ public final class Magic {
 			c.invested += take;
 			c.channelTicks++;
 			float power = 0.6F + (c.focus.channelCap - 0.6F) * Math.min(1.0F, c.channelTicks / (float) CHANNEL_RAMP);
-			c.spell.channel.tick(new Cast(level, player, c.spell, power, spellBonus(player)), c.channelTicks);
+			for (Cast cast : casts(player, c.spell, power, c.copies)) c.spell.channel.tick(cast, c.channelTicks);
 			if (c.channelTicks % 20 == 0) giveXp(player, c.invested);
 		}
 	}
@@ -444,6 +515,7 @@ public final class Magic {
 	static void release(ServerPlayer player) {
 		Charge c = CHARGES.remove(player.getUUID());
 		player.removeAttached(CASTING);
+		player.removeAttached(CASTING_COPIES);
 		if (c == null) return;
 		ServerLevel level = player.level();
 		long now = level.getGameTime();
@@ -460,12 +532,19 @@ public final class Magic {
 			return;
 		}
 		float power = c.power();
-		Cast cast = new Cast(level, player, c.spell, power, spellBonus(player));
-		if (!c.spell.action.cast(cast)) {
+		List<Cast> casts = casts(player, c.spell, power, c.copies);
+		if (!c.spell.action.cast(casts.get(0))) {
 			refund(player, c.invested * 0.75F);
 			fx(player, c.spell, CastFx.FIZZLE, 0.0F);
 			player.displayClientMessage(Component.translatable("suchki.magic.no_target").withStyle(ChatFormatting.GRAY), true);
 			return;
+		}
+		// Копии мультикаста вылетают одна за другой из своих кругов.
+		for (int i = 1; i < casts.size(); i++) {
+			Cast copy = casts.get(i);
+			Zones.later(copy, i * 4, () -> {
+				if (copy.caster.isAlive()) copy.spell.action.cast(copy);
+			});
 		}
 		setData(player, data(player).cooldown(c.spell.id, now + c.spell.cooldownTicks, now));
 		fx(player, c.spell, CastFx.RELEASE, power);
@@ -475,6 +554,7 @@ public final class Magic {
 	/** Каст прерван (сменил предмет, умер, вышел): половина маны сгорает. */
 	private static void abort(ServerPlayer player, Charge c) {
 		player.removeAttached(CASTING);
+		player.removeAttached(CASTING_COPIES);
 		if (c.spell.charged()) refund(player, c.invested * 0.5F);
 		fx(player, c.spell, CastFx.FIZZLE, 0.0F);
 	}
@@ -497,9 +577,43 @@ public final class Magic {
 		return s.action.cast(new Cast(p.level(), p, s, power, spellBonus(p)));
 	}
 
+	/** Сразу сотворить заклинание мультикастом: все копии сразу, без задержки. Возвращает успех главной копии. */
+	public static boolean castNow(ServerPlayer p, Spell s, float power, int copies) {
+		List<Cast> casts = casts(p, s, power, copies);
+		boolean ok = s.action.cast(casts.get(0));
+		for (int i = 1; i < casts.size(); i++) s.action.cast(casts.get(i));
+		return ok;
+	}
+
+	/**
+	 * Касты для всех копий: у каждой своя точка вылета (центр её круга, {@link CircleLayout}) и своя цель
+	 * ({@link Cast#copyTargets}). Одна копия — обычный каст от руки.
+	 */
+	public static List<Cast> casts(ServerPlayer p, Spell s, float power, int copies) {
+		float bonus = spellBonus(p);
+		if (copies <= 1) return List.of(new Cast(p.level(), p, s, power, bonus));
+		List<Targeting.Aim> aims = Cast.copyTargets(p.level(), p, s, copies);
+		Vec3 look = p.getViewVector(1.0F);
+		Targeting.Aim main = aims.get(0);
+		CircleLayout.Placement mainCircle = CircleLayout.main(s, Cast.handOf(p), look, p.position(), main.point(), main.ground());
+		java.util.ArrayList<Cast> out = new java.util.ArrayList<>();
+		for (int i = 0; i < copies; i++) {
+			CircleLayout.Placement pl = CircleLayout.copy(s, mainCircle, look, i, copies);
+			Vec3 origin = s.anchor == Anchor.HAND || s.anchor == Anchor.LINE ? pl.center() : null;
+			out.add(new Cast(p.level(), p, s, power, bonus, i, copies, origin, aims.get(i)));
+		}
+		return out;
+	}
+
 	/** Прогнать поток {@code ticks} тиков с силой {@code power}. */
 	public static void channelNow(ServerPlayer p, Spell s, int ticks, float power) {
-		for (int t = 1; t <= ticks; t++) s.channel.tick(new Cast(p.level(), p, s, power, spellBonus(p)), t);
+		channelNow(p, s, ticks, power, 1);
+	}
+
+	public static void channelNow(ServerPlayer p, Spell s, int ticks, float power, int copies) {
+		for (int t = 1; t <= ticks; t++) {
+			for (Cast c : casts(p, s, power, copies)) s.channel.tick(c, t);
+		}
 	}
 
 	/** Попадание снаряда заклинания (как будто он долетел). */
@@ -550,7 +664,7 @@ public final class Magic {
 		}
 		if (blocked > 0) {
 			MagicFx.burst(player.level(), player.getEyePosition().add(player.getViewVector(1.0F).scale(0.8)),
-					MagicParticles.spark(School.RESTORATION.light, 0.35F, 8), 6, 0.25, 0.05);
+					MagicParticles.spark(School.LIFE.light, 0.35F, 8), 6, 0.25, 0.05);
 			MagicFx.sound(player.level(), player.position(), MagicSounds.WARD_HIT, 0.8F, 1.1F + player.getRandom().nextFloat() * 0.2F);
 		}
 		return damage - blocked;

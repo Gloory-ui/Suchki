@@ -263,6 +263,16 @@ DEATH = {
                      "%1$s was killed by sorcery", "%1$s was killed by %2$s's sorcery"),
     "spell_earth": ("%1$s раздавлен землёй", "%1$s раздавлен землетрясением %2$s",
                     "%1$s was crushed by the earth", "%1$s was crushed by %2$s's earthquake"),
+    "spell_wind": ("%1$s разорван ветром", "%1$s разорван ветром %2$s",
+                   "%1$s was torn apart by the wind", "%1$s was torn apart by %2$s's wind"),
+    "spell_water": ("%1$s утонул в магической воде", "%1$s утоплен магией %2$s",
+                    "%1$s drowned in magic water", "%1$s was drowned by %2$s's magic"),
+    "spell_void": ("%1$s стёрт пустотой", "%1$s стёрт пустотой %2$s",
+                   "%1$s was erased by the void", "%1$s was erased by %2$s"),
+    "spell_blood": ("%1$s истёк кровью", "%1$s обескровлен магией %2$s",
+                    "%1$s bled out", "%1$s was bled dry by %2$s"),
+    "spell_psychic": ("%1$s сошёл с ума", "%1$s сломлен разумом %2$s",
+                      "%1$s lost their mind", "%1$s was broken by %2$s's mind"),
 }
 
 # Звуки: событие → список (ванильный звук, громкость, высота). Пересведение под магию.
@@ -351,6 +361,11 @@ DAMAGE_TYPES = {
     "spell_dark": {},
     "spell_arcane": {},
     "spell_earth": {},
+    "spell_wind": {},
+    "spell_water": {"effects": "drowning"},
+    "spell_void": {},
+    "spell_blood": {},
+    "spell_psychic": {},
 }
 
 

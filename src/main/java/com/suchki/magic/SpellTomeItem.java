@@ -48,13 +48,23 @@ public class SpellTomeItem extends Item {
 			case LEARNED -> {
 				if (!sp.hasInfiniteMaterials()) stack.shrink(1);
 				sp.sendSystemMessage(Component.translatable("suchki.magic.learned", spell.displayName())
-						.withStyle(s -> s.withColor(spell.school.color)));
+						.withStyle(s -> s.withColor(spell.color())));
 				MagicFx.learned(sp.level(), sp, spell);
 			}
 			case NOT_MAGE -> sp.displayClientMessage(Component.translatable("suchki.magic.learn_not_mage").withStyle(ChatFormatting.RED), true);
 			case LOW_LEVEL -> sp.displayClientMessage(Component.translatable("suchki.magic.learn_level", spell.requiredLevel())
 					.withStyle(ChatFormatting.RED), true);
 			case KNOWN -> sp.displayClientMessage(Component.translatable("suchki.magic.learn_known").withStyle(ChatFormatting.GRAY), true);
+			case MISSING_ELEMENTS -> {
+				Component parts = Component.empty();
+				java.util.List<School> missing = Magic.missingElements(sp, spell);
+				for (int i = 0; i < missing.size(); i++) {
+					if (i > 0) parts = parts.copy().append(", ");
+					parts = parts.copy().append(missing.get(i).displayName());
+				}
+				sp.displayClientMessage(Component.translatable("suchki.magic.learn_elements", parts,
+						Component.translatable("suchki.tier." + Math.max(1, spell.tier - 1))).withStyle(ChatFormatting.RED), true);
+			}
 		}
 		return InteractionResult.SUCCESS;
 	}
@@ -71,11 +81,21 @@ public class SpellTomeItem extends Item {
 	/** Описание заклинания для подсказок (книга, колесо выбора). */
 	public static void describe(Spell spell, Consumer<Component> out) {
 		out.accept(Component.translatable("suchki.spell.line", spell.school.displayName(),
-				Component.translatable("suchki.tier." + spell.tier)).withStyle(s -> s.withColor(spell.school.color)));
+				Component.translatable("suchki.tier." + spell.tier)).withStyle(s -> s.withColor(spell.color())));
+		if (spell.fusion()) {
+			Component parts = Component.empty();
+			for (int i = 0; i < spell.combo.size(); i++) {
+				if (i > 0) parts = parts.copy().append(" + ");
+				parts = parts.copy().append(spell.combo.get(i).displayName());
+			}
+			out.accept(Component.translatable("suchki.spell.fusion", parts).withStyle(s -> s.withColor(spell.lightColor())));
+		}
 		out.accept(Component.translatable("suchki.style." + spell.style.name().toLowerCase(java.util.Locale.ROOT))
 				.withStyle(ChatFormatting.GRAY));
 		out.accept(Component.translatable(spell.charged() ? "suchki.spell.mana" : "suchki.spell.mana_per_second", spell.mana)
 				.withStyle(ChatFormatting.AQUA));
 		out.accept(spell.description().copy().withStyle(ChatFormatting.WHITE));
+		if (spell.destroys) out.accept(Component.translatable("suchki.spell.destroys").withStyle(ChatFormatting.DARK_RED));
+		if (spell.maxCopies > 1) out.accept(Component.translatable("suchki.spell.multicast", spell.maxCopies).withStyle(ChatFormatting.DARK_AQUA));
 	}
 }

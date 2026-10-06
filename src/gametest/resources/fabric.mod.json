@@ -5,7 +5,12 @@
 	"name": "Suchki UI tests",
 	"environment": "*",
 	"entrypoints": {
-		"fabric-client-gametest": ["com.suchki.test.SuchkiUiTest"]
+		"fabric-client-gametest": [
+			"com.suchki.test.SuchkiUiTest",
+			"com.suchki.test.CircleGalleryTest",
+			"com.suchki.test.HudGalleryTest",
+			"com.suchki.test.SpellShowcaseTest"
+		]
 	},
 	"depends": {
 		"suchki": "*"

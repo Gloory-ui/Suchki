@@ -46,7 +46,7 @@ public class SpellWheelScreen extends Screen {
 	@Override
 	protected void init() {
 		Spell sel = minecraft.player == null ? null : Magic.data(minecraft.player).selectedSpell();
-		school = sel != null ? sel.school : School.DESTRUCTION;
+		school = sel != null ? sel.school : School.FIRE;
 	}
 
 	@Override
@@ -205,7 +205,7 @@ public class SpellWheelScreen extends Screen {
 		if (hovered != null) {
 			SpellTomeItem.describe(hovered, lines::add);
 		} else if (spells.isEmpty()) {
-			lines.add(Component.translatable(known(School.DESTRUCTION).isEmpty() && allEmpty() ? "suchki.wheel.none" : "suchki.wheel.empty"));
+			lines.add(Component.translatable(known(School.FIRE).isEmpty() && allEmpty() ? "suchki.wheel.none" : "suchki.wheel.empty"));
 		} else {
 			lines.add(Component.translatable("suchki.wheel.hint"));
 		}

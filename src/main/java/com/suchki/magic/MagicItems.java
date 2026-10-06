@@ -37,9 +37,12 @@ public final class MagicItems {
 
 	public static final FocusItem APPRENTICE_STAFF = register("apprentice_staff", p -> new FocusItem(p, 1.0F, 1.75F, 1.0F, 1.2F, 3, true),
 			new Item.Properties().stacksTo(1).component(DataComponents.USE_EFFECTS, CASTING_MOVE));
-	public static final FocusItem GRIMOIRE = register("grimoire", p -> new FocusItem(p, 1.25F, 1.5F, 0.85F, 1.3F, 4, false),
+	public static final FocusItem GRIMOIRE = register("grimoire", p -> new FocusItem(p, 1.25F, 1.5F, 0.85F, 1.3F, 5, false),
 			new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON).component(DataComponents.USE_EFFECTS, CASTING_MOVE));
-	public static final FocusItem ARCHMAGE_STAFF = register("archmage_staff", p -> new FocusItem(p, 1.0F, 2.25F, 0.9F, 1.5F, 5, true),
+	public static final FocusItem ARCHMAGE_STAFF = register("archmage_staff", p -> new FocusItem(p, 1.0F, 2.25F, 0.9F, 1.5F, 6, true),
+			new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant().component(DataComponents.USE_EFFECTS, CASTING_MOVE));
+	/** Посох первоначал: единственный фокус, который выдерживает божественные заклинания. */
+	public static final FocusItem PRIMORDIAL_STAFF = register("primordial_staff", p -> new FocusItem(p, 1.1F, 2.75F, 0.8F, 1.8F, 7, true),
 			new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant().component(DataComponents.USE_EFFECTS, CASTING_MOVE));
 
 	public static final Map<School, SpellTomeItem> TOMES = new EnumMap<>(School.class);
@@ -63,11 +66,12 @@ public final class MagicItems {
 	public static final CreativeModeTab TAB = Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, Magic.id("magic"),
 			FabricItemGroup.builder()
 					.title(Component.translatable("itemGroup.suchki.magic"))
-					.icon(() -> new ItemStack(ARCHMAGE_STAFF))
+					.icon(() -> new ItemStack(PRIMORDIAL_STAFF))
 					.displayItems((params, out) -> {
 						out.accept(APPRENTICE_STAFF);
 						out.accept(GRIMOIRE);
 						out.accept(ARCHMAGE_STAFF);
+						out.accept(PRIMORDIAL_STAFF);
 						for (Spell spell : Spells.all()) out.accept(tome(spell));
 					})
 					.build());
