@@ -2,17 +2,21 @@ package com.suchki.skill;
 
 import com.suchki.Suchki;
 import com.suchki.SuchkiConfig;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.Commands;
 import net.minecraft.core.Holder;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -85,6 +89,21 @@ public final class Skills {
 		ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> applyAttributes(newPlayer));
 		SkillXp.register();
 		SkillEffects.register();
+		registerCommand();
+	}
+
+	/** /suchki_skills max — для операторов: все роли до максимального уровня, все ступени всех веток. */
+	private static void registerCommand() {
+		CommandRegistrationCallback.EVENT.register((dispatcher, ctx, env) -> dispatcher.register(
+				Commands.literal("suchki_skills")
+						.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+						.then(Commands.literal("max").executes(c -> {
+							ServerPlayer p = c.getSource().getPlayerOrException();
+							maxAll(p);
+							c.getSource().sendSuccess(() -> Component.translatable("suchki.skill.cmd.max",
+									SkillTree.roles().size(), SkillTree.maxLevel()), false);
+							return 1;
+						}))));
 	}
 
 	public static PlayerSkills get(Player player) {
@@ -172,6 +191,20 @@ public final class Skills {
 		applyAttributes(player);
 		player.level().playSound(null, player.blockPosition(), SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.7F, 1.2F);
 		com.suchki.fx.Fx.skillLearned(player.level(), player);
+	}
+
+	/** Все роли — максимальный уровень и все ступени всех веток. Активная роль не меняется. */
+	public static void maxAll(ServerPlayer player) {
+		PlayerSkills s = get(player);
+		for (SkillTree.Role role : SkillTree.roles().values()) {
+			List<String> nodes = role.nodes().stream()
+					.sorted(Comparator.comparingInt(SkillTree.Node::branch).thenComparingInt(SkillTree.Node::tier))
+					.map(SkillTree.Node::id)
+					.toList();
+			s = s.with(role.id(), new PlayerSkills.Progress(SkillTree.maxLevel(), 0, nodes));
+		}
+		set(player, s);
+		applyAttributes(player);
 	}
 
 	/** Сброс навыков активной роли за опыт: очки возвращаются, уровень роли остаётся. */

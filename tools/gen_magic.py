@@ -245,6 +245,7 @@ LANG = {
     "suchki.magic.cmd.learned": ("Изучены все заклинания: %s", "Learned all spells: %s"),
     "suchki.magic.cmd.mana": ("Мана восполнена", "Mana restored"),
     "suchki.magic.cmd.reset": ("Перезарядки сброшены, мана восполнена", "Cooldowns reset, mana restored"),
+    "suchki.magic.cmd.foci": ("Выданы все посохи и гримуар: %s", "Given all staffs and the grimoire: %s"),
 }
 
 DEATH = {

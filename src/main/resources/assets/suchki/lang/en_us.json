@@ -303,5 +303,7 @@
   "suchki.magic.mana_dry": "Out of mana — power won't grow, release",
   "suchki.magic.cmd.learned": "Learned all spells: %s",
   "suchki.magic.cmd.mana": "Mana restored",
-  "suchki.magic.cmd.reset": "Cooldowns reset, mana restored"
+  "suchki.magic.cmd.reset": "Cooldowns reset, mana restored",
+  "suchki.skill.cmd.max": "All roles (%s) raised to level %s, all branches learned",
+  "suchki.magic.cmd.foci": "Given all staffs and the grimoire: %s"
 }

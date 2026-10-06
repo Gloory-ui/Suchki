@@ -182,7 +182,7 @@ public final class Magic {
 		registerCommand();
 	}
 
-	/** /suchki_magic learn_all | mana | reset — для операторов (проверить магию, не собирая книги). */
+	/** /suchki_magic learn_all | mana | reset | give_foci — для операторов (проверить магию, не собирая книги). */
 	private static void registerCommand() {
 		net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback.EVENT.register((dispatcher, ctx, env) -> dispatcher.register(
 				net.minecraft.commands.Commands.literal("suchki_magic")
@@ -205,6 +205,13 @@ public final class Magic {
 							setData(p, new MagicData(d.known(), d.selected(), Map.of(), d.starter()));
 							setMana(p, maxMana(p));
 							c.getSource().sendSuccess(() -> Component.translatable("suchki.magic.cmd.reset"), false);
+							return 1;
+						}))
+						.then(net.minecraft.commands.Commands.literal("give_foci").executes(c -> {
+							ServerPlayer p = c.getSource().getPlayerOrException();
+							List<FocusItem> foci = List.of(MagicItems.APPRENTICE_STAFF, MagicItems.GRIMOIRE, MagicItems.ARCHMAGE_STAFF);
+							for (FocusItem focus : foci) p.getInventory().placeItemBackInInventory(new net.minecraft.world.item.ItemStack(focus));
+							c.getSource().sendSuccess(() -> Component.translatable("suchki.magic.cmd.foci", foci.size()), false);
 							return 1;
 						}))));
 	}
