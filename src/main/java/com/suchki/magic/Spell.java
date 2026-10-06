@@ -139,6 +139,11 @@ public final class Spell {
 		return !combo.isEmpty();
 	}
 
+	/** Есть ли у заклинания попадание снаряда. */
+	public boolean projectile() {
+		return hit != null;
+	}
+
 	/** Радиус главного круга в блоках (свой или по рангу и якорю). */
 	public float circleRadius() {
 		if (circleRadius > 0) return circleRadius;

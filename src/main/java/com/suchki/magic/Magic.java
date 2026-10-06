@@ -199,7 +199,7 @@ public final class Magic {
 		registerCommand();
 	}
 
-	/** /suchki_magic learn_all | mana | reset | give_foci — для операторов (проверить магию, не собирая книги). */
+	/** /suchki_magic learn_all | mana | reset | select | multicast | cast | give_foci — для операторов (проверить магию). */
 	private static void registerCommand() {
 		net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback.EVENT.register((dispatcher, ctx, env) -> dispatcher.register(
 				net.minecraft.commands.Commands.literal("suchki_magic")
@@ -223,13 +223,55 @@ public final class Magic {
 							c.getSource().sendSuccess(() -> Component.translatable("suchki.magic.cmd.reset"), false);
 							return 1;
 						}))
+						.then(net.minecraft.commands.Commands.literal("select")
+								.then(net.minecraft.commands.Commands.argument("spell", com.mojang.brigadier.arguments.StringArgumentType.word())
+										.suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+												Spells.all().stream().map(s -> s.id), b))
+										.executes(c -> {
+											ServerPlayer p = c.getSource().getPlayerOrException();
+											Spell spell = Spells.get(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "spell"));
+											if (spell == null) return 0;
+											teach(p, spell);
+											select(p, spell.id);
+											c.getSource().sendSuccess(() -> Component.translatable("suchki.magic.cmd.selected", spell.displayName()), false);
+											return 1;
+										})))
+						.then(net.minecraft.commands.Commands.literal("multicast")
+								.then(net.minecraft.commands.Commands.argument("copies",
+										com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, MAX_COPIES)).executes(c -> {
+											ServerPlayer p = c.getSource().getPlayerOrException();
+											int n = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "copies");
+											setData(p, data(p).withMulticast(n));
+											c.getSource().sendSuccess(() -> Component.translatable("suchki.magic.cmd.multicast", n), false);
+											return 1;
+										})))
+						.then(net.minecraft.commands.Commands.literal("cast")
+								.then(net.minecraft.commands.Commands.argument("spell", com.mojang.brigadier.arguments.StringArgumentType.word())
+										.suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+												Spells.all().stream().filter(Spell::charged).map(s -> s.id), b))
+										.executes(c -> castCommand(c, 1))
+										.then(net.minecraft.commands.Commands.argument("copies",
+												com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, MAX_COPIES))
+												.executes(c -> castCommand(c, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "copies"))))))
 						.then(net.minecraft.commands.Commands.literal("give_foci").executes(c -> {
 							ServerPlayer p = c.getSource().getPlayerOrException();
-							List<FocusItem> foci = List.of(MagicItems.APPRENTICE_STAFF, MagicItems.GRIMOIRE, MagicItems.ARCHMAGE_STAFF);
+							List<FocusItem> foci = List.of(MagicItems.APPRENTICE_STAFF, MagicItems.GRIMOIRE, MagicItems.ARCHMAGE_STAFF,
+									MagicItems.PRIMORDIAL_STAFF);
 							for (FocusItem focus : foci) p.getInventory().placeItemBackInInventory(new net.minecraft.world.item.ItemStack(focus));
 							c.getSource().sendSuccess(() -> Component.translatable("suchki.magic.cmd.foci", foci.size()), false);
 							return 1;
 						}))));
+	}
+
+	/** /suchki_magic cast: сразу сотворить заряженное заклинание (без маны и зарядки) — посмотреть, как оно выглядит. */
+	private static int castCommand(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> c, int copies)
+			throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		ServerPlayer p = c.getSource().getPlayerOrException();
+		Spell spell = Spells.get(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "spell"));
+		if (spell == null || !spell.charged()) return 0;
+		boolean ok = castNow(p, spell, 1.0F, Math.min(copies, spell.maxCopies));
+		fx(p, spell, ok ? CastFx.RELEASE : CastFx.FIZZLE, 1.0F);
+		return ok ? 1 : 0;
 	}
 
 	// --- Кто и сколько ---

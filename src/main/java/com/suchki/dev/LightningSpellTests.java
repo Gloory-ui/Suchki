@@ -1,0 +1,11 @@
+package com.suchki.dev;
+
+import java.util.Map;
+
+/** Проверки заклинаний стихии (эффект каждого заклинания на мишенях). */
+final class LightningSpellTests {
+	private LightningSpellTests() {}
+
+	static void addTo(Map<String, DevTests.Test> tests) {
+	}
+}

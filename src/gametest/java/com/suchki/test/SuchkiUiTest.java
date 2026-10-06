@@ -242,8 +242,7 @@ public class SuchkiUiTest implements FabricClientGameTest {
 				failures.add("Прочность X: удар не отменён или нет надписи (отменён " + cancelled[0] + ", надпись «" + overlay + "»)");
 			}
 
-			// 10. Магия: каст всех типов от первого и третьего лица, колесо заклинаний, HUD.
-			MagicUiTest.run(context, sp, failures);
+			// 10. Магия — в отдельных тестах: SpellShowcaseTest (каждое заклинание), CircleGalleryTest, HudGalleryTest.
 
 			// 11. Полная серверная самопроверка — теперь с настоящим игроком (маяк и др.).
 			List<String> report = new ArrayList<>();
