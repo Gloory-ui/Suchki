@@ -128,6 +128,7 @@ public final class DevTests {
 		tests.put("Роли", DevTests::roles);
 		tests.put("Навыки: эффекты", DevTests::skillPerks);
 		tests.put("Пружина: урон от падения", DevTests::springFall);
+		tests.put("Баланс боевых ролей", DevTests::combatBalance);
 		MagicTests.addTo(tests);
 		Skills.testChanceOverride = -1;
 		for (Map.Entry<String, Test> t : tests.entrySet()) {
@@ -180,6 +181,10 @@ public final class DevTests {
 		p.setHealth(p.getMaxHealth());
 		p.experienceLevel = 0;
 		p.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0, pitch);
+		// Взгляд живых существ идёт по голове — после прошлых проверок она могла остаться повёрнутой.
+		p.setYHeadRot(0);
+		p.yHeadRotO = 0;
+		p.yBodyRot = 0;
 		p.setItemInHand(InteractionHand.MAIN_HAND, held);
 		return p;
 	}
@@ -676,14 +681,14 @@ public final class DevTests {
 		DamageSource hit = level.damageSources().playerAttack(p);
 
 		skills(p, "warrior", "warrior.2.2");
-		r.check(near(magicAbsorb(z, hit, 10), 10.5, 0.01), "Воин «Точный удар»: +5% урона (" + magicAbsorb(z, hit, 10) + ")");
+		r.check(near(magicAbsorb(z, hit, 10), 11.0, 0.01), "Воин «Точный удар»: +10% урона (" + magicAbsorb(z, hit, 10) + ")");
 		skills(p, "warrior", "warrior.0.1");
 		p.setHealth(5);
 		r.check(near(magicAbsorb(z, hit, 10), 11, 0.01), "Воин «Ярость»: +10% при низком здоровье (" + magicAbsorb(z, hit, 10) + ")");
 		p.setHealth(p.getMaxHealth());
 		r.check(near(magicAbsorb(z, hit, 10), 10, 0.01), "Воин «Ярость»: без бонуса при полном здоровье");
 		skills(p, "warrior", "warrior.1.4");
-		r.check(near(magicAbsorb(p, level.damageSources().generic(), 10), 9.5, 0.01), "Воин «Бывалый»: −5% получаемого урона");
+		r.check(near(magicAbsorb(p, level.damageSources().generic(), 10), 9.0, 0.01), "Воин «Бывалый»: −10% получаемого урона");
 		skills(p, "hunter", "hunter.2.1");
 		r.check(near(magicAbsorb(z, hit, 10), 10.5, 0.01), "Охотник: +5% по враждебным мобам");
 
@@ -812,6 +817,45 @@ public final class DevTests {
 			if (s.getBlock() instanceof CropBlock cb && cb.getAge(s) > 0) grown++;
 		}
 		r.check(grown > 0, "Фермер «Садовник»: посевы рядом подрастают (" + grown + " из " + planted + ")");
+	}
+
+	// --- Баланс ---
+
+	/** Все узлы роли (как на 50 уровне). */
+	private static String[] allNodes(String role) {
+		return com.suchki.skill.SkillTree.role(role).nodes().stream().map(com.suchki.skill.SkillTree.Node::id).toArray(String[]::new);
+	}
+
+	/** Итоги полностью прокачанных боевых ролей: урон, защита, здоровье — как в таблице баланса. */
+	private static void combatBalance(ServerLevel level, BlockPos o, Report r) throws Exception {
+		FakePlayer p = player(level, o, ItemStack.EMPTY, 0);
+		Mob z = spawn(level, EntityType.ZOMBIE, o.offset(-3, 0, -3));
+		DamageSource melee = level.damageSources().playerAttack(p);
+		DamageSource arrow = level.damageSources().arrow(EntityType.ARROW.create(level, EntitySpawnReason.COMMAND), p);
+
+		skills(p, "warrior", allNodes("warrior"));
+		p.setHealth(p.getMaxHealth());
+		float full = magicAbsorb(z, melee, 10);
+		p.setHealth(p.getMaxHealth() / 4);
+		float low = magicAbsorb(z, melee, 10);
+		p.setHealth(p.getMaxHealth());
+		r.check(near(full, 14.0, 0.01) && near(low, 19.0, 0.01) && near(magicAbsorb(p, level.damageSources().generic(), 10), 8.0, 0.01)
+				&& near(p.getMaxHealth(), 26.0, 0.01),
+				"Воин 50: урон вблизи +40% (" + full + "), при ранении +90% (" + low + "), получаемый −20%, 13 сердец ("
+						+ p.getMaxHealth() + ")");
+
+		skills(p, "archer", allNodes("archer"));
+		r.check(near(magicAbsorb(z, arrow, 10), 15.5, 0.01) && near(magicAbsorb(p, level.damageSources().generic(), 10), 9.0, 0.01)
+				&& near(p.getMaxHealth(), 24.0, 0.01),
+				"Лучник 50: снаряды +55% (" + magicAbsorb(z, arrow, 10) + "), получаемый −10%, 12 сердец");
+
+		skills(p, "hunter", allNodes("hunter"));
+		r.check(near(magicAbsorb(z, melee, 10), 16.0, 0.01) && near(magicAbsorb(z, arrow, 10), 16.0, 0.01)
+				&& near(magicAbsorb(p, level.damageSources().generic(), 10), 9.0, 0.01) && near(p.getMaxHealth(), 24.0, 0.01)
+				&& near(Skills.get(p).perk(com.suchki.skill.Perk.HUNTER_SENSE), 32, 0.01),
+				"Охотник 50: по монстрам +60% вблизи и снарядами (" + magicAbsorb(z, melee, 10) + "), получаемый −10%, 12 сердец, подсветка 32");
+		skills(p, null);
+		p.setHealth(p.getMaxHealth());
 	}
 
 	// --- Пружина ---

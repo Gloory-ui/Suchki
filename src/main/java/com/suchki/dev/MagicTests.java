@@ -92,6 +92,14 @@ final class MagicTests {
 		return p;
 	}
 
+	/** Поставить мага в центр площадки и повернуть взгляд (голова тоже — прицел идёт по ней). */
+	private static void face(FakePlayer p, BlockPos o, float pitch) {
+		p.snapTo(o.getX() + 0.5, o.getY(), o.getZ() + 0.5, 0, pitch);
+		p.setYHeadRot(0);
+		p.yHeadRotO = 0;
+		p.yBodyRot = 0;
+	}
+
 	private static Spell spell(String id) {
 		Spell s = Spells.get(id);
 		if (s == null) throw new IllegalStateException("нет заклинания " + id);
@@ -359,14 +367,16 @@ final class MagicTests {
 		z.discard();
 		for (int dy = 0; dy <= 3; dy++) level.setBlock(o.offset(0, dy, 10), Blocks.STONE.defaultBlockState(), 3);
 		Vec3 from = p.position();
-		p.snapTo(o.getX() + 0.5, o.getY(), o.getZ() + 0.5, 0, -40);
+		face(p, o, -40);
 		r.check(!Magic.castNow(p, spell("shadow_step"), 1), "Теневой шаг: в небо не переносит");
-		p.snapTo(o.getX() + 0.5, o.getY(), o.getZ() + 0.5, 0, 0);
+		face(p, o, 0);
+		var aimed = new Cast(level, p, spell("shadow_step"), 1, 1).aim(20, e -> e instanceof LivingEntity l && l != p);
+		String aimInfo = aimed.getType() + (aimed instanceof EntityHitResult eh ? " " + eh.getEntity().getType().toShortString() + " " + eh.getEntity().blockPosition() : " " + aimed.getLocation());
 		boolean stepped = Magic.castNow(p, spell("shadow_step"), 1);
-		r.check(stepped && p.position().distanceTo(from) > 5 && p.hasEffect(MobEffects.INVISIBILITY), "Теневой шаг (сработал: " + stepped + "): перенос на "
+		r.check(stepped && p.position().distanceTo(from) > 5 && p.hasEffect(MobEffects.INVISIBILITY), "Теневой шаг (сработал: " + stepped + ", прицел: " + aimInfo + "): перенос на "
 				+ String.format("%.1f", p.position().distanceTo(from)) + " блока и невидимость");
 
-		p.snapTo(o.getX() + 0.5, o.getY(), o.getZ() + 0.5, 0, 0);
+		face(p, o, 0);
 		Magic.castNow(p, spell("raise_dead"), 1);
 		List<Husk> husks = level.getEntitiesOfClass(Husk.class, new AABB(o).inflate(8), h -> Minions.isOwnedBy(h, p));
 		boolean peaceful = true;
@@ -405,7 +415,7 @@ final class MagicTests {
 		Vec3 from = p.position();
 		Magic.castNow(p, spell("blink"), 1);
 		r.check(p.position().z - from.z > 6, "Скачок: рывок вперёд на " + String.format("%.1f", p.position().z - from.z) + " блока");
-		p.snapTo(o.getX() + 0.5, o.getY(), o.getZ() + 0.5, 0, 0);
+		face(p, o, 0);
 
 		Magic.castNow(p, spell("deep_breath"), 1);
 		r.check(p.hasEffect(MobEffects.WATER_BREATHING) && p.hasEffect(MobEffects.DOLPHINS_GRACE), "Дыхание глубин");
@@ -480,12 +490,12 @@ final class MagicTests {
 		r.check(dropped.isRemoved(), "Выброшенный призрачный клинок исчезает");
 
 		level.setBlock(o.offset(0, 1, 3), Blocks.OAK_LOG.defaultBlockState(), 3);
-		p.snapTo(o.getX() + 0.5, o.getY(), o.getZ() + 0.5, 0, 10);
+		face(p, o, 10);
 		p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, ItemStack.EMPTY);
 		Magic.castNow(p, spell("bound_tool"), 1);
 		r.check(p.getOffhandItem().is(MagicItems.SPECTRAL_AXE), "Призрачный инструмент: у бревна — топор (" + p.getOffhandItem() + ")");
 		level.setBlock(o.offset(0, 1, 3), Blocks.AIR.defaultBlockState(), 3);
-		p.snapTo(o.getX() + 0.5, o.getY(), o.getZ() + 0.5, 0, 0);
+		face(p, o, 0);
 
 		Magic.castNow(p, spell("familiar"), 1);
 		List<Wolf> wolves = level.getEntitiesOfClass(Wolf.class, new AABB(o).inflate(6), w -> Minions.isOwnedBy(w, p));
