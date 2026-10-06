@@ -41,6 +41,10 @@ public final class MagicClient {
 		ClientPlayNetworking.registerGlobalReceiver(Magic.Shake.TYPE, (payload, ctx) ->
 				CastCamera.shake(payload.at(), payload.strength(), payload.duration()));
 		WorldRenderEvents.AFTER_ENTITIES.register(CastVisuals::render);
+		// Круги, эффекты в мире (пакеты FxNet) — регистрирует CastVisuals; фразы и клавиши — свои классы.
+		CastVisuals.register();
+		IncantationHud.register();
+		MagicKeys.register(category);
 		ClientTickEvents.END_CLIENT_TICK.register(MagicClient::tick);
 	}
 

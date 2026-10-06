@@ -38,6 +38,10 @@ public final class CastVisuals {
 
 	// --- Частицы (каждый тик) ---
 
+	/** Регистрация приёма пакетов эффектов и прочего, что нужно визуалам. */
+	public static void register() {
+	}
+
 	static void tick(ClientLevel level) {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player == null) return;
