@@ -83,12 +83,18 @@ public final class DevTests {
 
 	public static void register() {
 		CommandRegistrationCallback.EVENT.register((dispatcher, ctx, env) -> dispatcher.register(
-				Commands.literal("suchki_test").executes(c -> {
-					BlockPos origin = BlockPos.containing(c.getSource().getPosition()).above(30);
-					List<String> report = run(c.getSource().getLevel(), origin);
-					report.forEach(line -> c.getSource().sendSuccess(() -> Component.literal(line), false));
-					return report.stream().anyMatch(l -> l.startsWith("FAIL")) ? 0 : 1;
-				})));
+				Commands.literal("suchki_test").executes(c -> runCommand(c.getSource(), ""))
+						.then(Commands.argument("filter", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+								.executes(c -> runCommand(c.getSource(),
+										com.mojang.brigadier.arguments.StringArgumentType.getString(c, "filter"))))));
+	}
+
+	/** /suchki_test [фильтр] — фильтр: часть названия проверки (например «Огонь» или «Магия:»). */
+	private static int runCommand(net.minecraft.commands.CommandSourceStack source, String filter) {
+		BlockPos origin = BlockPos.containing(source.getPosition()).above(30);
+		List<String> report = run(source.getLevel(), origin, filter);
+		report.forEach(line -> source.sendSuccess(() -> Component.literal(line), false));
+		return report.stream().anyMatch(l -> l.startsWith("FAIL")) ? 0 : 1;
 	}
 
 	/** Отчёт: строки «OK  …» и «FAIL …». */
@@ -105,6 +111,10 @@ public final class DevTests {
 	}
 
 	public static List<String> run(ServerLevel level, BlockPos origin) {
+		return run(level, origin, "");
+	}
+
+	public static List<String> run(ServerLevel level, BlockPos origin, String filter) {
 		Report r = new Report();
 		Map<String, Test> tests = new java.util.LinkedHashMap<>();
 		tests.put("Бур и Автоплавка", DevTests::drillAndSmelting);
@@ -132,6 +142,9 @@ public final class DevTests {
 		MagicTests.addTo(tests);
 		Skills.testChanceOverride = -1;
 		for (Map.Entry<String, Test> t : tests.entrySet()) {
+			if (!filter.isBlank() && !t.getKey().toLowerCase(java.util.Locale.ROOT).contains(filter.toLowerCase(java.util.Locale.ROOT).trim())) {
+				continue;
+			}
 			try {
 				t.getValue().run(level, origin, r);
 			} catch (Throwable e) {

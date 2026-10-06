@@ -325,10 +325,14 @@ final class MagicTests {
 		ChunkAccess ignored = level.getChunk(wall);
 		Targeting.Aim aim = Targeting.aim(level, p, Magic.MAX_RANGE);
 		r.check(!aim.miss() && Math.abs(aim.point().z - wall.getZ()) < 1.5, "Прицел достаёт стену в 100 блоках (z=" + aim.point().z + ")");
-		Zombie far = dummy(level, EntityType.ZOMBIE, o.offset(0, 0, 90));
+		// В игре чанки вокруг игрока загружены; у ненастоящего игрока — грузим чанк мишени сами.
+		BlockPos farPos = o.offset(0, 0, 90);
+		level.setChunkForced(farPos.getX() >> 4, farPos.getZ() >> 4, true);
+		Zombie far = dummy(level, EntityType.ZOMBIE, farPos);
 		aim = Targeting.aim(level, p, Magic.MAX_RANGE);
 		r.check(aim.entity() == far, "Прицел ловит существо в 90 блоках");
 		far.discard();
+		level.setChunkForced(farPos.getX() >> 4, farPos.getZ() >> 4, false);
 		for (int dx = -2; dx <= 2; dx++) for (int dy = -1; dy <= 3; dy++) level.setBlock(wall.offset(dx, dy, 0), Blocks.AIR.defaultBlockState(), 2);
 		aim = Targeting.aim(level, p, Magic.MAX_RANGE);
 		r.check(aim.miss() && aim.point().distanceTo(p.getEyePosition()) > 127, "В пустоту — точка на 128 блоках");
