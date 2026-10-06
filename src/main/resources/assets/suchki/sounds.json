@@ -1,67 +1,4 @@
 {
-  "magic.charge.destruction": {
-    "subtitle": "subtitles.suchki.magic.charge.destruction",
-    "sounds": [
-      {
-        "name": "suchki:magic/charge_destruction",
-        "volume": 0.68
-      }
-    ]
-  },
-  "magic.charge.restoration": {
-    "subtitle": "subtitles.suchki.magic.charge.restoration",
-    "sounds": [
-      {
-        "name": "suchki:magic/charge_restoration",
-        "volume": 0.85
-      }
-    ]
-  },
-  "magic.charge.light": {
-    "subtitle": "subtitles.suchki.magic.charge.light",
-    "sounds": [
-      {
-        "name": "suchki:magic/charge_light",
-        "volume": 1.0
-      }
-    ]
-  },
-  "magic.charge.dark": {
-    "subtitle": "subtitles.suchki.magic.charge.dark",
-    "sounds": [
-      {
-        "name": "suchki:magic/charge_dark",
-        "volume": 0.51
-      }
-    ]
-  },
-  "magic.charge.alteration": {
-    "subtitle": "subtitles.suchki.magic.charge.alteration",
-    "sounds": [
-      {
-        "name": "suchki:magic/charge_alteration",
-        "volume": 0.55
-      }
-    ]
-  },
-  "magic.charge.illusion": {
-    "subtitle": "subtitles.suchki.magic.charge.illusion",
-    "sounds": [
-      {
-        "name": "suchki:magic/charge_illusion",
-        "volume": 1.0
-      }
-    ]
-  },
-  "magic.charge.conjuration": {
-    "subtitle": "subtitles.suchki.magic.charge.conjuration",
-    "sounds": [
-      {
-        "name": "suchki:magic/charge_conjuration",
-        "volume": 0.66
-      }
-    ]
-  },
   "magic.ready": {
     "subtitle": "subtitles.suchki.magic.ready",
     "sounds": [
@@ -76,7 +13,7 @@
     "sounds": [
       {
         "name": "suchki:magic/stage",
-        "volume": 0.86
+        "volume": 0.63
       }
     ]
   },
@@ -85,7 +22,7 @@
     "sounds": [
       {
         "name": "suchki:magic/peak",
-        "volume": 0.45
+        "volume": 0.5
       }
     ]
   },
@@ -103,252 +40,128 @@
     "sounds": [
       {
         "name": "suchki:magic/learn",
+        "volume": 0.79
+      }
+    ]
+  },
+  "magic.select": {
+    "subtitle": "subtitles.suchki.magic.select",
+    "sounds": [
+      {
+        "name": "suchki:magic/select",
         "volume": 1.0
       }
     ]
   },
-  "magic.cast.fire": {
-    "subtitle": "subtitles.suchki.magic.cast.fire",
+  "magic.multicast": {
+    "subtitle": "subtitles.suchki.magic.multicast",
     "sounds": [
       {
-        "name": "suchki:magic/cast_fire_1",
-        "volume": 0.96
-      },
-      {
-        "name": "suchki:magic/cast_fire_2",
-        "volume": 0.87
-      }
-    ]
-  },
-  "magic.cast.frost": {
-    "subtitle": "subtitles.suchki.magic.cast.frost",
-    "sounds": [
-      {
-        "name": "suchki:magic/cast_frost_1",
-        "volume": 1.0
-      },
-      {
-        "name": "suchki:magic/cast_frost_2",
-        "volume": 1.0
-      }
-    ]
-  },
-  "magic.cast.shock": {
-    "subtitle": "subtitles.suchki.magic.cast.shock",
-    "sounds": [
-      {
-        "name": "suchki:magic/cast_shock_1",
-        "volume": 1.0
-      },
-      {
-        "name": "suchki:magic/cast_shock_2",
-        "volume": 1.0
-      }
-    ]
-  },
-  "magic.cast.holy": {
-    "subtitle": "subtitles.suchki.magic.cast.holy",
-    "sounds": [
-      {
-        "name": "suchki:magic/cast_holy_1",
-        "volume": 1.0
-      },
-      {
-        "name": "suchki:magic/cast_holy_2",
-        "volume": 1.0
-      }
-    ]
-  },
-  "magic.cast.dark": {
-    "subtitle": "subtitles.suchki.magic.cast.dark",
-    "sounds": [
-      {
-        "name": "suchki:magic/cast_dark_1",
-        "volume": 0.45
-      },
-      {
-        "name": "suchki:magic/cast_dark_2",
-        "volume": 0.45
-      }
-    ]
-  },
-  "magic.cast.arcane": {
-    "subtitle": "subtitles.suchki.magic.cast.arcane",
-    "sounds": [
-      {
-        "name": "suchki:magic/cast_arcane_1",
-        "volume": 1.0
-      },
-      {
-        "name": "suchki:magic/cast_arcane_2",
-        "volume": 1.0
-      }
-    ]
-  },
-  "magic.cast.heal": {
-    "subtitle": "subtitles.suchki.magic.cast.heal",
-    "sounds": [
-      {
-        "name": "suchki:magic/cast_heal_1",
-        "volume": 0.88
-      },
-      {
-        "name": "suchki:magic/cast_heal_2",
-        "volume": 1.0
-      }
-    ]
-  },
-  "magic.cast.illusion": {
-    "subtitle": "subtitles.suchki.magic.cast.illusion",
-    "sounds": [
-      {
-        "name": "suchki:magic/cast_illusion_1",
-        "volume": 1.0
-      },
-      {
-        "name": "suchki:magic/cast_illusion_2",
-        "volume": 1.0
-      }
-    ]
-  },
-  "magic.cast.summon": {
-    "subtitle": "subtitles.suchki.magic.cast.summon",
-    "sounds": [
-      {
-        "name": "suchki:magic/cast_summon_1",
-        "volume": 1.0
-      },
-      {
-        "name": "suchki:magic/cast_summon_2",
-        "volume": 0.97
-      }
-    ]
-  },
-  "magic.cast.teleport": {
-    "subtitle": "subtitles.suchki.magic.cast.teleport",
-    "sounds": [
-      {
-        "name": "suchki:magic/cast_teleport_1",
-        "volume": 0.75
-      },
-      {
-        "name": "suchki:magic/cast_teleport_2",
-        "volume": 0.77
-      }
-    ]
-  },
-  "magic.cast.earth": {
-    "subtitle": "subtitles.suchki.magic.cast.earth",
-    "sounds": [
-      {
-        "name": "suchki:magic/cast_earth_1",
-        "volume": 0.51
-      },
-      {
-        "name": "suchki:magic/cast_earth_2",
+        "name": "suchki:magic/multicast",
         "volume": 0.47
       }
     ]
   },
-  "magic.impact.fire": {
-    "subtitle": "subtitles.suchki.magic.impact.fire",
+  "magic.circle.draw": {
+    "subtitle": "subtitles.suchki.magic.circle.draw",
     "sounds": [
       {
-        "name": "suchki:magic/impact_fire_1",
-        "volume": 0.7
+        "name": "suchki:magic/circle_draw_1",
+        "volume": 0.8
       },
       {
-        "name": "suchki:magic/impact_fire_2",
+        "name": "suchki:magic/circle_draw_2",
+        "volume": 0.65
+      },
+      {
+        "name": "suchki:magic/circle_draw_3",
+        "volume": 0.8
+      },
+      {
+        "name": "suchki:magic/circle_draw_4",
+        "volume": 0.59
+      },
+      {
+        "name": "suchki:magic/circle_draw_5",
         "volume": 0.71
       },
       {
-        "name": "suchki:magic/impact_fire_3",
-        "volume": 0.7
+        "name": "suchki:magic/circle_draw_6",
+        "volume": 0.74
       }
     ]
   },
-  "magic.impact.frost": {
-    "subtitle": "subtitles.suchki.magic.impact.frost",
+  "magic.circle.complete": {
+    "subtitle": "subtitles.suchki.magic.circle.complete",
     "sounds": [
       {
-        "name": "suchki:magic/impact_frost_1",
-        "volume": 1.0
-      },
-      {
-        "name": "suchki:magic/impact_frost_2",
-        "volume": 1.0
-      },
-      {
-        "name": "suchki:magic/impact_frost_3",
-        "volume": 1.0
+        "name": "suchki:magic/circle_complete",
+        "volume": 0.61
       }
     ]
   },
-  "magic.impact.shock": {
-    "subtitle": "subtitles.suchki.magic.impact.shock",
+  "magic.circle.big": {
+    "subtitle": "subtitles.suchki.magic.circle.big",
     "sounds": [
       {
-        "name": "suchki:magic/impact_shock_1",
-        "volume": 1.0
-      },
-      {
-        "name": "suchki:magic/impact_shock_2",
-        "volume": 1.0
-      },
-      {
-        "name": "suchki:magic/impact_shock_3",
-        "volume": 1.0
+        "name": "suchki:magic/circle_big",
+        "volume": 0.75,
+        "attenuation_distance": 96
       }
     ]
   },
-  "magic.impact.holy": {
-    "subtitle": "subtitles.suchki.magic.impact.holy",
+  "magic.riser.short": {
+    "subtitle": "subtitles.suchki.magic.riser.short",
     "sounds": [
       {
-        "name": "suchki:magic/impact_holy_1",
-        "volume": 1.0
-      },
-      {
-        "name": "suchki:magic/impact_holy_2",
-        "volume": 1.0
-      },
-      {
-        "name": "suchki:magic/impact_holy_3",
-        "volume": 1.0
+        "name": "suchki:magic/riser_short",
+        "volume": 0.67
       }
     ]
   },
-  "magic.impact.dark": {
-    "subtitle": "subtitles.suchki.magic.impact.dark",
+  "magic.riser.long": {
+    "subtitle": "subtitles.suchki.magic.riser.long",
     "sounds": [
       {
-        "name": "suchki:magic/impact_dark_1",
-        "volume": 0.48
-      },
-      {
-        "name": "suchki:magic/impact_dark_2",
-        "volume": 0.5
-      },
-      {
-        "name": "suchki:magic/impact_dark_3",
-        "volume": 0.5
+        "name": "suchki:magic/riser_long",
+        "volume": 1.0,
+        "attenuation_distance": 128
       }
     ]
   },
-  "magic.impact.arcane": {
-    "subtitle": "subtitles.suchki.magic.impact.arcane",
+  "magic.release.heavy": {
+    "subtitle": "subtitles.suchki.magic.release.heavy",
     "sounds": [
       {
-        "name": "suchki:magic/impact_arcane_1",
-        "volume": 1.0
+        "name": "suchki:magic/release_heavy",
+        "volume": 0.88
+      }
+    ]
+  },
+  "magic.release.ultimate": {
+    "subtitle": "subtitles.suchki.magic.release.ultimate",
+    "sounds": [
+      {
+        "name": "suchki:magic/release_ultimate",
+        "volume": 0.96,
+        "attenuation_distance": 128
+      }
+    ]
+  },
+  "magic.glitch": {
+    "subtitle": "subtitles.suchki.magic.glitch",
+    "sounds": [
+      {
+        "name": "suchki:magic/glitch_1",
+        "volume": 0.69
       },
       {
-        "name": "suchki:magic/impact_arcane_2",
-        "volume": 1.0
+        "name": "suchki:magic/glitch_2",
+        "volume": 0.49
       },
       {
-        "name": "suchki:magic/impact_arcane_3",
-        "volume": 1.0
+        "name": "suchki:magic/glitch_3",
+        "volume": 0.74
       }
     ]
   },
@@ -357,15 +170,28 @@
     "sounds": [
       {
         "name": "suchki:magic/explosion_1",
-        "volume": 0.47
+        "volume": 0.9,
+        "attenuation_distance": 96
       },
       {
         "name": "suchki:magic/explosion_2",
-        "volume": 0.45
+        "volume": 1.0,
+        "attenuation_distance": 96
       },
       {
         "name": "suchki:magic/explosion_3",
-        "volume": 0.47
+        "volume": 1.0,
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "magic.explosion.huge": {
+    "subtitle": "subtitles.suchki.magic.explosion.huge",
+    "sounds": [
+      {
+        "name": "suchki:magic/explosion_huge",
+        "volume": 0.9,
+        "attenuation_distance": 128
       }
     ]
   },
@@ -374,7 +200,8 @@
     "sounds": [
       {
         "name": "suchki:magic/meteor_fall",
-        "volume": 1.0
+        "volume": 1.0,
+        "attenuation_distance": 96
       }
     ]
   },
@@ -383,61 +210,135 @@
     "sounds": [
       {
         "name": "suchki:magic/pillar",
+        "volume": 1.0,
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "magic.shockwave": {
+    "subtitle": "subtitles.suchki.magic.shockwave",
+    "sounds": [
+      {
+        "name": "suchki:magic/shockwave",
+        "volume": 0.89,
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "magic.thunder": {
+    "subtitle": "subtitles.suchki.magic.thunder",
+    "sounds": [
+      {
+        "name": "suchki:magic/thunder_1",
+        "volume": 0.97,
+        "attenuation_distance": 96
+      },
+      {
+        "name": "suchki:magic/thunder_2",
+        "volume": 0.89,
+        "attenuation_distance": 96
+      },
+      {
+        "name": "suchki:magic/thunder_3",
+        "volume": 0.87,
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "magic.rumble": {
+    "subtitle": "subtitles.suchki.magic.rumble",
+    "sounds": [
+      {
+        "name": "suchki:magic/rumble",
+        "volume": 0.87,
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "magic.freeze": {
+    "subtitle": "subtitles.suchki.magic.freeze",
+    "sounds": [
+      {
+        "name": "suchki:magic/freeze",
+        "volume": 0.97
+      }
+    ]
+  },
+  "magic.shatter": {
+    "subtitle": "subtitles.suchki.magic.shatter",
+    "sounds": [
+      {
+        "name": "suchki:magic/shatter_1",
+        "volume": 1.0
+      },
+      {
+        "name": "suchki:magic/shatter_2",
+        "volume": 0.81
+      }
+    ]
+  },
+  "magic.gust": {
+    "subtitle": "subtitles.suchki.magic.gust",
+    "sounds": [
+      {
+        "name": "suchki:magic/gust_1",
+        "volume": 0.97
+      },
+      {
+        "name": "suchki:magic/gust_2",
+        "volume": 1.0
+      },
+      {
+        "name": "suchki:magic/gust_3",
         "volume": 1.0
       }
     ]
   },
-  "magic.loop.flames": {
-    "subtitle": "subtitles.suchki.magic.loop.flames",
+  "magic.beam_blast": {
+    "subtitle": "subtitles.suchki.magic.beam_blast",
     "sounds": [
       {
-        "name": "suchki:magic/loop_flames",
-        "volume": 0.92
+        "name": "suchki:magic/beam_blast",
+        "volume": 0.91,
+        "attenuation_distance": 96
       }
     ]
   },
-  "magic.loop.beam": {
-    "subtitle": "subtitles.suchki.magic.loop.beam",
+  "magic.timestop": {
+    "subtitle": "subtitles.suchki.magic.timestop",
     "sounds": [
       {
-        "name": "suchki:magic/loop_beam",
-        "volume": 0.92
+        "name": "suchki:magic/timestop",
+        "volume": 0.96,
+        "attenuation_distance": 128
       }
     ]
   },
-  "magic.loop.drain": {
-    "subtitle": "subtitles.suchki.magic.loop.drain",
+  "magic.domain": {
+    "subtitle": "subtitles.suchki.magic.domain",
     "sounds": [
       {
-        "name": "suchki:magic/loop_drain",
-        "volume": 0.62
+        "name": "suchki:magic/domain",
+        "volume": 0.77,
+        "attenuation_distance": 128
       }
     ]
   },
-  "magic.loop.heal": {
-    "subtitle": "subtitles.suchki.magic.loop.heal",
+  "magic.teleport": {
+    "subtitle": "subtitles.suchki.magic.teleport",
     "sounds": [
       {
-        "name": "suchki:magic/loop_heal",
-        "volume": 0.94
+        "name": "suchki:magic/teleport",
+        "volume": 0.71
       }
     ]
   },
-  "magic.loop.ward": {
-    "subtitle": "subtitles.suchki.magic.loop.ward",
+  "magic.summon": {
+    "subtitle": "subtitles.suchki.magic.summon",
     "sounds": [
       {
-        "name": "suchki:magic/loop_ward",
-        "volume": 0.77
-      }
-    ]
-  },
-  "magic.loop.wind": {
-    "subtitle": "subtitles.suchki.magic.loop.wind",
-    "sounds": [
-      {
-        "name": "suchki:magic/loop_wind",
-        "volume": 1.0
+        "name": "suchki:magic/summon",
+        "volume": 0.63
       }
     ]
   },
@@ -446,7 +347,7 @@
     "sounds": [
       {
         "name": "suchki:magic/vanish",
-        "volume": 0.91
+        "volume": 1.0
       }
     ]
   },
@@ -460,6 +361,621 @@
       {
         "name": "suchki:magic/ward_hit_2",
         "volume": 1.0
+      }
+    ]
+  },
+  "magic.loop.flames": {
+    "subtitle": "subtitles.suchki.magic.loop.flames",
+    "sounds": [
+      {
+        "name": "suchki:magic/loop_flames",
+        "volume": 0.9
+      }
+    ]
+  },
+  "magic.loop.beam": {
+    "subtitle": "subtitles.suchki.magic.loop.beam",
+    "sounds": [
+      {
+        "name": "suchki:magic/loop_beam",
+        "volume": 0.63
+      }
+    ]
+  },
+  "magic.loop.drain": {
+    "subtitle": "subtitles.suchki.magic.loop.drain",
+    "sounds": [
+      {
+        "name": "suchki:magic/loop_drain",
+        "volume": 0.61
+      }
+    ]
+  },
+  "magic.loop.heal": {
+    "subtitle": "subtitles.suchki.magic.loop.heal",
+    "sounds": [
+      {
+        "name": "suchki:magic/loop_heal",
+        "volume": 0.67
+      }
+    ]
+  },
+  "magic.loop.ward": {
+    "subtitle": "subtitles.suchki.magic.loop.ward",
+    "sounds": [
+      {
+        "name": "suchki:magic/loop_ward",
+        "volume": 0.56
+      }
+    ]
+  },
+  "magic.loop.wind": {
+    "subtitle": "subtitles.suchki.magic.loop.wind",
+    "sounds": [
+      {
+        "name": "suchki:magic/loop_wind",
+        "volume": 0.8
+      }
+    ]
+  },
+  "magic.loop.lightning": {
+    "subtitle": "subtitles.suchki.magic.loop.lightning",
+    "sounds": [
+      {
+        "name": "suchki:magic/loop_lightning",
+        "volume": 0.87
+      }
+    ]
+  },
+  "magic.loop.water": {
+    "subtitle": "subtitles.suchki.magic.loop.water",
+    "sounds": [
+      {
+        "name": "suchki:magic/loop_water",
+        "volume": 0.75
+      }
+    ]
+  },
+  "magic.loop.void": {
+    "subtitle": "subtitles.suchki.magic.loop.void",
+    "sounds": [
+      {
+        "name": "suchki:magic/loop_void",
+        "volume": 0.83
+      }
+    ]
+  },
+  "magic.loop.storm": {
+    "subtitle": "subtitles.suchki.magic.loop.storm",
+    "sounds": [
+      {
+        "name": "suchki:magic/loop_storm",
+        "volume": 0.79
+      }
+    ]
+  },
+  "magic.loop.chant": {
+    "subtitle": "subtitles.suchki.magic.loop.chant",
+    "sounds": [
+      {
+        "name": "suchki:magic/loop_chant",
+        "volume": 0.62
+      }
+    ]
+  },
+  "magic.charge.fire": {
+    "subtitle": "subtitles.suchki.magic.charge.fire",
+    "sounds": [
+      {
+        "name": "suchki:magic/charge_fire",
+        "volume": 0.64
+      }
+    ]
+  },
+  "magic.charge.water": {
+    "subtitle": "subtitles.suchki.magic.charge.water",
+    "sounds": [
+      {
+        "name": "suchki:magic/charge_water",
+        "volume": 0.66
+      }
+    ]
+  },
+  "magic.charge.wind": {
+    "subtitle": "subtitles.suchki.magic.charge.wind",
+    "sounds": [
+      {
+        "name": "suchki:magic/charge_wind",
+        "volume": 0.66
+      }
+    ]
+  },
+  "magic.charge.earth": {
+    "subtitle": "subtitles.suchki.magic.charge.earth",
+    "sounds": [
+      {
+        "name": "suchki:magic/charge_earth",
+        "volume": 0.61
+      }
+    ]
+  },
+  "magic.charge.lightning": {
+    "subtitle": "subtitles.suchki.magic.charge.lightning",
+    "sounds": [
+      {
+        "name": "suchki:magic/charge_lightning",
+        "volume": 0.69
+      }
+    ]
+  },
+  "magic.charge.light": {
+    "subtitle": "subtitles.suchki.magic.charge.light",
+    "sounds": [
+      {
+        "name": "suchki:magic/charge_light",
+        "volume": 0.6
+      }
+    ]
+  },
+  "magic.charge.dark": {
+    "subtitle": "subtitles.suchki.magic.charge.dark",
+    "sounds": [
+      {
+        "name": "suchki:magic/charge_dark",
+        "volume": 0.68
+      }
+    ]
+  },
+  "magic.charge.space": {
+    "subtitle": "subtitles.suchki.magic.charge.space",
+    "sounds": [
+      {
+        "name": "suchki:magic/charge_space",
+        "volume": 0.63
+      }
+    ]
+  },
+  "magic.charge.life": {
+    "subtitle": "subtitles.suchki.magic.charge.life",
+    "sounds": [
+      {
+        "name": "suchki:magic/charge_life",
+        "volume": 0.74
+      }
+    ]
+  },
+  "magic.charge.mind": {
+    "subtitle": "subtitles.suchki.magic.charge.mind",
+    "sounds": [
+      {
+        "name": "suchki:magic/charge_mind",
+        "volume": 0.66
+      }
+    ]
+  },
+  "magic.charge.summon": {
+    "subtitle": "subtitles.suchki.magic.charge.summon",
+    "sounds": [
+      {
+        "name": "suchki:magic/charge_summon",
+        "volume": 0.69
+      }
+    ]
+  },
+  "magic.charge.fusion": {
+    "subtitle": "subtitles.suchki.magic.charge.fusion",
+    "sounds": [
+      {
+        "name": "suchki:magic/charge_fusion",
+        "volume": 0.65
+      }
+    ]
+  },
+  "magic.cast.fire": {
+    "subtitle": "subtitles.suchki.magic.cast.fire",
+    "sounds": [
+      {
+        "name": "suchki:magic/cast_fire_1",
+        "volume": 0.8
+      },
+      {
+        "name": "suchki:magic/cast_fire_2",
+        "volume": 0.7
+      },
+      {
+        "name": "suchki:magic/cast_fire_3",
+        "volume": 0.76
+      }
+    ]
+  },
+  "magic.cast.water": {
+    "subtitle": "subtitles.suchki.magic.cast.water",
+    "sounds": [
+      {
+        "name": "suchki:magic/cast_water_1",
+        "volume": 0.63
+      },
+      {
+        "name": "suchki:magic/cast_water_2",
+        "volume": 0.62
+      },
+      {
+        "name": "suchki:magic/cast_water_3",
+        "volume": 0.87
+      }
+    ]
+  },
+  "magic.cast.wind": {
+    "subtitle": "subtitles.suchki.magic.cast.wind",
+    "sounds": [
+      {
+        "name": "suchki:magic/cast_wind_1",
+        "volume": 1.0
+      },
+      {
+        "name": "suchki:magic/cast_wind_2",
+        "volume": 1.0
+      },
+      {
+        "name": "suchki:magic/cast_wind_3",
+        "volume": 1.0
+      }
+    ]
+  },
+  "magic.cast.earth": {
+    "subtitle": "subtitles.suchki.magic.cast.earth",
+    "sounds": [
+      {
+        "name": "suchki:magic/cast_earth_1",
+        "volume": 0.57
+      },
+      {
+        "name": "suchki:magic/cast_earth_2",
+        "volume": 0.58
+      },
+      {
+        "name": "suchki:magic/cast_earth_3",
+        "volume": 0.6
+      }
+    ]
+  },
+  "magic.cast.lightning": {
+    "subtitle": "subtitles.suchki.magic.cast.lightning",
+    "sounds": [
+      {
+        "name": "suchki:magic/cast_lightning_1",
+        "volume": 0.83
+      },
+      {
+        "name": "suchki:magic/cast_lightning_2",
+        "volume": 0.87
+      },
+      {
+        "name": "suchki:magic/cast_lightning_3",
+        "volume": 0.81
+      }
+    ]
+  },
+  "magic.cast.light": {
+    "subtitle": "subtitles.suchki.magic.cast.light",
+    "sounds": [
+      {
+        "name": "suchki:magic/cast_light_1",
+        "volume": 0.87
+      },
+      {
+        "name": "suchki:magic/cast_light_2",
+        "volume": 0.93
+      },
+      {
+        "name": "suchki:magic/cast_light_3",
+        "volume": 0.88
+      }
+    ]
+  },
+  "magic.cast.dark": {
+    "subtitle": "subtitles.suchki.magic.cast.dark",
+    "sounds": [
+      {
+        "name": "suchki:magic/cast_dark_1",
+        "volume": 0.52
+      },
+      {
+        "name": "suchki:magic/cast_dark_2",
+        "volume": 0.6
+      },
+      {
+        "name": "suchki:magic/cast_dark_3",
+        "volume": 0.56
+      }
+    ]
+  },
+  "magic.cast.space": {
+    "subtitle": "subtitles.suchki.magic.cast.space",
+    "sounds": [
+      {
+        "name": "suchki:magic/cast_space_1",
+        "volume": 0.73
+      },
+      {
+        "name": "suchki:magic/cast_space_2",
+        "volume": 0.79
+      },
+      {
+        "name": "suchki:magic/cast_space_3",
+        "volume": 0.8
+      }
+    ]
+  },
+  "magic.cast.life": {
+    "subtitle": "subtitles.suchki.magic.cast.life",
+    "sounds": [
+      {
+        "name": "suchki:magic/cast_life_1",
+        "volume": 0.82
+      },
+      {
+        "name": "suchki:magic/cast_life_2",
+        "volume": 0.79
+      },
+      {
+        "name": "suchki:magic/cast_life_3",
+        "volume": 0.76
+      }
+    ]
+  },
+  "magic.cast.mind": {
+    "subtitle": "subtitles.suchki.magic.cast.mind",
+    "sounds": [
+      {
+        "name": "suchki:magic/cast_mind_1",
+        "volume": 0.82
+      },
+      {
+        "name": "suchki:magic/cast_mind_2",
+        "volume": 0.81
+      },
+      {
+        "name": "suchki:magic/cast_mind_3",
+        "volume": 0.75
+      }
+    ]
+  },
+  "magic.cast.summon": {
+    "subtitle": "subtitles.suchki.magic.cast.summon",
+    "sounds": [
+      {
+        "name": "suchki:magic/cast_summon_1",
+        "volume": 0.8
+      },
+      {
+        "name": "suchki:magic/cast_summon_2",
+        "volume": 0.74
+      },
+      {
+        "name": "suchki:magic/cast_summon_3",
+        "volume": 0.85
+      }
+    ]
+  },
+  "magic.cast.fusion": {
+    "subtitle": "subtitles.suchki.magic.cast.fusion",
+    "sounds": [
+      {
+        "name": "suchki:magic/cast_fusion_1",
+        "volume": 0.66
+      },
+      {
+        "name": "suchki:magic/cast_fusion_2",
+        "volume": 0.73
+      },
+      {
+        "name": "suchki:magic/cast_fusion_3",
+        "volume": 0.61
+      }
+    ]
+  },
+  "magic.impact.fire": {
+    "subtitle": "subtitles.suchki.magic.impact.fire",
+    "sounds": [
+      {
+        "name": "suchki:magic/impact_fire_1",
+        "volume": 0.56
+      },
+      {
+        "name": "suchki:magic/impact_fire_2",
+        "volume": 0.58
+      },
+      {
+        "name": "suchki:magic/impact_fire_3",
+        "volume": 0.58
+      }
+    ]
+  },
+  "magic.impact.water": {
+    "subtitle": "subtitles.suchki.magic.impact.water",
+    "sounds": [
+      {
+        "name": "suchki:magic/impact_water_1",
+        "volume": 0.74
+      },
+      {
+        "name": "suchki:magic/impact_water_2",
+        "volume": 0.81
+      },
+      {
+        "name": "suchki:magic/impact_water_3",
+        "volume": 0.88
+      }
+    ]
+  },
+  "magic.impact.wind": {
+    "subtitle": "subtitles.suchki.magic.impact.wind",
+    "sounds": [
+      {
+        "name": "suchki:magic/impact_wind_1",
+        "volume": 1.0
+      },
+      {
+        "name": "suchki:magic/impact_wind_2",
+        "volume": 1.0
+      },
+      {
+        "name": "suchki:magic/impact_wind_3",
+        "volume": 1.0
+      }
+    ]
+  },
+  "magic.impact.earth": {
+    "subtitle": "subtitles.suchki.magic.impact.earth",
+    "sounds": [
+      {
+        "name": "suchki:magic/impact_earth_1",
+        "volume": 0.59
+      },
+      {
+        "name": "suchki:magic/impact_earth_2",
+        "volume": 0.6
+      },
+      {
+        "name": "suchki:magic/impact_earth_3",
+        "volume": 0.54
+      }
+    ]
+  },
+  "magic.impact.lightning": {
+    "subtitle": "subtitles.suchki.magic.impact.lightning",
+    "sounds": [
+      {
+        "name": "suchki:magic/impact_lightning_1",
+        "volume": 0.65
+      },
+      {
+        "name": "suchki:magic/impact_lightning_2",
+        "volume": 0.73
+      },
+      {
+        "name": "suchki:magic/impact_lightning_3",
+        "volume": 0.62
+      }
+    ]
+  },
+  "magic.impact.light": {
+    "subtitle": "subtitles.suchki.magic.impact.light",
+    "sounds": [
+      {
+        "name": "suchki:magic/impact_light_1",
+        "volume": 0.91
+      },
+      {
+        "name": "suchki:magic/impact_light_2",
+        "volume": 0.86
+      },
+      {
+        "name": "suchki:magic/impact_light_3",
+        "volume": 0.88
+      }
+    ]
+  },
+  "magic.impact.dark": {
+    "subtitle": "subtitles.suchki.magic.impact.dark",
+    "sounds": [
+      {
+        "name": "suchki:magic/impact_dark_1",
+        "volume": 0.58
+      },
+      {
+        "name": "suchki:magic/impact_dark_2",
+        "volume": 0.65
+      },
+      {
+        "name": "suchki:magic/impact_dark_3",
+        "volume": 0.61
+      }
+    ]
+  },
+  "magic.impact.space": {
+    "subtitle": "subtitles.suchki.magic.impact.space",
+    "sounds": [
+      {
+        "name": "suchki:magic/impact_space_1",
+        "volume": 0.59
+      },
+      {
+        "name": "suchki:magic/impact_space_2",
+        "volume": 0.63
+      },
+      {
+        "name": "suchki:magic/impact_space_3",
+        "volume": 0.6
+      }
+    ]
+  },
+  "magic.impact.life": {
+    "subtitle": "subtitles.suchki.magic.impact.life",
+    "sounds": [
+      {
+        "name": "suchki:magic/impact_life_1",
+        "volume": 0.72
+      },
+      {
+        "name": "suchki:magic/impact_life_2",
+        "volume": 0.73
+      },
+      {
+        "name": "suchki:magic/impact_life_3",
+        "volume": 0.74
+      }
+    ]
+  },
+  "magic.impact.mind": {
+    "subtitle": "subtitles.suchki.magic.impact.mind",
+    "sounds": [
+      {
+        "name": "suchki:magic/impact_mind_1",
+        "volume": 0.98
+      },
+      {
+        "name": "suchki:magic/impact_mind_2",
+        "volume": 1.0
+      },
+      {
+        "name": "suchki:magic/impact_mind_3",
+        "volume": 0.98
+      }
+    ]
+  },
+  "magic.impact.summon": {
+    "subtitle": "subtitles.suchki.magic.impact.summon",
+    "sounds": [
+      {
+        "name": "suchki:magic/impact_summon_1",
+        "volume": 0.89
+      },
+      {
+        "name": "suchki:magic/impact_summon_2",
+        "volume": 0.83
+      },
+      {
+        "name": "suchki:magic/impact_summon_3",
+        "volume": 0.9
+      }
+    ]
+  },
+  "magic.impact.fusion": {
+    "subtitle": "subtitles.suchki.magic.impact.fusion",
+    "sounds": [
+      {
+        "name": "suchki:magic/impact_fusion_1",
+        "volume": 0.68
+      },
+      {
+        "name": "suchki:magic/impact_fusion_2",
+        "volume": 0.65
+      },
+      {
+        "name": "suchki:magic/impact_fusion_3",
+        "volume": 0.64
       }
     ]
   }

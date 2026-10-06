@@ -1,5 +1,6 @@
 package com.suchki.client.magic;
 
+import com.suchki.magic.Anchor;
 import com.suchki.magic.CastStyle;
 import com.suchki.magic.FocusItem;
 import com.suchki.magic.Magic;
@@ -17,7 +18,8 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Состояние каста любого игрока на клиенте: какое заклинание, фаза (формирование, накопление, предел,
  * поток), выпуск. Из него считаются позы рук (от третьего и первого лица), эффекты у руки, звук и камера.
- * Зарядка берётся из ванильного «сколько тиков держит предмет» — она есть и у чужих игроков.
+ * Зарядка берётся из ванильного «сколько тиков держит предмет» — она есть и у чужих игроков; число копий
+ * мультикаста — из {@link Magic#CASTING_COPIES} (с копиями круг строится дольше).
  */
 public final class CastAnim {
 	/** Сколько тиков длится анимация выпуска. */
@@ -25,10 +27,65 @@ public final class CastAnim {
 	static final int RITUAL_RELEASE_TICKS = 14;
 	static final int FIZZLE_TICKS = 8;
 
-	record Release(Spell spell, float power, long tick, boolean staff, HumanoidArm castArm, boolean fizzle) {}
+	record Release(Spell spell, float power, long tick, boolean staff, HumanoidArm castArm, boolean fizzle, int copies) {}
 
 	/** Последние выпуски по id игрока (для анимации после окончания каста). */
 	static final Map<Integer, Release> RELEASES = new HashMap<>();
+
+	/**
+	 * Стойка мага. Для кругов у руки и под ногами — по типу каста; для кругов у цели, в небе, в линию, за спиной
+	 * и на орбите — своя: указать на цель, воздеть руки к небу, выбросить посох вперёд, раскинуть руки, вести круги.
+	 */
+	public enum Stance {
+		BOLT, CHANNEL, SELF, RITUAL, SUMMON,
+		/** Рука с посохом указывает на точку прицела (круг у цели). */
+		POINT,
+		/** Обе руки воздеты к небу, на выпуске — «обрушить» вниз на цель. */
+		SKY,
+		/** Посох двумя руками вперёд, на накоплении отводится, на выпуске — выпад (ствол из кругов). */
+		THRUST,
+		/** Руки раскинуты в стороны (веер кругов за спиной), на выпуске рука указывает на цель. */
+		SPREAD,
+		/** Руки ведут круги вокруг себя, на выпуске раскрываются. */
+		ORBIT;
+
+		/** Стойка по заклинанию: якорь круга важнее типа каста (кроме ритуала и призыва у цели). */
+		public static Stance of(CastStyle style, Anchor anchor) {
+			if (anchor != null) {
+				switch (anchor) {
+					case TARGET -> {
+						if (style == CastStyle.BOLT || style == CastStyle.SELF) return POINT;
+					}
+					case SKY -> {
+						return SKY;
+					}
+					case LINE -> {
+						return THRUST;
+					}
+					case BACK -> {
+						return SPREAD;
+					}
+					case ORBIT -> {
+						return ORBIT;
+					}
+					default -> {
+					}
+				}
+			}
+			return switch (style) {
+				case BOLT -> BOLT;
+				case CHANNEL -> CHANNEL;
+				case SELF -> SELF;
+				case RITUAL -> RITUAL;
+				case SUMMON -> SUMMON;
+			};
+		}
+
+		/** Руки высоко над головой (круг строится над магом). */
+		public boolean raised() {
+			return this == RITUAL || this == SUMMON || this == SKY;
+		}
+	}
 
 	/** Каст в одном кадре. */
 	public static final class Pose {
@@ -53,9 +110,30 @@ public final class CastAnim {
 		public boolean fizzle;
 		/** Время каста в тиках (с долей кадра) — для дрожи и вращения. */
 		public float time;
+		/** Копий мультикаста в этом касте (1 — обычный каст). */
+		public int copies = 1;
+		/** Предел накопления фокуса (сила на пике). */
+		public float cap = 1.75F;
+		/** Якорь круга (null — берётся из заклинания). */
+		public Anchor anchor;
 
 		public boolean casting() {
 			return release < 0;
+		}
+
+		/** Якорь круга этого каста. */
+		public Anchor anchor() {
+			return anchor != null ? anchor : spell != null ? spell.anchor : Anchor.HAND;
+		}
+
+		/** Стойка мага (по типу каста и якорю круга). */
+		public Stance stance() {
+			return Stance.of(style != null ? style : CastStyle.BOLT, anchor());
+		}
+
+		/** Ранг заклинания (1, если заклинание неизвестно). */
+		public int tier() {
+			return spell != null ? spell.tier : 1;
 		}
 
 		/** Насколько сильно сияет рука/фокус (0…1+). */
@@ -73,24 +151,30 @@ public final class CastAnim {
 
 	private CastAnim() {}
 
-	/** Чем колдовал игрок в последний раз (рука и вид фокуса) — пакет о выпуске приходит, когда каст уже кончился. */
-	private record Grip(boolean staff, HumanoidArm castArm) {}
+	/** Чем колдовал игрок в последний раз (рука, вид фокуса, копии) — пакет о выпуске приходит, когда каст уже кончился. */
+	private record Grip(boolean staff, HumanoidArm castArm, int copies) {}
 
 	private static final Map<Integer, Grip> GRIPS = new HashMap<>();
 
 	static void onRelease(Player p, Spell spell, float power, boolean fizzle) {
-		Grip grip = GRIPS.getOrDefault(p.getId(), new Grip(true, p.getMainArm()));
+		Grip grip = GRIPS.getOrDefault(p.getId(), new Grip(true, p.getMainArm(), 1));
 		long now = p.level().getGameTime();
 		// Свой выпуск клиент предсказывает сразу; ответ сервера только уточняет силу, не перезапуская анимацию.
 		Release prev = RELEASES.get(p.getId());
 		long tick = prev != null && prev.spell == spell && now - prev.tick <= 6 ? prev.tick : now;
-		RELEASES.put(p.getId(), new Release(spell, power, tick, grip.staff, grip.castArm, fizzle));
+		RELEASES.put(p.getId(), new Release(spell, power, tick, grip.staff, grip.castArm, fizzle, grip.copies));
 	}
 
-	/** Был ли недавно выпуск этого заклинания у игрока (чтобы не дёргать камеру дважды). */
+	/** Был ли недавно выпуск этого заклинания у игрока (чтобы не дёргать камеру и не играть звук дважды). */
 	static boolean releasedRecently(Player p, Spell spell) {
 		Release prev = RELEASES.get(p.getId());
 		return prev != null && prev.spell == spell && p.level().getGameTime() - prev.tick <= 6;
+	}
+
+	/** Сколько копий в текущем касте игрока (синхронизируется со всеми). */
+	public static int copiesOf(Player p) {
+		Integer copies = p.getAttached(Magic.CASTING_COPIES);
+		return copies == null ? 1 : Math.max(1, Math.min(Magic.MAX_COPIES, copies));
 	}
 
 	/** Поза каста игрока в этом кадре или null — не колдует и не выпускал недавно. */
@@ -108,14 +192,16 @@ public final class CastAnim {
 			pose.spell = spell;
 			pose.style = spell.style;
 			pose.staff = focus.staff;
+			pose.cap = focus.cap;
+			pose.copies = copiesOf(p);
 			HumanoidArm held = p.getUsedItemHand() == InteractionHand.MAIN_HAND ? p.getMainArm() : p.getMainArm().getOpposite();
 			pose.castArm = focus.staff ? held : held.getOpposite();
-			GRIPS.put(p.getId(), new Grip(pose.staff, pose.castArm));
+			GRIPS.put(p.getId(), new Grip(pose.staff, pose.castArm, pose.copies));
 			// Свежий каст отменяет хвост анимации прошлого выпуска.
 			if (last != null) RELEASES.remove(p.getId());
 			float t = p.getTicksUsingItem() + pt;
 			pose.time = t;
-			int form = Magic.formTicks(spell, Magic.castSpeed(p, focus));
+			int form = Magic.formTicks(spell, Magic.castSpeed(p, focus), pose.copies);
 			int over = Magic.overTicks(spell, form);
 			pose.form = Mth.clamp(t / form, 0, 1);
 			pose.over = Mth.clamp((t - form) / over, 0, 1);
@@ -126,7 +212,7 @@ public final class CastAnim {
 		}
 		Release r = RELEASES.get(p.getId());
 		if (r == null) return null;
-		int len = r.fizzle ? FIZZLE_TICKS : r.spell.style == CastStyle.RITUAL ? RITUAL_RELEASE_TICKS : RELEASE_TICKS;
+		int len = r.fizzle ? FIZZLE_TICKS : Stance.of(r.spell.style, r.spell.anchor).raised() ? RITUAL_RELEASE_TICKS : RELEASE_TICKS;
 		float age = p.level().getGameTime() - r.tick + pt;
 		if (age > len || age < 0) {
 			if (age > len + 20) RELEASES.remove(p.getId());
@@ -137,6 +223,7 @@ public final class CastAnim {
 		pose.style = r.spell.style;
 		pose.staff = r.staff;
 		pose.castArm = r.castArm;
+		pose.copies = r.copies;
 		pose.form = 1;
 		pose.release = age / len;
 		pose.releasePower = r.power;
@@ -168,31 +255,43 @@ public final class CastAnim {
 
 	/**
 	 * Где в мире рука (или навершие посоха), которой колдуют. От первого лица — у камеры,
-	 * от третьего — по повороту тела и типу каста.
+	 * от третьего — по повороту тела и стойке.
 	 */
 	public static Vec3 handPos(Player p, Pose pose, float pt, boolean firstPerson) {
 		Vec3 eye = p.getEyePosition(pt);
 		Vec3 look = p.getViewVector(pt);
 		float yaw = Mth.lerp(pt, p.yBodyRotO, p.yBodyRot) * Mth.DEG_TO_RAD;
 		float side = pose.castArm == HumanoidArm.RIGHT ? 1 : -1;
+		Stance stance = pose.stance();
 		if (firstPerson) {
 			float lookYaw = p.getViewYRot(pt) * Mth.DEG_TO_RAD;
 			Vec3 right = new Vec3(-Mth.cos(lookYaw), 0, -Mth.sin(lookYaw));
 			Vec3 up = right.cross(look).normalize().scale(-1);
-			double fwd = pose.style == CastStyle.RITUAL || pose.style == CastStyle.SUMMON ? 0.7 : 0.95;
-			double lift = pose.style == CastStyle.RITUAL || pose.style == CastStyle.SUMMON ? 0.15 + 0.35 * pose.form : pose.staff ? 0.05 : -0.08;
-			double sideOff = pose.style == CastStyle.CHANNEL || pose.style == CastStyle.SELF ? 0.12 : 0.3;
+			double fwd = stance.raised() ? 0.7 : stance == Stance.THRUST ? 1.1 : 0.95;
+			double lift = stance.raised() ? 0.15 + 0.35 * pose.form : pose.staff ? 0.05 : -0.08;
+			double sideOff = switch (stance) {
+				case CHANNEL, SELF, THRUST -> 0.12;
+				case SPREAD -> 0.55;
+				default -> 0.3;
+			};
 			return eye.add(look.scale(fwd)).add(right.scale(sideOff * side)).add(up.scale(lift - 0.1));
 		}
 		Vec3 right = new Vec3(-Mth.cos(yaw), 0, -Mth.sin(yaw));
 		Vec3 forward = new Vec3(-Mth.sin(yaw), 0, Mth.cos(yaw));
 		Vec3 shoulder = p.getPosition(pt).add(0, p.isCrouching() ? 1.05 : 1.38, 0).add(right.scale(0.37 * side));
 		double reach = pose.staff ? 1.15 : 0.75;
-		return switch (pose.style) {
-			case BOLT, CHANNEL -> shoulder.add(look.scale(reach)).add(right.scale(-0.12 * side));
+		return switch (stance) {
+			case BOLT, CHANNEL, POINT -> shoulder.add(look.scale(reach)).add(right.scale(-0.12 * side));
+			case THRUST -> shoulder.add(look.scale(reach + 0.2)).add(right.scale(-0.3 * side));
 			case SELF -> p.getPosition(pt).add(0, 1.15, 0).add(forward.scale(0.45));
 			case RITUAL -> p.getPosition(pt).add(0, 1.38 + 0.9 * pose.form, 0).add(forward.scale(0.2));
+			case SKY -> p.getPosition(pt).add(0, 1.38 + 1.05 * pose.form, 0).add(forward.scale(0.1)).add(right.scale(0.25 * side));
 			case SUMMON -> shoulder.add(0, 0.8 * pose.form + (pose.staff ? 0.5 : 0), 0);
+			case SPREAD -> shoulder.add(right.scale((0.55 + 0.25 * pose.form) * side)).add(0, 0.1, 0);
+			case ORBIT -> {
+				float a = pose.time * 0.3F;
+				yield p.getPosition(pt).add(0, 1.2 + 0.1 * Mth.sin(a), 0).add(forward.scale(0.5)).add(right.scale(0.2 * Mth.cos(a) * side));
+			}
 		};
 	}
 }

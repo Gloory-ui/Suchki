@@ -7,6 +7,11 @@
     "suchki:spell_holy",
     "suchki:spell_dark",
     "suchki:spell_arcane",
-    "suchki:spell_earth"
+    "suchki:spell_earth",
+    "suchki:spell_wind",
+    "suchki:spell_water",
+    "suchki:spell_void",
+    "suchki:spell_blood",
+    "suchki:spell_psychic"
   ]
 }

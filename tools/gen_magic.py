@@ -1,333 +1,296 @@
-"""Генератор ресурсов магии Suchki. Запуск: python tools/gen_magic.py
+#!/usr/bin/env python3
+"""Генератор ресурсов магии Suchki.
 
-Пишет: переводы (дописывает ключи магии в ru_ru/en_us), рецепты книг и фокусов, модели предметов,
-описания частиц, sounds.json, блок света, типы урона и теги. Числа в описаниях должны совпадать с кодом
-в com.suchki.magic.spells.* (там — источник правды для механики).
+Запуск из корня мода (лучше питоном с numpy и soundfile — иначе громкость звуков не выравнивается):
+    python tools/gen_magic.py           — записать ресурсы
+    python tools/gen_magic.py --check   — только проверить данные и показать предупреждения (ничего не пишет)
+
+Источники:
+- Java (источник правды): стихии — magic/School.java, звуковые события — magic/MagicSounds.java, виды урона —
+  magic/MagicDamage.java, заклинания — Spell.of(...) в magic/spells/*.java (только для сверки);
+- тексты заклинаний — tools/spelldata/<стихия>.py (формат — в tools/spelldata/__init__.py);
+- тексты интерфейса — tools/lang/*.py: LANG = {"ключ": ("ru", "en")}; core.py — основа, остальные модули
+  (по алфавиту) дописывают и могут переопределять его ключи;
+- звуки — файлы assets/suchki/sounds/magic/*.ogg (их пишет tools/gen_sounds.py): событие «magic.cast.fire» ↔
+  cast_fire.ogg или cast_fire_1…N.ogg; нет файла — ванильная замена из FALLBACK и предупреждение.
+
+Пишет: переводы ru_ru/en_us (ключи магии обновляет, устаревшие убирает, остальные ключи мода не трогает; порядок
+и формат файла сохраняются), рецепты книг и фокусов, модели и описания предметов, блок света, частицы, sounds.json,
+типы урона и теги. Устаревшие файлы (рецепты книг, модели старых школ, типы урона) удаляет. Всё детерминировано.
 """
+import argparse
+import importlib.util
 import json
+import re
+import sys
+import zipfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent / "src" / "main" / "resources"
-ASSETS = ROOT / "assets" / "suchki"
-DATA = ROOT / "data"
+sys.dont_write_bytecode = True          # модули данных грузятся из tools/ — без __pycache__ в репозитории
 
-SCHOOLS = {
-    "destruction": ("Разрушение", "Destruction"),
-    "restoration": ("Восстановление", "Restoration"),
-    "light": ("Свет", "Light"),
-    "dark": ("Тьма", "Darkness"),
-    "alteration": ("Изменение", "Alteration"),
-    "illusion": ("Иллюзия", "Illusion"),
-    "conjuration": ("Колдовство", "Conjuration"),
-}
+TOOLS = Path(__file__).resolve().parent
+REPO = TOOLS.parent
+RES = REPO / "src" / "main" / "resources"
+ASSETS = RES / "assets" / "suchki"
+DATA = RES / "data"
+JAVA = REPO / "src" / "main" / "java" / "com" / "suchki"
+MAGIC_JAVA = JAVA / "magic"
+SOUND_DIR = ASSETS / "sounds" / "magic"
+LANG_DIR = ASSETS / "lang"
 
-# id: (школа, круг, ru имя, ru описание, en имя, en описание, ингредиенты рецепта или None — только находки)
-SPELLS = {
-    # --- Разрушение ---
-    "firebolt": ("destruction", 1, "Огненная стрела", "Снаряд: 6 урона огнём и поджог на 3 с.",
-                 "Firebolt", "Projectile: 6 fire damage, sets the target on fire for 3 s.",
-                 ["blaze_powder", "flint"]),
-    "flames": ("destruction", 1, "Пламя", "Поток: конус огня на 5 блоков, ~6 урона в секунду и поджог.",
-               "Flames", "Channel: a 5-block cone of fire, ~6 damage per second, ignites.",
-               ["blaze_powder", "coal"]),
-    "ice_shard": ("destruction", 2, "Ледяной осколок", "Снаряд: 7 урона холодом, замедление II на 3 с и обледенение.",
-                  "Ice Shard", "Projectile: 7 frost damage, Slowness II for 3 s and freezing.",
-                  ["packed_ice", "lapis_lazuli", "lapis_lazuli"]),
-    "chain_lightning": ("destruction", 3, "Цепная молния", "Бьёт цель под прицелом на 8 урона и перескакивает ещё на 3 врагов (каждый раз ×0,8). Накопление добавляет перескоки.",
-                        "Chain Lightning", "Strikes the target for 8 damage and jumps to 3 more enemies (×0.8 each). Overcharge adds jumps.",
-                        ["lightning_rod", "copper_ingot", "gold_ingot", "lapis_lazuli", "lapis_lazuli"]),
-    "frost_nova": ("destruction", 3, "Ледяная волна", "Волна холода вокруг мага (радиус 6): 6 урона, замедление III на 4 с.",
-                   "Frost Nova", "A wave of cold around you (radius 6): 6 damage, Slowness III for 4 s.",
-                   ["blue_ice", "snow_block", "gold_ingot", "lapis_lazuli", "lapis_lazuli"]),
-    "fireball": ("destruction", 4, "Огненный шар", "Снаряд взрывается (радиус 3,5): до 14 урона, поджог, отбрасывание. Блоки не ломает.",
-                 "Fireball", "Explodes on impact (radius 3.5): up to 14 damage, fire, knockback. Does not break blocks.",
-                 ["fire_charge", "magma_block", "blaze_rod", "diamond", "lapis_lazuli", "lapis_lazuli", "lapis_lazuli"]),
-    "meteor_shower": ("destruction", 5, "Метеоритный дождь", "Ритуал: за 4 с в точку прицела падают 8 метеоров (накопление — больше), каждый 9 урона в радиусе 2,5.",
-                      "Meteor Shower", "Ritual: 8 meteors (more when overcharged) fall on the target area over 4 s, 9 damage each in radius 2.5.",
-                      None),
-    # --- Восстановление ---
-    "healing": ("restoration", 1, "Исцеление", "Поток: лечит мага ~2 ед. здоровья в секунду.",
-                "Healing", "Channel: heals you for ~2 health per second.",
-                ["glistering_melon_slice", "apple"]),
-    "ward": ("restoration", 1, "Оберег", "Поток: урон спереди снижается на 70%. Каждая погашенная единица урона стоит 2 маны.",
-             "Ward", "Channel: damage from the front is reduced by 70%. Each blocked point costs 2 mana.",
-             ["iron_ingot", "glistering_melon_slice"]),
-    "heal_other": ("restoration", 2, "Лечение ближнего", "Лечит существо под прицелом на 8 ед. Нежить вместо этого получает 6 урона.",
-                   "Heal Other", "Heals the creature you aim at for 8 health. Undead take 6 damage instead.",
-                   ["golden_carrot", "lapis_lazuli", "lapis_lazuli"]),
-    "cure": ("restoration", 2, "Очищение", "Снимает все вредные эффекты, тушит огонь и немного лечит.",
-             "Cure", "Removes all harmful effects, puts out fire and heals a little.",
-             ["milk_bucket", "honey_bottle", "lapis_lazuli", "lapis_lazuli"]),
-    "rejuvenation": ("restoration", 3, "Восстановление сил", "Регенерация II на 10 с магу и союзникам в радиусе 8.",
-                     "Rejuvenation", "Regeneration II for 10 s for you and allies within 8 blocks.",
-                     ["golden_apple", "sweet_berries", "lapis_lazuli", "lapis_lazuli"]),
-    "healing_circle": ("restoration", 4, "Круг исцеления", "Ритуал: круг радиуса 4 на 12 с. Союзникам +1 ед. здоровья в секунду, нежити −1.",
-                       "Healing Circle", "Ritual: a circle of radius 4 for 12 s. Allies heal 1 health per second, undead take 1 damage.",
-                       ["glistering_melon_slice", "glistering_melon_slice", "ghast_tear", "diamond", "lapis_lazuli", "lapis_lazuli", "lapis_lazuli"]),
-    "undying": ("restoration", 5, "Неугасимая жизнь", "На 60 с: смертельный удар отменяется один раз — половина здоровья, регенерация и поглощение.",
-                "Undying", "For 60 s: a fatal blow is cancelled once — half health, regeneration and absorption.",
-                None),
-    # --- Свет ---
-    "candlelight": ("light", 1, "Светоч", "На 3 мин за магом летит свет — тёмные пещеры не страшны.",
-                    "Candlelight", "For 3 min a light follows you — no more dark caves.",
-                    ["torch", "glowstone_dust"]),
-    "smite": ("light", 1, "Кара", "Снаряд света: 5 урона, нежити ×2,5 и поджог.",
-              "Smite", "A bolt of light: 5 damage, ×2.5 against undead and sets them on fire.",
-              ["glowstone_dust", "gold_nugget"]),
-    "flash": ("light", 2, "Вспышка", "Слепящая вспышка: враги в радиусе 7 слепнут на 5 с и теряют цель.",
-              "Flash", "A blinding flash: enemies within 7 blocks are blinded for 5 s and lose their target.",
-              ["glow_ink_sac", "glowstone_dust", "lapis_lazuli", "lapis_lazuli"]),
-    "sunbeam": ("light", 3, "Солнечный луч", "Поток: луч на 24 блока, ~6 урона в секунду; нежити ×2,5 и поджог.",
-                "Sunbeam", "Channel: a 24-block beam, ~6 damage per second; ×2.5 against undead and ignites them.",
-                ["sunflower", "glowstone", "gold_ingot", "lapis_lazuli", "lapis_lazuli"]),
-    "blessing": ("light", 3, "Благословение", "Сила I и сопротивление I на 45 с магу и союзникам в радиусе 8.",
-                 "Blessing", "Strength I and Resistance I for 45 s for you and allies within 8 blocks.",
-                 ["golden_apple", "glowstone", "lapis_lazuli", "lapis_lazuli"]),
-    "sanctuary": ("light", 4, "Святая земля", "Ритуал: зона радиуса 6 на 15 с. Нежить горит, враги выталкиваются, союзники регенерируют.",
-                  "Sanctuary", "Ritual: a zone of radius 6 for 15 s. Undead burn, enemies are pushed out, allies regenerate.",
-                  ["glowstone", "gold_block", "diamond", "lapis_lazuli", "lapis_lazuli", "lapis_lazuli"]),
-    "judgement": ("light", 5, "Небесный суд", "Ритуал: столп света бьёт в точку прицела — 18 урона в радиусе 3 (нежити ×1,5), ослепление.",
-                  "Judgement", "Ritual: a pillar of light strikes the target point — 18 damage in radius 3 (×1.5 vs undead), blindness.",
-                  None),
-    # --- Тьма ---
-    "shadow_bolt": ("dark", 1, "Теневая стрела", "Снаряд тени: 5 урона и иссушение на 4 с.",
-                    "Shadow Bolt", "A shadow projectile: 5 damage and Wither for 4 s.",
-                    ["ink_sac", "bone"]),
-    "drain_life": ("dark", 2, "Похищение жизни", "Поток: луч на 16 блоков, ~4 урона в секунду; 60% урона лечит мага.",
-                   "Drain Life", "Channel: a 16-block beam, ~4 damage per second; 60% of it heals you.",
-                   ["fermented_spider_eye", "redstone", "lapis_lazuli", "lapis_lazuli"]),
-    "curse": ("dark", 2, "Проклятие", "Цель под прицелом на 15 с получает на 25% больше урона, слабеет и замедляется.",
-              "Curse", "For 15 s the target takes 25% more damage, is weakened and slowed.",
-              ["spider_eye", "ink_sac", "lapis_lazuli", "lapis_lazuli"]),
-    "shadow_step": ("dark", 3, "Теневой шаг", "Телепорт в точку прицела (до 20 блоков) или за спину врага, 2 с невидимости.",
-                    "Shadow Step", "Teleports you to the aimed spot (up to 20 blocks) or behind an enemy, 2 s of invisibility.",
-                    ["ender_pearl", "ink_sac", "gold_ingot", "lapis_lazuli", "lapis_lazuli"]),
-    "raise_dead": ("dark", 3, "Поднять мертвецов", "Призыв: 2 мертвеца-союзника на 60 с (при сильном накоплении — 3).",
-                   "Raise Dead", "Summon: 2 undead allies for 60 s (3 when strongly overcharged).",
-                   ["rotten_flesh", "rotten_flesh", "bone", "gold_ingot", "lapis_lazuli", "lapis_lazuli"]),
-    "darkness": ("dark", 4, "Покров тьмы", "Облако тьмы радиуса 4 на 8 с в точке прицела: врагам слепота, тьма, иссушение и замедление.",
-                 "Shroud of Darkness", "A cloud of darkness (radius 4) for 8 s at the aimed spot: enemies get blindness, darkness, wither and slowness.",
-                 ["sculk", "ink_sac", "diamond", "lapis_lazuli", "lapis_lazuli", "lapis_lazuli"]),
-    "soul_harvest": ("dark", 5, "Жатва душ", "Ритуал: враги в радиусе 12 получают 14 урона и иссушение II, маг лечится за каждого.",
-                     "Soul Harvest", "Ritual: enemies within 12 blocks take 14 damage and Wither II, you heal for each.",
-                     None),
-    # --- Изменение ---
-    "stoneflesh": ("alteration", 1, "Каменная кожа", "+4 брони и +2 прочности брони на 90 с (при сильном накоплении — вдвое).",
-                   "Stoneflesh", "+4 armor and +2 armor toughness for 90 s (doubled when strongly overcharged).",
-                   ["cobblestone", "iron_nugget"]),
-    "telekinesis": ("alteration", 1, "Телекинез", "Поток: притягивает предметы и опыт по взгляду (до 24 блоков) и мелких существ.",
-                    "Telekinesis", "Channel: pulls items and experience along your gaze (up to 24 blocks) and small creatures.",
-                    ["string", "amethyst_shard"]),
-    "featherfall": ("alteration", 2, "Пёрышко", "Плавное падение и прыгучесть на 60 с.",
-                    "Featherfall", "Slow Falling and Jump Boost for 60 s.",
-                    ["feather", "feather", "lapis_lazuli", "lapis_lazuli"]),
-    "blink": ("alteration", 2, "Скачок", "Мгновенный рывок-телепорт на 10 блоков вперёд (не сквозь стены).",
-              "Blink", "Instantly teleports you 10 blocks forward (not through walls).",
-              ["ender_pearl", "sugar", "lapis_lazuli", "lapis_lazuli"]),
-    "deep_breath": ("alteration", 3, "Дыхание глубин", "Подводное дыхание, грация дельфина и сила источника на 3 мин.",
-                    "Deep Breath", "Water Breathing, Dolphin's Grace and Conduit Power for 3 min.",
-                    ["pufferfish", "kelp", "gold_ingot", "lapis_lazuli", "lapis_lazuli"]),
-    "paralyze": ("alteration", 4, "Паралич", "Снаряд: цель 5 с не двигается и не наносит урона (кроме боссов).",
-                 "Paralyze", "Projectile: the target can't move or deal damage for 5 s (except bosses).",
-                 ["cobweb", "slime_ball", "diamond", "lapis_lazuli", "lapis_lazuli", "lapis_lazuli"]),
-    "earthquake": ("alteration", 5, "Землетрясение", "Ритуал: 3 волны в радиусе 8 — по 7 урона стоящим на земле врагам, подбрасывает и замедляет.",
-                   "Earthquake", "Ritual: 3 waves in radius 8 — 7 damage each to grounded enemies, knocks them up and slows.",
-                   None),
-    # --- Иллюзия ---
-    "night_eye": ("illusion", 1, "Ночной глаз", "Ночное зрение на 4 мин.",
-                  "Night Eye", "Night Vision for 4 min.",
-                  ["carrot", "glowstone_dust"]),
-    "fear": ("illusion", 1, "Страх", "Враги в радиусе 4 от точки прицела 8 с бегут прочь и не нападают.",
-             "Fear", "Enemies within 4 blocks of the aimed spot flee for 8 s and don't attack.",
-             ["bone", "gunpowder"]),
-    "calm": ("illusion", 2, "Умиротворение", "Мобы в радиусе 4 от точки прицела 20 с не нападают на игроков, пока их не ударить.",
-             "Calm", "Mobs within 4 blocks of the aimed spot won't attack players for 20 s unless hit.",
-             ["poppy", "wheat", "lapis_lazuli", "lapis_lazuli"]),
-    "invisibility": ("illusion", 3, "Невидимость", "Невидимость на 30 с; мобы, гнавшиеся за магом, теряют его.",
-                     "Invisibility", "Invisibility for 30 s; mobs chasing you lose track of you.",
-                     ["fermented_spider_eye", "glass", "gold_ingot", "lapis_lazuli", "lapis_lazuli"]),
-    "frenzy": ("illusion", 3, "Бешенство", "Мобы в радиусе 5 от точки прицела 15 с дерутся друг с другом.",
-               "Frenzy", "Mobs within 5 blocks of the aimed spot fight each other for 15 s.",
-               ["redstone", "rotten_flesh", "gold_ingot", "lapis_lazuli", "lapis_lazuli"]),
-    "mirror_image": ("illusion", 4, "Двойник", "Создаёт двойника мага на 12 с — все враги рядом бросаются на него. Маг ненадолго невидим.",
-                     "Mirror Image", "Creates a double of you for 12 s — nearby enemies attack it. You turn invisible briefly.",
-                     ["glass", "armor_stand", "diamond", "lapis_lazuli", "lapis_lazuli", "lapis_lazuli"]),
-    "mass_hysteria": ("illusion", 5, "Массовая паника", "Ритуал: все враги в радиусе 16 бегут 12 с и слабеют.",
-                      "Mass Hysteria", "Ritual: all enemies within 16 blocks flee for 12 s and are weakened.",
-                      None),
-    # --- Колдовство ---
-    "bound_blade": ("conjuration", 1, "Призрачный клинок", "Призрачный меч (как незеритовый) на 2 мин. При сильном накоплении — с Остротой V.",
-                    "Bound Blade", "A spectral sword (like netherite) for 2 min. Sharpness V when strongly overcharged.",
-                    ["iron_ingot", "amethyst_shard"]),
-    "familiar": ("conjuration", 1, "Призрачный волк", "Призыв: волк-союзник на 90 с (при сильном накоплении — два).",
-                 "Familiar", "Summon: a wolf ally for 90 s (two when strongly overcharged).",
-                 ["bone", "beef"]),
-    "bound_tool": ("conjuration", 2, "Призрачный инструмент", "Кирка, топор или лопата — по блоку под прицелом — с Эффективностью III на 3 мин.",
-                   "Bound Tool", "A pickaxe, axe or shovel — depending on the block you look at — with Efficiency III for 3 min.",
-                   ["iron_ingot", "stick", "lapis_lazuli", "lapis_lazuli"]),
-    "spirit_blades": ("conjuration", 3, "Духи-клинки", "Призыв: 3 летающих духа с клинками на 30 с.",
-                      "Spirit Blades", "Summon: 3 flying spirits with blades for 30 s.",
-                      ["iron_sword", "amethyst_shard", "gold_ingot", "lapis_lazuli", "lapis_lazuli"]),
-    "spectral_steed": ("conjuration", 3, "Призрачный конь", "Призыв: осёдланный быстрый конь на 5 мин; исчезает, если на нём никто не едет.",
-                       "Spectral Steed", "Summon: a fast saddled horse for 5 min; vanishes when nobody rides it.",
-                       ["leather", "hay_block", "gold_ingot", "lapis_lazuli", "lapis_lazuli"]),
-    "recall": ("conjuration", 4, "Возврат", "Ритуал (3 с): перенос к точке возрождения — кровати или якорю, иначе к точке появления мира.",
-               "Recall", "Ritual (3 s): teleports you to your respawn point — bed or anchor, otherwise world spawn.",
-               ["compass", "ender_pearl", "diamond", "lapis_lazuli", "lapis_lazuli", "lapis_lazuli"]),
-    "iron_guardian": ("conjuration", 5, "Железный страж", "Призыв: железный голем-союзник на 60 с (при сильном накоплении — два).",
-                      "Iron Guardian", "Summon: an iron golem ally for 60 s (two when strongly overcharged).",
-                      None),
-}
+MAX_RANK = 7
+CRAFT_MAX_RANK = 4          # книги рангов 1–4 могут крафтиться, 5–7 — только находки
+WARNINGS = []
 
-TIERS = {1: ("I — Новичок", "I — Novice"), 2: ("II — Ученик", "II — Apprentice"), 3: ("III — Адепт", "III — Adept"),
-         4: ("IV — Эксперт", "IV — Expert"), 5: ("V — Мастер", "V — Master")}
 
-STYLES = {
-    "bolt": ("Снаряд или удар по прицелу", "Projectile or aimed strike"),
-    "channel": ("Поток: держите, пока нужно", "Channel: hold as long as needed"),
-    "self": ("На себя или вокруг себя", "On yourself or around you"),
-    "ritual": ("Ритуал: долгая зарядка, большая сила", "Ritual: long charge, great power"),
-    "summon": ("Призыв", "Summon"),
-}
+def warn(msg):
+    WARNINGS.append(msg)
 
-LANG = {
-    # (ru, en)
-    "itemGroup.suchki.magic": ("Suchki: Магия", "Suchki: Magic"),
-    "item.suchki.apprentice_staff": ("Посох ученика", "Apprentice Staff"),
-    "item.suchki.grimoire": ("Гримуар", "Grimoire"),
-    "item.suchki.archmage_staff": ("Посох архимага", "Archmage Staff"),
-    "item.suchki.spectral_blade": ("Призрачный клинок", "Spectral Blade"),
-    "item.suchki.spectral_pickaxe": ("Призрачная кирка", "Spectral Pickaxe"),
-    "item.suchki.spectral_axe": ("Призрачный топор", "Spectral Axe"),
-    "item.suchki.spectral_shovel": ("Призрачная лопата", "Spectral Shovel"),
-    "item.suchki.tome.named": ("Книга заклинаний: %s", "Spell Tome: %s"),
-    "block.suchki.magic_light": ("Магический свет", "Magic Light"),
-    "entity.suchki.spell_projectile": ("Заклинание", "Spell"),
-    "effect.suchki.stoneskin": ("Каменная кожа", "Stoneskin"),
-    "effect.suchki.paralysis": ("Паралич", "Paralysis"),
-    "effect.suchki.hex": ("Проклятие", "Hex"),
-    "effect.suchki.undying": ("Неугасимая жизнь", "Undying"),
-    "key.suchki.spell_wheel": ("Колесо заклинаний (зажать)", "Spell wheel (hold)"),
-    "suchki.focus.tier": ("Выдерживает заклинания до круга %s", "Handles spells up to circle %s"),
-    "suchki.focus.speed": ("Скорость каста: %s", "Casting speed: %s"),
-    "suchki.focus.cap": ("Предел накопления: ×%s", "Overcharge limit: ×%s"),
-    "suchki.focus.cost": ("Цена маны: %s", "Mana cost: %s"),
-    "suchki.focus.staff_hint": ("Посох держат двумя руками. ПКМ — колдовать, R — выбрать заклинание.",
-                                "Held in both hands. Right click — cast, R — choose a spell."),
-    "suchki.focus.book_hint": ("Книга в руке, колдует свободная рука. ПКМ — колдовать, R — выбрать заклинание.",
-                               "The book stays in hand, the free hand casts. Right click — cast, R — choose a spell."),
-    "suchki.tome.hint": ("ПКМ — изучить (нужен Маг %s уровня)", "Right click to learn (requires Mage level %s)"),
-    "suchki.spectral.hint": ("Призрачный: исчезнет со временем, его не положить в сундук",
-                             "Spectral: fades with time, can't be stored in chests"),
-    "suchki.spell.line": ("%s · круг %s", "%s · circle %s"),
-    "suchki.spell.mana": ("Мана: %s", "Mana: %s"),
-    "suchki.spell.mana_per_second": ("Мана: %s в секунду", "Mana: %s per second"),
-    "suchki.spell.cooldown_left": ("Перезарядка: %s с", "Cooldown: %s s"),
-    "suchki.magic.not_mage": ("Колдовать может только Маг", "Only a Mage can cast spells"),
-    "suchki.magic.no_spell": ("Заклинание не выбрано — зажмите R", "No spell selected — hold R"),
-    "suchki.magic.focus_too_weak": ("Этот фокус не выдерживает заклинания круга %s", "This focus can't handle circle %s spells"),
-    "suchki.magic.cooldown": ("Заклинание восстанавливается: %s с", "The spell is recovering: %s s"),
-    "suchki.magic.no_mana": ("Не хватает маны", "Not enough mana"),
-    "suchki.magic.mana_dry": ("Мана иссякла — сила больше не растёт, отпустите", "Out of mana — power won't grow, release"),
-    "suchki.magic.no_target": ("Нет цели — заклинание рассеялось", "No target — the spell dissipated"),
-    "suchki.magic.starter": ("Вы стали Магом! Получен Посох ученика и три заклинания. Зажмите R, чтобы выбрать заклинание, и ПКМ посохом, чтобы колдовать. Чем дольше держите — тем сильнее.",
-                             "You are a Mage now! You got an Apprentice Staff and three spells. Hold R to choose a spell and right click with the staff to cast. The longer you hold, the stronger it gets."),
-    "suchki.magic.learned": ("Изучено заклинание «%s»", "Learned the spell \"%s\""),
-    "suchki.magic.learn_not_mage": ("Изучать заклинания может только Маг", "Only a Mage can learn spells"),
-    "suchki.magic.learn_level": ("Нужен Маг %s уровня", "Requires Mage level %s"),
-    "suchki.magic.learn_known": ("Вы уже знаете это заклинание", "You already know this spell"),
-    "suchki.wheel.title": ("Заклинания", "Spells"),
-    "suchki.wheel.empty": ("Вы ещё не знаете заклинаний этой школы", "You don't know any spells of this school yet"),
-    "suchki.wheel.none": ("Вы ещё не знаете ни одного заклинания. Изучайте книги заклинаний!", "You don't know any spells yet. Study spell tomes!"),
-    "suchki.wheel.hint": ("Отпустите R, чтобы выбрать", "Release R to choose"),
-    "suchki.hud.mana": ("%s / %s", "%s / %s"),
-    "suchki.power": ("Сила ×%s", "Power ×%s"),
-    "suchki.magic.cmd.learned": ("Изучены все заклинания: %s", "Learned all spells: %s"),
-    "suchki.magic.cmd.mana": ("Мана восполнена", "Mana restored"),
-    "suchki.magic.cmd.reset": ("Перезарядки сброшены, мана восполнена", "Cooldowns reset, mana restored"),
-    "suchki.magic.cmd.foci": ("Выданы все посохи и гримуар: %s", "Given all staffs and the grimoire: %s"),
-}
 
-DEATH = {
-    "spell_fire": ("%1$s сгорел в магическом огне", "%1$s сгорел в магическом огне от %2$s",
-                   "%1$s was burnt by magic fire", "%1$s was burnt by %2$s's magic fire"),
-    "spell_frost": ("%1$s замёрз от магии", "%1$s заморожен магией %2$s",
-                    "%1$s was frozen by magic", "%1$s was frozen by %2$s's magic"),
-    "spell_shock": ("%1$s поражён молнией", "%1$s поражён молнией %2$s",
-                    "%1$s was struck by lightning magic", "%1$s was struck by %2$s's lightning"),
-    "spell_holy": ("%1$s испепелён светом", "%1$s испепелён светом %2$s",
-                   "%1$s was smitten by light", "%1$s was smitten by %2$s's light"),
-    "spell_dark": ("%1$s поглощён тьмой", "%1$s поглощён тьмой %2$s",
-                   "%1$s was consumed by darkness", "%1$s was consumed by %2$s's darkness"),
-    "spell_arcane": ("%1$s погиб от чар", "%1$s погиб от чар %2$s",
-                     "%1$s was killed by sorcery", "%1$s was killed by %2$s's sorcery"),
-    "spell_earth": ("%1$s раздавлен землёй", "%1$s раздавлен землетрясением %2$s",
-                    "%1$s was crushed by the earth", "%1$s was crushed by %2$s's earthquake"),
-    "spell_wind": ("%1$s разорван ветром", "%1$s разорван ветром %2$s",
-                   "%1$s was torn apart by the wind", "%1$s was torn apart by %2$s's wind"),
-    "spell_water": ("%1$s утонул в магической воде", "%1$s утоплен магией %2$s",
-                    "%1$s drowned in magic water", "%1$s was drowned by %2$s's magic"),
-    "spell_void": ("%1$s стёрт пустотой", "%1$s стёрт пустотой %2$s",
-                   "%1$s was erased by the void", "%1$s was erased by %2$s"),
-    "spell_blood": ("%1$s истёк кровью", "%1$s обескровлен магией %2$s",
-                    "%1$s bled out", "%1$s was bled dry by %2$s"),
-    "spell_psychic": ("%1$s сошёл с ума", "%1$s сломлен разумом %2$s",
-                      "%1$s lost their mind", "%1$s was broken by %2$s's mind"),
-}
+class DataError(Exception):
+    pass
 
-# Звуки: событие → список (ванильный звук, громкость, высота). Пересведение под магию.
-SOUNDS = {
-    "magic.charge.destruction": [("fire/fire", 0.7, 1.0)],
-    "magic.charge.restoration": [("block/conduit/ambient", 0.8, 1.4)],
-    "magic.charge.light": [("block/beacon/ambient", 0.8, 1.6)],
-    "magic.charge.dark": [("portal/portal", 0.35, 0.6)],
-    "magic.charge.alteration": [("block/respawn_anchor/ambient1", 0.8, 1.0), ("block/respawn_anchor/ambient2", 0.8, 1.0),
-                                ("block/respawn_anchor/ambient3", 0.8, 1.0)],
-    "magic.charge.illusion": [("block/conduit/ambient", 0.8, 0.8)],
-    "magic.charge.conjuration": [("block/vault/ambient1", 0.9, 1.0), ("block/vault/ambient2", 0.9, 1.0), ("block/vault/ambient3", 0.9, 1.0)],
-    "magic.ready": [("block/amethyst/resonate1", 0.9, 1.6), ("block/amethyst/resonate2", 0.9, 1.6),
-                    ("block/amethyst/resonate3", 0.9, 1.6), ("block/amethyst/resonate4", 0.9, 1.6)],
-    "magic.stage": [("note/icechime", 0.6, 1.0)],
-    "magic.peak": [("block/beacon/power1", 0.9, 1.5), ("block/beacon/power2", 0.9, 1.5), ("block/beacon/power3", 0.9, 1.5)],
-    "magic.fizzle": [("random/fizz", 0.5, 1.4), ("block/candle/extinguish1", 0.8, 0.9), ("block/candle/extinguish2", 0.8, 0.9)],
-    "magic.learn": [("block/enchantment_table/enchant1", 1.0, 1.0), ("block/enchantment_table/enchant2", 1.0, 1.0),
-                    ("block/enchantment_table/enchant3", 1.0, 1.0)],
-    "magic.cast.fire": [("mob/ghast/fireball4", 0.8, 1.0)],
-    "magic.cast.frost": [("block/powder_snow/break1", 1.0, 1.2), ("block/powder_snow/break2", 1.0, 1.2), ("random/glass1", 0.5, 1.6),
-                         ("random/glass2", 0.5, 1.6)],
-    "magic.cast.shock": [("item/trident/thunder1", 0.5, 1.6), ("item/trident/thunder2", 0.5, 1.6)],
-    "magic.cast.holy": [("block/bell/resonate", 0.7, 1.4), ("block/beacon/activate", 0.8, 1.4)],
-    "magic.cast.dark": [("mob/wither/shoot", 0.5, 1.2), ("mob/evocation_illager/cast1", 0.8, 0.8), ("mob/evocation_illager/cast2", 0.8, 0.8)],
-    "magic.cast.arcane": [("block/respawn_anchor/charge1", 0.8, 1.3), ("block/respawn_anchor/charge2", 0.8, 1.3),
-                          ("block/respawn_anchor/charge3", 0.8, 1.3)],
-    "magic.cast.heal": [("block/amethyst/resonate1", 1.0, 1.1), ("block/amethyst/resonate2", 1.0, 1.1), ("block/beacon/power1", 0.6, 1.8)],
-    "magic.cast.illusion": [("mob/illusion_illager/mirror_move1", 0.9, 1.0), ("mob/illusion_illager/mirror_move2", 0.9, 1.0),
-                            ("mob/illusion_illager/prepare_blind", 0.7, 1.2)],
-    "magic.cast.summon": [("mob/evocation_illager/prepare_summon", 0.9, 1.1), ("block/trial_spawner/spawn1", 0.8, 1.0),
-                          ("block/trial_spawner/spawn2", 0.8, 1.0)],
-    "magic.cast.teleport": [("mob/endermen/portal", 0.8, 1.0), ("mob/endermen/portal2", 0.8, 1.0)],
-    "magic.cast.earth": [("random/explode1", 0.6, 0.5), ("random/explode2", 0.6, 0.5), ("dig/stone1", 1.0, 0.6)],
-    "magic.impact.fire": [("random/explode1", 0.3, 1.6), ("fire/ignite", 0.9, 1.0)],
-    "magic.impact.frost": [("random/glass1", 0.8, 1.3), ("random/glass2", 0.8, 1.3), ("random/glass3", 0.8, 1.3)],
-    "magic.impact.shock": [("item/trident/thunder1", 0.35, 1.9), ("item/trident/thunder2", 0.35, 1.9)],
-    "magic.impact.holy": [("block/bell/bell_use01", 0.6, 1.6), ("block/bell/bell_use02", 0.6, 1.6)],
-    "magic.impact.dark": [("block/sculk/charge1", 1.0, 0.8), ("block/sculk/charge2", 1.0, 0.8), ("block/sculk/charge3", 1.0, 0.8)],
-    "magic.impact.arcane": [("block/amethyst/break1", 1.0, 1.2), ("block/amethyst/break2", 1.0, 1.2), ("block/amethyst/break3", 1.0, 1.2)],
-    "magic.explosion": [("random/explode1", 1.0, 1.0), ("random/explode2", 1.0, 1.0), ("random/explode3", 1.0, 1.0),
-                        ("random/explode4", 1.0, 1.0)],
-    "magic.meteor_fall": [("mob/ghast/fireball4", 1.0, 0.5)],
-    "magic.pillar": [("block/beacon/activate", 1.0, 0.8), ("block/conduit/activate", 1.0, 1.2)],
-    "magic.loop.flames": [("mob/blaze/breathe1", 0.8, 1.0), ("mob/blaze/breathe2", 0.8, 1.0), ("mob/blaze/breathe3", 0.8, 1.0),
-                          ("mob/blaze/breathe4", 0.8, 1.0)],
-    "magic.loop.beam": [("block/beacon/ambient", 0.9, 2.0)],
-    "magic.loop.drain": [("ambient/nether/soulsand_valley/whisper1", 1.0, 0.8), ("ambient/nether/soulsand_valley/whisper2", 1.0, 0.8),
-                         ("ambient/nether/soulsand_valley/whisper3", 1.0, 0.8)],
-    "magic.loop.heal": [("block/conduit/ambient", 0.8, 1.8)],
-    "magic.loop.ward": [("block/beacon/ambient", 0.8, 0.7)],
-    "magic.loop.wind": [("mob/breeze/whirl", 0.7, 1.2)],
-    "magic.vanish": [("mob/illusion_illager/mirror_move1", 0.7, 1.4), ("block/candle/extinguish3", 1.0, 0.8)],
-    "magic.ward_hit": [("block/amethyst/break1", 1.0, 0.8), ("block/amethyst/break2", 1.0, 0.8)],
-}
+
+# ---------------------------------------------------------------- чтение Java
+
+def read(path):
+    return path.read_text(encoding="utf-8")
+
+
+def strip_comments(src):
+    """Убрать комментарии Java (строки не трогаем: в них нет «//» и «/*» у нас)."""
+    src = re.sub(r"/\*.*?\*/", "", src, flags=re.S)
+    return re.sub(r"//[^\n]*", "", src)
+
+
+def java_elements():
+    """Стихии из School.java: id → (цвет, светлый цвет) в порядке перечисления."""
+    out = {}
+    for m in re.finditer(r'^\s*[A-Z_]+\("([a-z_]+)",\s*0x([0-9A-Fa-f]{6}),\s*0x([0-9A-Fa-f]{6})\)',
+                         strip_comments(read(MAGIC_JAVA / "School.java")), re.M):
+        out[m.group(1)] = ("#" + m.group(2).upper(), "#" + m.group(3).upper())
+    if not out:
+        raise DataError("не нашёл стихий в School.java")
+    return out
+
+
+def java_styles():
+    src = strip_comments(read(MAGIC_JAVA / "CastStyle.java"))
+    body = src[src.index("{") + 1:]
+    body = body[:body.index(";")]
+    return [s.strip().lower() for s in body.split(",") if s.strip()]
+
+
+def java_sound_events(elements):
+    """События из MagicSounds.java: register("magic.x") и register("magic.charge." + s.id) — для каждой стихии."""
+    src = strip_comments(read(MAGIC_JAVA / "MagicSounds.java"))
+    events = []
+    for m in re.finditer(r'register\(\s*"([a-z0-9_.]+)"\s*(\+\s*[A-Za-z_][\w.]*\s*)?\)', src):
+        names = [m.group(1) + e for e in elements] if m.group(2) else [m.group(1)]
+        for n in names:
+            if n not in events:
+                events.append(n)
+    if not events:
+        raise DataError("не нашёл звуковых событий в MagicSounds.java")
+    return events
+
+
+def java_damage_types():
+    src = strip_comments(read(MAGIC_JAVA / "MagicDamage.java"))
+    return [m.group(1) for m in re.finditer(r'^\s*[A-Z_]+\("(spell_[a-z_]+)"\)', src, re.M)]
+
+
+def java_spells(elements):
+    """Заклинания из magic/spells/*.java: id → (стихия, ранг). Только для сверки с текстами."""
+    out = {}
+    up = {e.upper(): e for e in elements}
+    for f in sorted((MAGIC_JAVA / "spells").glob("*.java")):
+        src = strip_comments(read(f))
+        for m in re.finditer(r'\bof\(\s*"([a-z0-9_]+)"\s*,\s*(?:School\.)?([A-Z_]+)\s*,\s*(\d+)\s*,', src):
+            if m.group(2) in up:
+                out[m.group(1)] = (up[m.group(2)], int(m.group(3)), f.name)
+    return out
+
+
+def java_registered(file, kind):
+    """Имена из register("name", ...) в файле магии (предметы, эффекты, блоки)."""
+    path = MAGIC_JAVA / file
+    if not path.exists():
+        return []
+    return [f"{kind}.suchki.{m.group(1)}"
+            for m in re.finditer(r'\bregister\(\s*"([a-z0-9_]+)"\s*,', strip_comments(read(path)))]
+
+
+def first_arg(src, i):
+    """Первый аргумент вызова, начиная с позиции после «(»: до запятой или «)» на нулевой глубине."""
+    depth, j = 0, i
+    while j < len(src):
+        ch = src[j]
+        if ch == '"':
+            j += 1
+            while j < len(src) and src[j] != '"':
+                j += 2 if src[j] == "\\" else 1
+        elif ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            if depth == 0:
+                break
+            depth -= 1
+        elif ch == "," and depth == 0:
+            break
+        j += 1
+    return src[i:j].strip()
+
+
+def java_lang_refs():
+    """Ключи переводов из кода: точные (translatable("x"), тернарники внутри) и префиксы (translatable("x." + …))."""
+    keys, prefixes = {}, {}
+    for f in sorted(JAVA.rglob("*.java")):
+        src = strip_comments(read(f))
+        rel = f.relative_to(JAVA).as_posix()
+        for m in re.finditer(r'translatable(?:WithFallback)?\(', src):
+            arg = first_arg(src, m.end())
+            lits = re.findall(r'"((?:[^"\\]|\\.)*)"', arg)
+            if not lits:
+                continue
+            if re.fullmatch(r'"(?:[^"\\]|\\.)*"\s*\+.*', arg, re.S):
+                prefixes.setdefault(lits[0], rel)          # "spell.suchki." + id + ".desc" → префикс
+            elif "+" not in arg:
+                for lit in lits:                              # "x" или cond ? "x" : "y"
+                    keys.setdefault(lit, rel)
+        for m in re.finditer(r'"(key\.suchki\.[a-z0-9_.]+)"', src):
+            keys.setdefault(m.group(1), rel)
+    return keys, prefixes
+
+
+# ---------------------------------------------------------------- ванильные справочники (для проверки)
+
+def mc_version():
+    for line in read(REPO / "gradle.properties").splitlines():
+        if line.startswith("minecraft_version="):
+            return line.split("=", 1)[1].strip()
+    return None
+
+
+def vanilla_items():
+    """Ванильные предметы — из клиента Minecraft в кэше Gradle (assets/minecraft/items/*.json); None — нет клиента."""
+    ver = mc_version()
+    for jar in sorted(Path.home().glob(f".gradle/caches/fabric-loom/{ver}/minecraft-client.jar")):
+        with zipfile.ZipFile(jar) as z:
+            names = {n[len("assets/minecraft/items/"):-5] for n in z.namelist()
+                     if n.startswith("assets/minecraft/items/") and n.endswith(".json")}
+        if names:
+            return names
+    return None
+
+
+def vanilla_sounds():
+    """Ванильные звуковые файлы (minecraft/sounds/<путь>.ogg) — из индекса ассетов в кэше Gradle; None — нет индекса."""
+    ver = mc_version()
+    for idx in sorted(Path.home().glob(f".gradle/caches/fabric-loom/assets/indexes/{ver}*.json")):
+        objs = json.loads(read(idx)).get("objects", {})
+        return {k[len("minecraft/sounds/"):-4] for k in objs if k.startswith("minecraft/sounds/") and k.endswith(".ogg")}
+    return None
+
+
+# ---------------------------------------------------------------- модули данных
+
+def load_module(path, name):
+    spec = importlib.util.spec_from_file_location(name, path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+SPELL_FIELDS = {"rank", "ru", "ru_desc", "en", "en_desc", "chant_ru", "chant_en", "ingredients"}
+
+
+def chant_lines(text):
+    return [s for s in (text or "").split("|") if s.strip()]
+
+
+def load_spells(elements, items):
+    """Тексты из tools/spelldata/<стихия>.py → [(id, стихия, данные)] по порядку стихий, внутри — по рангу."""
+    out, seen = [], {}
+    for el in elements:
+        path = TOOLS / "spelldata" / f"{el}.py"
+        if not path.exists():
+            warn(f"нет модуля tools/spelldata/{el}.py")
+            continue
+        spells = getattr(load_module(path, f"spelldata_{el}"), "SPELLS", None)
+        if not isinstance(spells, dict):
+            raise DataError(f"{path.name}: нет словаря SPELLS")
+        rows = []
+        for sid, d in spells.items():
+            where = f"spelldata/{el}.py: {sid}"
+            if not re.fullmatch(r"[a-z0-9_]+", sid):
+                raise DataError(f"{where}: id только из a-z, 0-9 и _")
+            if sid in seen:
+                raise DataError(f"{where}: такой id уже есть в {seen[sid]}.py")
+            seen[sid] = el
+            if not isinstance(d, dict):
+                raise DataError(f"{where}: ожидался словарь")
+            extra = set(d) - SPELL_FIELDS
+            if extra:
+                warn(f"{where}: лишние поля {sorted(extra)} (опечатка?)")
+            rank = d.get("rank")
+            if not isinstance(rank, int) or not 1 <= rank <= MAX_RANK:
+                raise DataError(f"{where}: rank должен быть 1…{MAX_RANK}, а не {rank!r}")
+            for f in ("ru", "ru_desc", "en", "en_desc"):
+                if not isinstance(d.get(f), str) or not d[f].strip():
+                    raise DataError(f"{where}: пустое поле {f}")
+            ing = d.get("ingredients")
+            if ing is not None:
+                if rank > CRAFT_MAX_RANK:
+                    raise DataError(f"{where}: ранг {rank} — только находки, ingredients должно быть None")
+                if not isinstance(ing, (list, tuple)) or not 1 <= len(ing) <= 8:
+                    raise DataError(f"{where}: ingredients — список из 1…8 предметов или None")
+                ing = [i.removeprefix("minecraft:") for i in ing]
+                if items is not None:
+                    bad = [i for i in ing if i not in items]
+                    if bad:
+                        raise DataError(f"{where}: нет таких ванильных предметов: {bad}")
+            elif rank <= 3:
+                warn(f"{where}: ранг {rank} без рецепта книги (самопроверка ждёт рецепт у рангов 1–3)")
+            cru, cen = chant_lines(d.get("chant_ru")), chant_lines(d.get("chant_en"))
+            if rank >= 2 and (not cru or not cen):
+                warn(f"{where}: ранг {rank} без фразы (chant_ru/chant_en)")
+            elif len(cru) != len(cen):
+                warn(f"{where}: в фразе ru {len(cru)} строк, en — {len(cen)}")
+            if rank >= 3 and cru and len(cru) < min(4, rank - 1):
+                warn(f"{where}: фраза ранга {rank} короче {min(4, rank - 1)} строк")
+            rows.append((sid, el, {**d, "ingredients": ing}))
+        rows.sort(key=lambda r: r[2]["rank"])           # как Spells.all(): стихия, потом ранг (устойчиво)
+        out.extend(rows)
+    return out
+
+
+def load_lang():
+    """Все модули tools/lang/*.py: core первым, остальные по алфавиту (могут переопределять core)."""
+    paths = sorted((TOOLS / "lang").glob("*.py"), key=lambda p: (p.stem != "core", p.name))
+    paths = [p for p in paths if not p.name.startswith("_")]
+    merged, owner = {}, {}
+    core = None
+    for p in paths:
+        mod = load_module(p, f"lang_{p.stem}")
+        if p.stem == "core":
+            core = mod
+        lang = getattr(mod, "LANG", None)
+        if not isinstance(lang, dict):
+            warn(f"tools/lang/{p.name}: нет словаря LANG — пропущен")
+            continue
+        for k, v in lang.items():
+            if not (isinstance(v, tuple) and len(v) == 2 and all(isinstance(s, str) for s in v)):
+                raise DataError(f"tools/lang/{p.name}: {k} — ожидалась пара (ru, en)")
+            if k in merged and merged[k] != v and owner[k] != "core":
+                warn(f"ключ {k}: tools/lang/{p.name} переопределяет {owner[k]}.py")
+            merged[k], owner[k] = v, p.stem
+    if core is None:
+        raise DataError("нет tools/lang/core.py")
+    return merged, core
+
+
+# ---------------------------------------------------------------- таблицы
 
 FOCUS_RECIPES = {
     "apprentice_staff": {"type": "minecraft:crafting_shaped", "category": "equipment",
@@ -342,7 +305,15 @@ FOCUS_RECIPES = {
                        "pattern": [" DE", " BD", "B  "],
                        "key": {"E": "minecraft:echo_shard", "D": "minecraft:diamond", "B": "minecraft:blaze_rod"},
                        "result": {"id": "suchki:archmage_staff", "count": 1}},
+    # Конец игры: посох архимага по диагонали (как посох лежит в сетке), навершие — звезда Незера, рядом осколки
+    # эха и драконье дыхание, внизу — тяжёлое ядро (испытания). Трофеи визера, дракона, древнего города и испытаний.
+    "primordial_staff": {"type": "minecraft:crafting_shaped", "category": "equipment",
+                         "pattern": [" EN", "DAE", "HD "],
+                         "key": {"N": "minecraft:nether_star", "E": "minecraft:echo_shard", "D": "minecraft:dragon_breath",
+                                 "A": "suchki:archmage_staff", "H": "minecraft:heavy_core"},
+                         "result": {"id": "suchki:primordial_staff", "count": 1}},
 }
+STAFFS = ("apprentice_staff", "archmage_staff", "primordial_staff")
 
 PARTICLES = {
     "spark": ["suchki:spark"],
@@ -353,155 +324,432 @@ PARTICLES = {
     "pillar": ["suchki:beam"],
 }
 
-DAMAGE_TYPES = {
+# Особые поля типов урона (остальное общее). Огонь горит, холод замораживает, вода — звук утопления.
+DAMAGE_EXTRA = {
     "spell_fire": {"effects": "burning"},
     "spell_frost": {"effects": "freezing"},
-    "spell_shock": {},
-    "spell_holy": {},
-    "spell_dark": {},
-    "spell_arcane": {},
-    "spell_earth": {},
-    "spell_wind": {},
     "spell_water": {"effects": "drowning"},
-    "spell_void": {},
-    "spell_blood": {},
-    "spell_psychic": {},
 }
 
+# Ванильные звуки на случай, если своего файла нет: событие → [(путь, громкость, высота)].
+FALLBACK = {
+    "magic.ready": [("block/amethyst/resonate1", 0.9, 1.6), ("block/amethyst/resonate2", 0.9, 1.6)],
+    "magic.stage": [("note/icechime", 0.6, 1.0)],
+    "magic.peak": [("block/beacon/power1", 0.9, 1.5), ("block/beacon/power2", 0.9, 1.5), ("block/beacon/power3", 0.9, 1.5)],
+    "magic.fizzle": [("random/fizz", 0.5, 1.4), ("block/candle/extinguish1", 0.8, 0.9), ("block/candle/extinguish2", 0.8, 0.9)],
+    "magic.learn": [("block/enchantment_table/enchant1", 1.0, 1.0), ("block/enchantment_table/enchant2", 1.0, 1.0),
+                    ("block/enchantment_table/enchant3", 1.0, 1.0)],
+    "magic.select": [("block/amethyst/shimmer", 0.8, 1.4)],
+    "magic.multicast": [("block/respawn_anchor/charge1", 0.6, 1.7), ("block/respawn_anchor/charge2", 0.6, 1.7)],
+    "magic.circle.draw": [("block/amethyst_cluster/place1", 0.5, 1.8), ("block/amethyst_cluster/place2", 0.5, 1.8),
+                          ("block/amethyst_cluster/place3", 0.5, 1.8), ("block/amethyst_cluster/place4", 0.5, 1.8)],
+    "magic.circle.complete": [("block/beacon/activate", 0.8, 1.6)],
+    "magic.circle.big": [("block/conduit/activate", 1.0, 0.8)],
+    "magic.riser.short": [("portal/trigger", 0.7, 1.7)],
+    "magic.riser.long": [("portal/trigger", 0.9, 1.0)],
+    "magic.release.heavy": [("mob/warden/sonic_boom1", 0.7, 1.4), ("mob/warden/sonic_boom2", 0.7, 1.4)],
+    "magic.release.ultimate": [("mob/warden/sonic_boom3", 1.0, 0.8), ("mob/warden/sonic_boom4", 1.0, 0.8)],
+    "magic.glitch": [("block/sculk_sensor/sculk_clicking1", 0.7, 1.8), ("block/sculk_sensor/sculk_clicking2", 0.7, 1.8)],
+    "magic.explosion": [("random/explode1", 1.0, 1.0), ("random/explode2", 1.0, 1.0), ("random/explode3", 1.0, 1.0),
+                        ("random/explode4", 1.0, 1.0)],
+    "magic.explosion.huge": [("random/explode1", 1.0, 0.6), ("random/explode2", 1.0, 0.6), ("random/explode3", 1.0, 0.6)],
+    "magic.meteor_fall": [("mob/ghast/fireball4", 1.0, 0.5)],
+    "magic.pillar": [("block/beacon/activate", 1.0, 0.8), ("block/conduit/activate", 1.0, 1.2)],
+    "magic.shockwave": [("item/mace/smash_ground_heavy", 1.0, 0.8)],
+    "magic.thunder": [("ambient/weather/thunder1", 1.0, 1.0), ("ambient/weather/thunder2", 1.0, 1.0),
+                      ("ambient/weather/thunder3", 1.0, 1.0)],
+    "magic.rumble": [("ambient/weather/thunder2", 0.7, 0.5), ("ambient/weather/thunder3", 0.7, 0.5)],
+    "magic.freeze": [("block/powder_snow/break1", 1.0, 0.8), ("random/glass1", 0.6, 1.4)],
+    "magic.shatter": [("random/glass1", 1.0, 0.8), ("random/glass2", 1.0, 0.8), ("random/glass3", 1.0, 0.8)],
+    "magic.gust": [("entity/wind_charge/wind_burst1", 1.0, 1.0), ("entity/wind_charge/wind_burst2", 1.0, 1.0),
+                   ("entity/wind_charge/wind_burst3", 1.0, 1.0)],
+    "magic.beam_blast": [("mob/warden/sonic_boom1", 1.0, 0.9), ("mob/warden/sonic_boom2", 1.0, 0.9)],
+    "magic.timestop": [("block/bell/resonate", 1.0, 0.5), ("block/respawn_anchor/deplete1", 1.0, 0.6)],
+    "magic.domain": [("block/end_portal/endportal", 1.0, 0.8)],
+    "magic.teleport": [("mob/endermen/portal", 0.8, 1.0), ("mob/endermen/portal2", 0.8, 1.0)],
+    "magic.summon": [("mob/evocation_illager/prepare_summon", 0.9, 1.1), ("block/trial_spawner/spawn1", 0.8, 1.0)],
+    "magic.vanish": [("mob/illusion_illager/mirror_move1", 0.7, 1.4), ("block/candle/extinguish3", 1.0, 0.8)],
+    "magic.ward_hit": [("block/amethyst/break1", 1.0, 0.8), ("block/amethyst/break2", 1.0, 0.8)],
+    "magic.loop.flames": [("mob/blaze/breathe1", 0.8, 1.0), ("mob/blaze/breathe2", 0.8, 1.0), ("mob/blaze/breathe3", 0.8, 1.0)],
+    "magic.loop.beam": [("block/beacon/ambient", 0.9, 2.0)],
+    "magic.loop.drain": [("ambient/nether/soulsand_valley/whisper1", 1.0, 0.8),
+                         ("ambient/nether/soulsand_valley/whisper2", 1.0, 0.8)],
+    "magic.loop.heal": [("block/conduit/ambient", 0.8, 1.8)],
+    "magic.loop.ward": [("block/beacon/ambient", 0.8, 0.7)],
+    "magic.loop.wind": [("mob/breeze/whirl", 0.7, 1.2)],
+    "magic.loop.lightning": [("block/beacon/ambient", 0.9, 2.0)],
+    "magic.loop.water": [("liquid/water", 1.0, 1.0)],
+    "magic.loop.void": [("portal/portal", 0.4, 0.5)],
+    "magic.loop.storm": [("ambient/weather/rain1", 0.8, 0.8), ("ambient/weather/rain2", 0.8, 0.8)],
+    "magic.loop.chant": [("ambient/nether/soulsand_valley/voices1", 0.6, 1.3)],
+}
+# Стихии: гул зарядки, выпуск, попадание.
+ELEMENT_FALLBACK = {
+    "fire": ([("fire/fire", 0.7, 1.0)], [("mob/ghast/fireball4", 0.8, 1.0)],
+             [("random/explode1", 0.3, 1.6), ("fire/ignite", 0.9, 1.0)]),
+    "water": ([("liquid/water", 0.8, 0.8)], [("liquid/splash", 0.8, 1.2), ("liquid/splash2", 0.8, 1.2)],
+              [("random/splash", 0.8, 1.3), ("random/glass1", 0.5, 1.6)]),
+    "wind": ([("item/elytra/elytra_loop", 0.5, 1.3)], [("mob/breeze/wind_burst1", 0.9, 1.1), ("mob/breeze/wind_burst2", 0.9, 1.1)],
+             [("entity/wind_charge/wind_burst1", 0.8, 1.2), ("entity/wind_charge/wind_burst2", 0.8, 1.2)]),
+    "earth": ([("block/respawn_anchor/ambient1", 0.8, 0.7), ("block/respawn_anchor/ambient2", 0.8, 0.7)],
+              [("random/explode1", 0.6, 0.5), ("dig/stone1", 1.0, 0.6)],
+              [("dig/stone2", 1.0, 0.7), ("dig/stone3", 1.0, 0.7), ("item/mace/smash_ground1", 0.8, 0.8)]),
+    "lightning": ([("block/beacon/ambient", 0.8, 2.0)], [("item/trident/thunder1", 0.5, 1.6), ("item/trident/thunder2", 0.5, 1.6)],
+                  [("item/trident/thunder1", 0.35, 1.9), ("item/trident/thunder2", 0.35, 1.9)]),
+    "light": ([("block/beacon/ambient", 0.8, 1.6)], [("block/bell/resonate", 0.7, 1.4), ("block/beacon/activate", 0.8, 1.4)],
+              [("block/bell/bell_use01", 0.6, 1.6), ("block/bell/bell_use02", 0.6, 1.6)]),
+    "dark": ([("portal/portal", 0.35, 0.6)], [("mob/wither/shoot", 0.5, 1.2), ("mob/evocation_illager/cast1", 0.8, 0.8)],
+             [("block/sculk/charge1", 1.0, 0.8), ("block/sculk/charge2", 1.0, 0.8), ("block/sculk/charge3", 1.0, 0.8)]),
+    "space": ([("block/conduit/ambient", 0.8, 0.6)], [("mob/endermen/portal", 0.8, 0.8), ("mob/endermen/portal2", 0.8, 0.8)],
+              [("block/respawn_anchor/deplete1", 0.8, 1.4), ("block/respawn_anchor/deplete2", 0.8, 1.4)]),
+    "life": ([("block/conduit/ambient", 0.8, 1.4)], [("block/amethyst/resonate1", 1.0, 1.1), ("block/beacon/power1", 0.6, 1.8)],
+             [("block/amethyst/resonate2", 0.9, 1.6), ("block/amethyst/resonate3", 0.9, 1.6)]),
+    "mind": ([("block/conduit/ambient", 0.8, 0.8)],
+             [("mob/illusion_illager/mirror_move1", 0.9, 1.0), ("mob/illusion_illager/mirror_move2", 0.9, 1.0)],
+             [("mob/illusion_illager/prepare_blind", 0.7, 1.3)]),
+    "summon": ([("block/vault/ambient1", 0.9, 1.0), ("block/vault/ambient2", 0.9, 1.0)],
+               [("mob/evocation_illager/prepare_summon", 0.9, 1.1), ("block/trial_spawner/spawn1", 0.8, 1.0)],
+               [("block/amethyst/break1", 1.0, 1.2), ("block/amethyst/break2", 1.0, 1.2)]),
+    "fusion": ([("block/beacon/ambient", 0.8, 1.0)],
+               [("block/respawn_anchor/charge1", 0.8, 1.3), ("block/respawn_anchor/charge2", 0.8, 1.3)],
+               [("block/amethyst/break3", 1.0, 1.0), ("block/amethyst/break4", 1.0, 1.0)]),
+}
+for _el, (_charge, _cast, _impact) in ELEMENT_FALLBACK.items():
+    FALLBACK[f"magic.charge.{_el}"] = _charge
+    FALLBACK[f"magic.cast.{_el}"] = _cast
+    FALLBACK[f"magic.impact.{_el}"] = _impact
 
-SOUND_DIR = ASSETS / "sounds" / "magic"
-# Громкость выравниваем по RMS к этому уровню (dBFS): громкие звуки тише, тихие — как есть.
-TARGET_RMS = -15.0
+# Большие звуки слышны издалека: attenuation_distance в sounds.json (по умолчанию 16). На клиенте дальность =
+# max(громкость, 1) × attenuation_distance, сервер же рассылает звук на 16 × громкость блоков (MagicFx.soundFar).
+FAR = {
+    "magic.explosion.huge": 128, "magic.release.ultimate": 128, "magic.riser.long": 128, "magic.domain": 128,
+    "magic.timestop": 128,
+    "magic.explosion": 96, "magic.beam_blast": 96, "magic.meteor_fall": 96, "magic.thunder": 96, "magic.pillar": 96,
+    "magic.rumble": 96, "magic.circle.big": 96, "magic.shockwave": 96,
+}
+# Сведение: громкость своих звуков выравнивается по самому громкому месту (RMS в окне 0,4 с) к уровню семейства, дБ.
+# Ориентиры ванили так же: взрыв ≈ −8,5, выстрел гаста ≈ −13, заклинание вызывателя ≈ −15.
+MIX_TARGET = {"default": -13.0, "big": -9.0, "cue": -18.0}
+CUES = ("magic.select", "magic.multicast", "magic.circle.draw", "magic.stage", "magic.glitch")
+LOUD = ("magic.release.heavy",)          # громкие, но слышные только рядом
 
 
-def own_sounds(event):
-    """Свои синтезированные звуки (tools/gen_sounds.py) для события: [(имя, громкость)], или [] — тогда ванильные."""
+def longest_prefix(event, table):
+    best = None
+    for k in table:
+        if (event == k or event.startswith(k + ".")) and (best is None or len(k) > len(best)):
+            best = k
+    return best
+
+
+def own_sounds(event, sf_ok):
+    """Свои файлы для события: [(имя файла без .ogg, громкость)]; [] — своих нет."""
     base = event.removeprefix("magic.").replace(".", "_")
-    files = sorted(SOUND_DIR.glob(f"{base}.ogg")) + sorted(SOUND_DIR.glob(f"{base}_[0-9].ogg"))
+    files = []
+    single = SOUND_DIR / f"{base}.ogg"
+    if single.exists():
+        files.append((0, single))
+    for f in SOUND_DIR.glob(f"{base}_*.ogg"):
+        m = re.fullmatch(re.escape(base) + r"_(\d+)", f.stem)
+        if m:
+            files.append((int(m.group(1)), f))
+    files.sort()
+    group = "big" if event in FAR or event in LOUD else "cue" if event in CUES else "default"
     out = []
-    for f in files:
+    for _, f in files:
         vol = 1.0
-        try:
-            import numpy as np
-            import soundfile as sf
-            data, _ = sf.read(str(f), dtype="float32")
-            rms = 20 * np.log10(max(1e-9, float(np.sqrt(np.mean(np.square(data))))))
-            vol = round(float(min(1.0, max(0.45, 10 ** ((TARGET_RMS - rms) / 20)))), 2)
-        except ImportError:
-            pass
+        if sf_ok:
+            vol = normalized_volume(f, MIX_TARGET[group])
         out.append((f.stem, vol))
     return out
 
 
-def write(path: Path, obj):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+def normalized_volume(path, target_db):
+    import numpy as np
+    import soundfile as sf
+    data, sr = sf.read(str(path), dtype="float32", always_2d=True)
+    x = data.mean(axis=1)
+    win, hop = max(1, int(0.4 * sr)), max(1, int(0.1 * sr))
+    if len(x) <= win:
+        loud = float(np.sqrt(np.mean(np.square(x))))
+    else:
+        sq = np.concatenate([[0.0], np.cumsum(np.square(x, dtype=np.float64))])
+        starts = np.arange(0, len(x) - win + 1, hop)
+        loud = float(np.sqrt(np.max((sq[starts + win] - sq[starts]) / win)))
+    db = 20 * np.log10(max(1e-9, loud))
+    return round(float(min(1.0, max(0.35, 10 ** ((target_db - db) / 20)))), 2)
+
+
+def subtitle(event, core, elements):
+    """Текст субтитра (ru, en): семейство стихии, иначе самый длинный префикс; неизвестное — общий и предупреждение."""
+    for fam, (ru, en) in core.ELEMENT_SUBTITLES.items():
+        el = event[len(fam) + 1:] if event.startswith(fam + ".") else None
+        if el in elements:
+            _, _, gen, adj = core.ELEMENTS[el]
+            return ru.format(ru=gen), en.format(en=adj)
+    key = longest_prefix(event, core.SUBTITLES)
+    if key is None or key == "magic":
+        warn(f"звук {event}: нет субтитра для семейства — общий «{core.SUBTITLES['magic'][0]}» (добавьте в tools/lang/core.py)")
+        return core.SUBTITLES["magic"]
+    return core.SUBTITLES[key]
+
+
+# ---------------------------------------------------------------- запись
+
+def write(path, obj, written):
+    """JSON с отступом 2 и CRLF — как остальные файлы ресурсов мода."""
+    text = json.dumps(obj, indent=2, ensure_ascii=False) + "\n"
+    written[path] = text
+
+
+def flush(written, removed):
+    for path, text in written.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        data = text.replace("\n", "\r\n").encode("utf-8")
+        if not path.exists() or path.read_bytes() != data:
+            path.write_bytes(data)
+    for path in removed:
+        if path.exists():
+            path.unlink()
+
+
+# Ключи магии в файлах перевода: такие ключи генератор ведёт сам (обновляет, а лишние — убирает).
+MANAGED = ("spell.suchki.", "suchki.school.", "item.suchki.tome_", "suchki.tier.", "subtitles.suchki.magic.",
+           "death.attack.suchki.spell_", "suchki.style.", "suchki.spell.", "suchki.magic.", "suchki.focus.",
+           "suchki.wheel.", "suchki.hud.", "suchki.tome.", "suchki.power", "suchki.spectral.", "suchki.chant.",
+           "suchki.multicast.", "suchki.circle.", "suchki.cast.")
+
+
+def merge_lang(path, gen, java_keys, lang_idx):
+    """Слить ключи в файл перевода: старые ключи на своих местах, новые — в конец, устаревшие ключи магии убрать."""
+    old = json.loads(read(path)) if path.exists() else {}
+    out, removed = {}, []
+    for k, v in old.items():
+        if k in gen:
+            out[k] = gen[k][lang_idx]
+        elif k.startswith(MANAGED) and k not in java_keys:
+            removed.append(k)
+        else:
+            out[k] = v
+    added = [k for k in gen if k not in out]
+    for k in added:
+        out[k] = gen[k][lang_idx]
+    return out, removed, added
 
 
 def main():
-    ru_path = ASSETS / "lang" / "ru_ru.json"
-    en_path = ASSETS / "lang" / "en_us.json"
-    ru = json.loads(ru_path.read_text(encoding="utf-8"))
-    en = json.loads(en_path.read_text(encoding="utf-8"))
-    for key, (r, e) in LANG.items():
-        ru[key], en[key] = r, e
-    for sid, (r, e) in SCHOOLS.items():
-        ru[f"suchki.school.{sid}"], en[f"suchki.school.{sid}"] = r, e
-        ru[f"item.suchki.tome_{sid}"] = f"Книга заклинаний: {r}"
-        en[f"item.suchki.tome_{sid}"] = f"Spell Tome: {e}"
-    for t, (r, e) in TIERS.items():
-        ru[f"suchki.tier.{t}"], en[f"suchki.tier.{t}"] = r, e
-    for s, (r, e) in STYLES.items():
-        ru[f"suchki.style.{s}"], en[f"suchki.style.{s}"] = r, e
-    for did, (r0, r1, e0, e1) in DEATH.items():
-        ru[f"death.attack.suchki.{did}"], ru[f"death.attack.suchki.{did}.player"] = r0, r1
-        en[f"death.attack.suchki.{did}"], en[f"death.attack.suchki.{did}.player"] = e0, e1
-    for sid, (school, tier, rn, rd, en_n, en_d, _) in SPELLS.items():
-        ru[f"spell.suchki.{sid}"], ru[f"spell.suchki.{sid}.desc"] = rn, rd
-        en[f"spell.suchki.{sid}"], en[f"spell.suchki.{sid}.desc"] = en_n, en_d
-    write(ru_path, ru)
-    write(en_path, en)
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--check", action="store_true", help="только проверить, ничего не писать")
+    args = ap.parse_args()
 
-    # Рецепты книг (I–IV круг): книга + материалы.
+    elements = java_elements()
+    styles = java_styles()
+    events = java_sound_events(elements)
+    damage = java_damage_types()
+    jspells = java_spells(elements)
+    items = vanilla_items()
+    if items is None:
+        warn("нет клиента Minecraft в кэше Gradle — ингредиенты рецептов не проверены")
+    vsounds = vanilla_sounds()
+    if vsounds is None:
+        warn("нет индекса ассетов Minecraft в кэше Gradle — ванильные звуки-замены не проверены")
+    try:
+        import numpy  # noqa: F401
+        import soundfile  # noqa: F401
+        sf_ok = True
+    except ImportError:
+        sf_ok = False
+        warn("нет numpy/soundfile — громкость своих звуков не выровнена (1.0); запускайте питоном из venv")
+
+    spells = load_spells(elements, items)
+    lang, core = load_lang()
+    if list(core.ELEMENTS) != list(elements):
+        raise DataError(f"стихии в tools/lang/core.py {list(core.ELEMENTS)} не совпадают с School.java {list(elements)}")
+    if set(core.STYLES) != set(styles):
+        raise DataError(f"стили в tools/lang/core.py {sorted(core.STYLES)} не совпадают с CastStyle.java {sorted(styles)}")
+    if set(core.DEATH) != set(damage):
+        warn(f"смерть от урона: в core.py {sorted(set(core.DEATH) ^ set(damage))} не совпадает с MagicDamage.java")
+    gen = dict(lang)
+
+    # Сверка с Java.
+    texts = {sid: (el, d["rank"]) for sid, el, d in spells}
+    for sid, (el, rank, file) in sorted(jspells.items()):
+        if sid not in texts:
+            warn(f"заклинание {sid} ({file}) без текстов в tools/spelldata/{el}.py")
+        elif texts[sid] != (el, rank):
+            warn(f"заклинание {sid}: в Java {el}/ранг {rank}, в spelldata {texts[sid][0]}/ранг {texts[sid][1]}")
+    for sid, (el, _) in texts.items():
+        if jspells and sid not in jspells:
+            warn(f"тексты {sid} (spelldata/{el}.py) есть, а заклинания в Java нет")
+
+    # Тексты заклинаний.
+    for sid, el, d in spells:
+        gen[f"spell.suchki.{sid}"] = (d["ru"], d["en"])
+        gen[f"spell.suchki.{sid}.desc"] = (d["ru_desc"], d["en_desc"])
+        cru, cen = chant_lines(d.get("chant_ru")), chant_lines(d.get("chant_en"))
+        if cru and cen:
+            gen[f"spell.suchki.{sid}.chant"] = ("|".join(s.strip() for s in cru), "|".join(s.strip() for s in cen))
+
+    # Звуки.
+    sounds, fallback_used, missing_fallback = {}, [], []
+    for event in events:
+        ru, en = subtitle(event, core, elements)
+        gen[f"subtitles.suchki.{event}"] = (ru, en)
+        att = FAR.get(event)
+        own = own_sounds(event, sf_ok)
+        if own:
+            entries = [{"name": f"suchki:magic/{name}", "volume": vol} for name, vol in own]
+        else:
+            fb = FALLBACK.get(event)
+            if fb is None:
+                fam = longest_prefix(event, FALLBACK)
+                fb = FALLBACK.get(fam) if fam else None
+            if fb is None:
+                fb = [("block/amethyst/resonate1", 0.8, 1.0)]
+                missing_fallback.append(event)
+            fallback_used.append(event)
+            if vsounds is not None:
+                for n, _, _ in fb:
+                    if n not in vsounds:
+                        warn(f"звук {event}: ванильного minecraft:{n} нет")
+            entries = [{"name": f"minecraft:{n}", "volume": v, "pitch": p} for n, v, p in fb]
+        if att:
+            for e in entries:
+                e["attenuation_distance"] = att
+        sounds[event] = {"subtitle": f"subtitles.suchki.{event}", "sounds": entries}
+    if fallback_used:
+        warn(f"нет своих .ogg для {len(fallback_used)} звуков — ванильная замена: {', '.join(fallback_used)}")
+    if missing_fallback:
+        warn(f"нет и ванильной замены (общий звон): {', '.join(missing_fallback)} — добавьте в FALLBACK")
+    used_files = {f"{e['name'].split('/', 1)[1]}.ogg" for v in sounds.values() for e in v["sounds"]
+                  if e["name"].startswith("suchki:")}
+    unused = sorted(f.name for f in SOUND_DIR.glob("*.ogg") if f.name not in used_files)
+    if unused:
+        warn(f"файлы звуков без события ({len(unused)}): {', '.join(unused)}")
+
+    # Ключи, на которые ссылается код.
+    java_keys, java_prefixes = java_lang_refs()
+    for k in java_registered("MagicItems.java", "item") + java_registered("MagicEffects.java", "effect") \
+            + java_registered("MagicBlocks.java", "block"):
+        java_keys.setdefault(k, "magic")
+    java_keys.setdefault("entity.suchki.spell_projectile", "magic/MagicEntities.java")
+    expand = {"suchki.tier.": [str(t) for t in range(1, MAX_RANK + 1)], "suchki.school.": list(elements),
+              "suchki.style.": styles, "item.suchki.tome_": list(elements),
+              "spell.suchki.": [s for s in jspells] or [sid for sid, _, _ in spells]}
+    for pre, src in java_prefixes.items():
+        if pre in expand:
+            for x in expand[pre]:
+                java_keys.setdefault(pre + x, src)
+    for sid in jspells:
+        java_keys.setdefault(f"spell.suchki.{sid}.desc", "magic/spells")
+
+    # Файлы перевода.
+    out = {}
+    ru, removed_ru, added = merge_lang(LANG_DIR / "ru_ru.json", gen, java_keys, 0)
+    en, removed_en, _ = merge_lang(LANG_DIR / "en_us.json", gen, java_keys, 1)
+    unresolved = sorted(k for k in java_keys if "suchki" in k and (k not in ru or k not in en))
+    for k in unresolved:
+        warn(f"ключ перевода {k} ({java_keys[k]}) нигде не задан")
+    for pre, src in sorted(java_prefixes.items()):
+        if "suchki" in pre and pre not in expand and not any(k.startswith(pre) for k in ru):
+            warn(f"динамический ключ «{pre}…» ({src}): нет ни одного ключа с таким началом")
+    if set(ru) != set(en):
+        warn(f"ru_ru и en_us различаются ключами: {sorted(set(ru) ^ set(en))[:12]}")
+    write(LANG_DIR / "ru_ru.json", ru, out)
+    write(LANG_DIR / "en_us.json", en, out)
+
+    # Рецепты книг и фокусов.
+    removed = []
     recipe_dir = DATA / "suchki" / "recipe"
-    for sid, (school, tier, *_rest, ingredients) in SPELLS.items():
-        path = recipe_dir / f"tome_{sid}.json"
-        if ingredients is None:
-            if path.exists():
-                path.unlink()
-            continue
-        write(path, {
-            "type": "minecraft:crafting_shapeless",
-            "category": "misc",
-            "group": f"suchki_tome_{school}",
-            "ingredients": ["minecraft:book"] + [f"minecraft:{i}" for i in ingredients],
-            "result": {"id": f"suchki:tome_{school}", "count": 1, "components": {"suchki:spell": sid}},
-        })
+    craft = {}
+    for sid, el, d in spells:
+        if d["ingredients"]:
+            craft[f"tome_{sid}"] = {
+                "type": "minecraft:crafting_shapeless",
+                "category": "misc",
+                "group": f"suchki_tome_{el}",
+                "ingredients": ["minecraft:book"] + [f"minecraft:{i}" for i in d["ingredients"]],
+                "result": {"id": f"suchki:tome_{el}", "count": 1, "components": {"suchki:spell": sid}},
+            }
+    for name, recipe in craft.items():
+        write(recipe_dir / f"{name}.json", recipe, out)
+    removed += [p for p in recipe_dir.glob("tome_*.json") if p.stem not in craft]
     for name, recipe in FOCUS_RECIPES.items():
-        write(recipe_dir / f"{name}.json", recipe)
+        write(recipe_dir / f"{name}.json", recipe, out)
 
-    # Модели предметов.
+    # Модели и описания предметов.
     staff_display = {
         "thirdperson_righthand": {"rotation": [0, -90, 40], "translation": [0, 6.5, 0.5], "scale": [1.15, 1.15, 1.15]},
         "thirdperson_lefthand": {"rotation": [0, 90, -40], "translation": [0, 6.5, 0.5], "scale": [1.15, 1.15, 1.15]},
         "firstperson_righthand": {"rotation": [0, -90, 20], "translation": [1.13, 4.2, 1.13], "scale": [0.85, 0.85, 0.85]},
         "firstperson_lefthand": {"rotation": [0, 90, -20], "translation": [1.13, 4.2, 1.13], "scale": [0.85, 0.85, 0.85]},
     }
-    write(ASSETS / "models" / "item" / "staff.json", {"parent": "minecraft:item/handheld", "display": staff_display})
-    write(ASSETS / "models" / "item" / "book_focus.json", {"parent": "minecraft:item/generated", "display": {
+    models = ASSETS / "models" / "item"
+    write(models / "staff.json", {"parent": "minecraft:item/handheld", "display": staff_display}, out)
+    write(models / "book_focus.json", {"parent": "minecraft:item/generated", "display": {
         "firstperson_righthand": {"rotation": [0, -90, 25], "translation": [1.13, 2.6, 1.13], "scale": [0.48, 0.48, 0.48]},
         "firstperson_lefthand": {"rotation": [0, 90, -25], "translation": [1.13, 2.6, 1.13], "scale": [0.48, 0.48, 0.48]},
         "thirdperson_righthand": {"rotation": [0, 0, 0], "translation": [0, 3, 1], "scale": [0.6, 0.6, 0.6]},
-        "thirdperson_lefthand": {"rotation": [0, 0, 0], "translation": [0, 3, 1], "scale": [0.6, 0.6, 0.6]}}})
-    items = {"apprentice_staff": "suchki:item/staff", "archmage_staff": "suchki:item/staff", "grimoire": "suchki:item/book_focus"}
-    items.update({f"tome_{s}": "minecraft:item/generated" for s in SCHOOLS})
-    items.update({f"spectral_{t}": "minecraft:item/handheld" for t in ("blade", "pickaxe", "axe", "shovel")})
-    for name, parent in items.items():
-        write(ASSETS / "models" / "item" / f"{name}.json", {"parent": parent, "textures": {"layer0": f"suchki:item/{name}"}})
-        write(ASSETS / "items" / f"{name}.json", {"model": {"type": "minecraft:model", "model": f"suchki:item/{name}"}})
+        "thirdperson_lefthand": {"rotation": [0, 0, 0], "translation": [0, 3, 1], "scale": [0.6, 0.6, 0.6]}}}, out)
+    item_models = {s: "suchki:item/staff" for s in STAFFS}
+    item_models["grimoire"] = "suchki:item/book_focus"
+    item_models.update({f"tome_{e}": "minecraft:item/generated" for e in elements})
+    item_models.update({f"spectral_{t}": "minecraft:item/handheld" for t in ("blade", "pickaxe", "axe", "shovel")})
+    for name, parent in item_models.items():
+        write(models / f"{name}.json", {"parent": parent, "textures": {"layer0": f"suchki:item/{name}"}}, out)
+        write(ASSETS / "items" / f"{name}.json", {"model": {"type": "minecraft:model", "model": f"suchki:item/{name}"}}, out)
+    for folder in (models, ASSETS / "items"):
+        removed += [p for p in folder.glob("tome_*.json") if p.stem not in item_models]
 
-    # Блок магического света: невидимый.
-    write(ASSETS / "blockstates" / "magic_light.json", {"variants": {"": {"model": "suchki:block/magic_light"}}})
-    write(ASSETS / "models" / "block" / "magic_light.json", {"textures": {"particle": "minecraft:block/glowstone"}})
-
-    # Частицы и звуки.
+    # Блок магического света (невидимый) и частицы.
+    write(ASSETS / "blockstates" / "magic_light.json", {"variants": {"": {"model": "suchki:block/magic_light"}}}, out)
+    write(ASSETS / "models" / "block" / "magic_light.json", {"textures": {"particle": "minecraft:block/glowstone"}}, out)
     for name, textures in PARTICLES.items():
-        write(ASSETS / "particles" / f"{name}.json", {"textures": textures})
-    sounds = {}
-    for event, entries in SOUNDS.items():
-        own = own_sounds(event)
-        if own:
-            items = [{"name": f"suchki:magic/{name}", "volume": vol} for name, vol in own]
-        else:
-            items = [{"name": f"minecraft:{n}", "volume": v, "pitch": p} for n, v, p in entries]
-        sounds[event] = {"subtitle": f"subtitles.suchki.{event}", "sounds": items}
-    write(ASSETS / "sounds.json", sounds)
-    subtitles = {
-        "magic.charge": ("Магия копится", "Magic charges"), "magic.ready": ("Заклинание готово", "Spell ready"),
-        "magic.stage": ("Сила растёт", "Power grows"), "magic.peak": ("Пик силы", "Peak power"),
-        "magic.fizzle": ("Заклинание рассеялось", "Spell fizzles"), "magic.learn": ("Изучено заклинание", "Spell learned"),
-        "magic.cast": ("Заклинание", "Spell cast"), "magic.impact": ("Удар магии", "Magic impact"),
-        "magic.explosion": ("Магический взрыв", "Magic explosion"), "magic.meteor_fall": ("Падает метеор", "Meteor falls"),
-        "magic.pillar": ("Столп света", "Pillar of light"), "magic.loop": ("Поток магии", "Magic flows"),
-        "magic.vanish": ("Призрак исчез", "Spectral fades"), "magic.ward_hit": ("Оберег гасит удар", "Ward blocks"),
-    }
-    for event in SOUNDS:
-        key = next(k for k in sorted(subtitles, key=len, reverse=True) if event.startswith(k))
-        ru[f"subtitles.suchki.{event}"], en[f"subtitles.suchki.{event}"] = subtitles[key]
-    write(ru_path, ru)
-    write(en_path, en)
+        write(ASSETS / "particles" / f"{name}.json", {"textures": textures}, out)
+    write(ASSETS / "sounds.json", sounds, out)
 
-    # Типы урона и теги.
-    for name, extra in DAMAGE_TYPES.items():
+    # Типы урона и теги (как у ванильной магии: животные паникуют, шипы стража не отвечают, чешуйницы просыпаются).
+    for name in damage:
         write(DATA / "suchki" / "damage_type" / f"{name}.json",
-              {"exhaustion": 0.1, "message_id": f"suchki.{name}", "scaling": "when_caused_by_living_non_player", **extra})
-    all_types = [f"suchki:{n}" for n in DAMAGE_TYPES]
-    write(DATA / "suchki" / "tags" / "damage_type" / "spell.json", {"values": all_types})
-    write(DATA / "minecraft" / "tags" / "damage_type" / "is_fire.json", {"replace": False, "values": ["suchki:spell_fire"]})
-    write(DATA / "minecraft" / "tags" / "damage_type" / "is_freezing.json", {"replace": False, "values": ["suchki:spell_frost"]})
-    write(DATA / "minecraft" / "tags" / "damage_type" / "no_knockback.json", {"replace": False, "values": all_types})
-    print(f"Магия: {len(SPELLS)} заклинаний, {sum(1 for s in SPELLS.values() if s[6])} рецептов книг, {len(SOUNDS)} звуков")
+              {"exhaustion": 0.1, "message_id": f"suchki.{name}", "scaling": "when_caused_by_living_non_player",
+               **DAMAGE_EXTRA.get(name, {})}, out)
+        for k in (f"death.attack.suchki.{name}", f"death.attack.suchki.{name}.player"):
+            if k not in ru or k not in en:
+                warn(f"тип урона {name}: нет перевода {k}")
+    removed += [p for p in (DATA / "suchki" / "damage_type").glob("spell_*.json") if p.stem not in damage]
+    all_types = [f"suchki:{n}" for n in damage]
+    tags = DATA / "minecraft" / "tags" / "damage_type"
+    write(DATA / "suchki" / "tags" / "damage_type" / "spell.json", {"values": all_types}, out)
+    write(tags / "is_fire.json", {"replace": False, "values": ["suchki:spell_fire"]}, out)
+    write(tags / "burns_armor_stands.json", {"replace": False, "values": ["suchki:spell_fire"]}, out)
+    write(tags / "is_freezing.json", {"replace": False, "values": ["suchki:spell_frost"]}, out)
+    for tag in ("no_knockback", "panic_causes", "avoids_guardian_thorns", "always_triggers_silverfish"):
+        write(tags / f"{tag}.json", {"replace": False, "values": all_types}, out)
+
+    print(f"Магия: {len(elements)} стихий, {len(spells)} заклинаний с текстами (в Java — {len(jspells)}), "
+          f"{len(craft)} рецептов книг, {len(sounds)} звуков ({len(sounds) - len(fallback_used)} своих), "
+          f"{len(damage)} видов урона")
+    print(f"Переводы: {len(ru)} ключей; добавлено {len(added)}, убрано {len(removed_ru)} (ru) / {len(removed_en)} (en)")
+    if removed_ru:
+        groups = {}
+        for k in removed_ru:
+            g = ".".join(k.split(".")[:3 if k.startswith(("spell.", "subtitles.", "death.")) else 2])
+            groups[g] = groups.get(g, 0) + 1
+        print("  убраны: " + ", ".join(f"{g}.* ×{n}" if n > 1 else g for g, n in sorted(groups.items())))
+    stale = [p for p in removed if p.exists()]
+    if stale:
+        print(f"Удаляются устаревшие файлы ({len(stale)}): " + ", ".join(p.relative_to(RES).as_posix() for p in stale))
+    for w in WARNINGS:
+        print("  ! " + w)
+    if args.check:
+        print("--check: ничего не записано")
+        return
+    flush(out, removed)
+    print(f"записано {len(out)} файлов")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except DataError as e:
+        sys.exit(f"Ошибка данных: {e}")

@@ -13,8 +13,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Камера мага: лёгкая дрожь на пике силы (в «пределе» — сильнее), отдача при выпуске, тряска от взрывов
- * и землетрясений рядом, сужение поля зрения во время зарядки. Сила — cameraShakeScale в config/suchki.json.
+ * Камера мага: лёгкая дрожь на пике силы (в «пределе» — сильнее, у высоких рангов — ещё сильнее), отдача при
+ * выпуске, рывки по крену на глитчах надписи, тряска от взрывов и землетрясений рядом, сужение поля зрения во
+ * время зарядки. Сила — cameraShakeScale в config/suchki.json.
  */
 public final class CastCamera {
 	private record Shake(Vec3 at, float strength, int duration, long start) {}
@@ -24,8 +25,20 @@ public final class CastCamera {
 	private static float releasePower;
 	private static float releaseSide;
 	private static CastStyle releaseStyle = CastStyle.BOLT;
+	private static int releaseTier = 1;
+	/** Рывок «глитча» надписи: когда начался и насколько сильный. */
+	private static float glitchStart = -1000;
+	private static float glitchStrength;
 
 	private CastCamera() {}
+
+	/** Глитч надписи заклинания: камеру на пару тиков дёргает по крену. */
+	static void glitch(float strength) {
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.level == null) return;
+		glitchStart = mc.level.getGameTime();
+		glitchStrength = Math.max(0.0F, Math.min(1.5F, strength));
+	}
 
 	static void shake(Vec3 at, float strength, int duration) {
 		Minecraft mc = Minecraft.getInstance();
@@ -36,12 +49,18 @@ public final class CastCamera {
 
 	/** Свой выпуск заклинания: отдача камеры. */
 	static void localRelease(float power, float side, CastStyle style) {
+		localRelease(power, side, style, 1);
+	}
+
+	/** Свой выпуск: отдача камеры, у высоких рангов — сильнее. */
+	static void localRelease(float power, float side, CastStyle style, int tier) {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.level == null) return;
 		releaseTick = mc.level.getGameTime();
 		releasePower = power;
 		releaseSide = side;
 		releaseStyle = style;
+		releaseTier = tier;
 	}
 
 	private static float noise(float x, float seed) {
@@ -62,20 +81,34 @@ public final class CastCamera {
 
 		Pose cp = CastAnim.compute(mc.player, pt);
 		if (cp != null && cp.casting()) {
-			float amp = cp.style == CastStyle.CHANNEL ? 0.12F * cp.channel : 0.3F * cp.over + 1.0F * cp.hold;
-			if (cp.style == CastStyle.RITUAL) amp += 0.18F * cp.form;
+			// Высокие ранги трясут сильнее: на пределе Божественного заклинания мир буквально дрожит.
+			int tier = cp.tier();
+			float rank = 0.7F + 0.12F * tier;
+			float amp = cp.style == CastStyle.CHANNEL ? 0.12F * cp.channel * rank : (0.3F * cp.over + (0.4F + 0.22F * tier) * cp.hold) * rank;
+			if (cp.stance().raised()) amp += 0.18F * cp.form;
+			if (tier >= 6 && cp.style != CastStyle.CHANNEL) amp += 0.12F * (tier - 5) * cp.form;
 			float t = now * 0.5F;
 			pitch += amp * noise(t, 0);
 			yaw += amp * noise(t, 5);
 			roll += amp * 0.6F * noise(t, 9);
 		}
 
+		// Глитч надписи — короткий рывок по крену (2–3 тика), рваный, а не плавный.
+		float gAge = now - glitchStart;
+		if (gAge >= 0 && gAge < 3) {
+			float k = (1 - gAge / 3) * glitchStrength;
+			float step = (float) Math.floor(now * 3.0F);
+			roll += k * 1.6F * Mth.sin(step * 12.9898F + 4.1F);
+			yaw += k * 0.5F * Mth.sin(step * 78.233F + 1.7F);
+		}
+
 		float age = now - releaseTick;
 		if (age >= 0 && age < 9) {
 			float k = (1 - age / 9) * (1 - age / 9);
 			float kick = releaseStyle == CastStyle.RITUAL ? 3.2F : releaseStyle == CastStyle.BOLT ? 2.2F : 1.4F;
-			pitch -= kick * Math.min(2.25F, releasePower) * k;
-			roll += releaseSide * 0.9F * k;
+			float rank = 0.85F + 0.07F * releaseTier;
+			pitch -= kick * Math.min(2.25F, releasePower) * k * rank;
+			roll += releaseSide * 0.9F * k * rank;
 		}
 
 		if (!SHAKES.isEmpty()) {

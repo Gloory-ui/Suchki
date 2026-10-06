@@ -23,7 +23,10 @@ import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 
-/** Клиент магии: регистрация отрисовки, колесо заклинаний (R), события каста, звуки, камера, HUD. */
+/**
+ * Клиент магии: регистрация отрисовки, колесо заклинаний (R), мультикаст (G), события каста, звуки, камера, HUD,
+ * заклинательная фраза.
+ */
 public final class MagicClient {
 	public static KeyMapping wheelKey;
 	/** Поза своего каста в прошлом тике — чтобы сразу показать выпуск, не дожидаясь сервера. */
@@ -62,6 +65,7 @@ public final class MagicClient {
 		CastVisuals.tick(mc.level);
 		CastSounds.tick(mc.level);
 		MagicHud.tick();
+		IncantationHud.tick(mc);
 	}
 
 	/** Отпустил ПКМ — показываем выпуск (или срыв) сразу; сервер потом уточнит силу. */
@@ -76,9 +80,16 @@ public final class MagicClient {
 			return;
 		}
 		boolean fizzle = prev.form < 1;
-		float cap = 1.0F + prev.over * 0.75F;
+		// Сила к моменту выпуска — по пределу фокуса, которым колдовали (у посоха ученика 1.75, у архимага 2.25…).
+		float cap = 1.0F + prev.over * (prev.cap - 1.0F);
 		CastAnim.onRelease(p, spell, fizzle ? 0 : cap, fizzle);
-		if (!fizzle) CastCamera.localRelease(cap, prev.castArm == HumanoidArm.RIGHT ? 1 : -1, spell.style);
+		if (!fizzle) {
+			CastCamera.localRelease(cap, prev.castArm == HumanoidArm.RIGHT ? 1 : -1, spell.style, spell.tier);
+			CastSounds.release(p, spell, cap);
+			IncantationHud.onRelease(spell);
+		} else {
+			IncantationHud.onFizzle();
+		}
 	}
 
 	private static void onCastFx(Magic.CastFx fx) {
@@ -90,7 +101,7 @@ public final class MagicClient {
 		boolean self = p == mc.player;
 		switch (fx.kind()) {
 			case Magic.CastFx.READY -> {
-				CastSounds.cue(p, MagicSounds.READY, 0.55F, 1.5F);
+				CastSounds.ready(p, spell);
 				burst(p, spell, 0.35F, 6);
 			}
 			case Magic.CastFx.STAGE -> {
@@ -103,16 +114,20 @@ public final class MagicClient {
 				burst(p, spell, 0.6F, 10);
 			}
 			case Magic.CastFx.RELEASE -> {
-				boolean camera = !self || !CastAnim.releasedRecently(p, spell);
+				// Свой выпуск уже предсказан (камера, звук, выкрик) — второй раз не повторяем.
+				boolean fresh = !self || !CastAnim.releasedRecently(p, spell);
 				CastAnim.onRelease(p, spell, Math.max(1.0F, fx.power()), false);
 				if (spell.style != CastStyle.CHANNEL) CastVisuals.releaseBurst(p, spell, fx.power());
-				if (self && camera && spell.style != CastStyle.CHANNEL) {
-					CastCamera.localRelease(fx.power(), p.getMainArm() == HumanoidArm.RIGHT ? 1 : -1, spell.style);
+				if (fresh) CastSounds.release(p, spell, fx.power());
+				if (self && fresh && spell.style != CastStyle.CHANNEL) {
+					CastCamera.localRelease(fx.power(), p.getMainArm() == HumanoidArm.RIGHT ? 1 : -1, spell.style, spell.tier);
+					IncantationHud.onRelease(spell);
 				}
 			}
 			case Magic.CastFx.FIZZLE -> {
 				CastAnim.onRelease(p, spell, 0, true);
 				CastSounds.cue(p, MagicSounds.FIZZLE, 0.6F, 1.0F);
+				if (self) IncantationHud.onFizzle();
 			}
 			default -> {
 			}

@@ -14,6 +14,7 @@
 import argparse
 import colorsys
 import math
+import re
 import zlib
 from pathlib import Path
 
@@ -50,15 +51,23 @@ STEEL = ramp("#141c26", "#28344a", "#43536c", "#66788f", "#93a3b6", "#c4d0dc")
 BOLT = ramp("#4a3000", "#8a5c00", "#c99200", "#f0c000", "#ffe050", "#fff6b8")
 BONE = ramp("#1f1229", "#3e2c52", "#6c5a84", "#a090b6", "#cec2de", "#f0eaf7")
 
-# Школы магии: обложка тома/круг значка и знак.
+PEARL = ramp("#2e2a3c", "#5a5470", "#8a849e", "#b8b2c8", "#dcd8e8", "#f6f4fc")
+PRISM = [rgb("#ff5a4a"), rgb("#ffb43a"), rgb("#f4f06a"), rgb("#5ee88a"), rgb("#4ad8ff"), rgb("#6a7cff"), rgb("#c070ff")]
+
+# Стихии (порядок как в School.java): обложка книги (6 тонов) и знак 13×13.
 SCHOOLS = {
-    "destruction": (ramp("#2e0806", "#5a1008", "#8c1e0c", "#bc3412", "#e05a1c", "#f4882e"), "flame"),
-    "restoration": (ramp("#0a2410", "#123c1a", "#1d5a26", "#2a7a32", "#3e9c40", "#62bc58"), "leaf"),
-    "alteration": (ramp("#0a1238", "#13205e", "#1e3388", "#2c4cb0", "#4068d0", "#628ae6"), "rhombus"),
-    "illusion": (ramp("#2a0a2a", "#4a1248", "#701e6a", "#962e8c", "#bc48ac", "#dc6ec8"), "eye"),
-    "conjuration": (ramp("#062a2a", "#0c4644", "#136662", "#1c8880", "#2aaaa0", "#4ccabe"), "spiral"),
+    "fire": (ramp("#2e0806", "#5a1008", "#8c1e0c", "#bc3412", "#e05a1c", "#f4882e"), "flame"),
+    "water": (ramp("#050f2a", "#0a1d4c", "#0f3176", "#174aa2", "#2468c8", "#4a8ce6"), "drop"),
+    "wind": (ramp("#2a5244", "#457e6a", "#66ac90", "#90d6b6", "#bff0da", "#eafff5"), "gust"),
+    "earth": (ramp("#1e1008", "#3a2010", "#5a3418", "#7a4a22", "#9a6430", "#b88244"), "mountain"),
+    "lightning": (ramp("#090c22", "#121a3e", "#1c295c", "#283b7c", "#38519a", "#4e6cb8"), "bolt"),
     "light": (ramp("#6a5636", "#9a8456", "#c4b080", "#e2d4a8", "#f4ecd0", "#fffcf0"), "sun"),
     "dark": (ramp("#07040c", "#110a1a", "#1c112a", "#28183a", "#36204c", "#462a60"), "crescent"),
+    "space": (ramp("#04030e", "#0b0920", "#141138", "#1e1a50", "#2a2568", "#383482"), "vortex"),
+    "life": (ramp("#0a2410", "#123c1a", "#1d5a26", "#2a7a32", "#3e9c40", "#62bc58"), "leaf"),
+    "mind": (ramp("#2a0a2a", "#4a1248", "#701e6a", "#962e8c", "#bc48ac", "#dc6ec8"), "eye"),
+    "summon": (ramp("#062a2a", "#0c4644", "#136662", "#1c8880", "#2aaaa0", "#4ccabe"), "wisp"),
+    "fusion": (ramp("#2a0a1a", "#4c1230", "#741c48", "#9c2a62", "#c43c7e", "#e65c9c"), "taiji"),
 }
 
 
@@ -299,14 +308,135 @@ def sym_crescent():
     return g
 
 
+def grid13():
+    y, x = np.mgrid[0:13, 0:13] + 0.5
+    return np.full((13, 13), "."), x, y
+
+
+def strokes13(paths, width, ss=8, thr=0.45):
+    """Маска 13×13 из ломаных (координаты в пикселях знака) толщиной width — со сглаживанием и порогом."""
+    img = Image.new("L", (13 * ss, 13 * ss), 0)
+    d = ImageDraw.Draw(img)
+    for pts in paths:
+        d.line([(px * ss, py * ss) for px, py in pts], fill=255, width=max(1, round(width * ss)), joint="curve")
+        for px, py in (pts[0], pts[-1]):
+            r = width / 2 * ss
+            d.ellipse([px * ss - r, py * ss - r, px * ss + r, py * ss + r], fill=255)
+    return np.asarray(img.resize((13, 13), Image.BOX), dtype=float) / 255 >= thr
+
+
+def curl(cx, cy, r, a0, a1, n=24):
+    return [(cx + r * math.cos(math.radians(a0 + (a1 - a0) * k / n)), cy + r * math.sin(math.radians(a0 + (a1 - a0) * k / n)))
+            for k in range(n + 1)]
+
+
+def sym_drop():
+    """Капля воды: остриё вверху, блик слева, тень справа внизу."""
+    g, x, y = grid13()
+    cx, cy, r, tip = 6.5, 8.2, 4.3, 0.4
+    k = np.clip((y - tip) / (cy - tip), 0, 1)
+    body = ((np.abs(x - cx) <= r * k ** 1.3 + 0.15) & (y >= tip) & (y <= cy)) | ((x - cx) ** 2 + (y - cy) ** 2 <= r ** 2)
+    g[body] = "#"
+    g[body & ((x - cx) * 0.8 + (y - cy) > r * 0.62)] = "-"
+    g[body & ((x - (cx - 1.9)) ** 2 + (y - (cy - 0.2)) ** 2 <= 1.2 ** 2)] = "+"
+    g[body & (np.abs(x - (cx - 1.0)) < 0.5) & (y > 4.0) & (y < 6.4)] = "+"
+    return g
+
+
+def sym_gust():
+    """Ветер: три порыва, верхний закручен вверх, нижний — вниз."""
+    g, _, _ = grid13()
+    top = [(1.0, 4.0), (8.0, 4.0)] + curl(8.0, 2.2, 1.8, 90, -190)
+    mid = [(0.6, 7.2), (11.6, 7.2)]
+    low = [(2.4, 10.4), (8.6, 10.4)] + curl(8.6, 11.9, 1.5, -90, 160)
+    g[strokes13([top, mid, low], 1.0)] = "#"
+    return g
+
+
+def sym_mountain():
+    """Земля: две вершины, снежная шапка, освещённые склоны слева."""
+    g, x, y = grid13()
+    big = inside_poly(x, y, [(7.6, 0.6), (13.0, 12.4), (2.2, 12.4)])
+    small = inside_poly(x, y, [(3.4, 4.6), (7.4, 12.4), (-0.4, 12.4)])
+    body = big | small
+    g[body] = "#"
+    g[big & (x > 7.6 + (y - 0.6) * 0.12)] = "-"
+    g[small & ~big & (x < 3.4)] = "+"
+    g[big & (y < 4.4) & (x <= 7.6 + (y - 0.6) * 0.12)] = "+"
+    return g
+
+
+def sym_bolt():
+    """Молния: зигзаг сверху вниз, светлая грань слева."""
+    g, x, y = grid13()
+    poly = [(8.9, 0.3), (2.6, 7.2), (6.0, 7.2), (3.6, 12.7), (10.6, 5.2), (7.1, 5.2), (10.2, 0.3)]
+    body = inside_poly(x, y, poly)
+    g[body] = "#"
+    g[body & (x + 0.45 * y < 7.2)] = "+"
+    g[body & (x + 0.45 * y > 11.4)] = "-"
+    return g
+
+
+def sym_vortex():
+    """Пространство: воронка-спираль (искривление пространства), яркое ядро."""
+    g, x, y = grid13()
+    pts = []
+    for k in range(200):
+        th = k / 199 * 2.0 * 2 * math.pi
+        r = 0.6 + th * 0.5
+        pts.append((6.5 + r * math.cos(th), 6.5 - r * math.sin(th)))
+    g[strokes13([pts], 1.2)] = "#"
+    g[(x - 6.5) ** 2 + (y - 6.5) ** 2 <= 1.3 ** 2] = "+"
+    return g
+
+
+def sym_wisp():
+    """Призыв: дух-призрак — голова, тело с тремя хвостами, тёмные глаза."""
+    g, x, y = grid13()
+    head = (x - 6.5) ** 2 + (y - 5.4) ** 2 <= 4.6 ** 2
+    body = (np.abs(x - 6.5) <= 4.6) & (y >= 5.4) & (y <= 12.6)
+    for bx in (4.2, 8.8):
+        body &= ~((x - bx) ** 2 + (y - 12.9) ** 2 <= 1.25 ** 2)
+    m = head | body
+    g[m] = "#"
+    g[m & (x - 6.5 + (y - 5.4) * 0.3 < -2.6)] = "+"
+    g[m & (x > 10.0) & (y > 6.0)] = "-"
+    for ex in (4.5, 8.5):
+        g[((x - ex) ** 2 / 0.8 + (y - 6.0) ** 2 / 1.9) <= 1.0] = "-"
+    return g
+
+
+def sym_taiji():
+    """Слияние: две силы, перетекающие друг в друга (светлая и тёмная половины с точками)."""
+    g, x, y = grid13()
+    c, R = 6.5, 5.9
+    disc = (x - c) ** 2 + (y - c) ** 2 <= R ** 2
+    up = (x - c) ** 2 + (y - (c - R / 2)) ** 2 <= (R / 2) ** 2
+    lo = (x - c) ** 2 + (y - (c + R / 2)) ** 2 <= (R / 2) ** 2
+    light = disc & (((x < c) | up) & ~lo)
+    g[disc] = "-"
+    g[light] = "+"
+    g[disc & ((x - c) ** 2 + (y - c) ** 2 > (R - 1.0) ** 2)] = "#"
+    g[(x - c) ** 2 + (y - (c - R / 2)) ** 2 <= 0.8 ** 2] = "-"
+    g[(x - c) ** 2 + (y - (c + R / 2)) ** 2 <= 0.8 ** 2] = "+"
+    return g
+
+
 SYMBOLS = {
     "flame": lambda: parse(FLAME),
-    "leaf": sym_leaf,
-    "rhombus": sym_rhombus,
-    "eye": lambda: parse(EYE),
-    "spiral": sym_spiral,
+    "drop": sym_drop,
+    "gust": sym_gust,
+    "mountain": sym_mountain,
+    "bolt": sym_bolt,
     "sun": lambda: parse(SUN),
     "crescent": sym_crescent,
+    "vortex": sym_vortex,
+    "leaf": sym_leaf,
+    "eye": lambda: parse(EYE),
+    "wisp": sym_wisp,
+    "taiji": sym_taiji,
+    "rhombus": sym_rhombus,
+    "spiral": sym_spiral,
 }
 
 
@@ -393,8 +523,53 @@ def archmage_staff():
     return cv.image()
 
 
-def book(cv, pal, *, x0, y0, x1, y1, thick, spine, corners, clasp=False, gold_frame=False, seed=1):
-    """Книга в лёгком ракурсе: обложка спереди, справа и снизу видны страницы (на thick пикселей)."""
+GEM_CYAN = ramp("#08304c", "#145e8c", "#2c9ccc", "#6ad8fa", "#c4f4ff", "#ffffff")
+GEM_VIOLET = ramp("#220c44", "#401c7c", "#6838b8", "#9a68ee", "#cdb0ff", "#ffffff")
+GEM_AMBER = ramp("#422400", "#804a00", "#c88410", "#ffbe30", "#ffe890", "#ffffff")
+GEM_ROSE = ramp("#420a1c", "#82163c", "#c82c5c", "#ff6688", "#ffb8c8", "#ffffff")
+
+
+def primordial_staff():
+    """Посох первоначал: жемчужное древко с золотой спиралью и навершие — радужный кристалл-ромб (четыре грани
+    четырёх цветов, все стихии разом) в золотом кольце-ореоле с четырьмя искрами стихий. Силуэт — одна часть,
+    без полупрозрачности; в слоте 16×16 читается как «светлый посох с радужным камнем в кольце»."""
+    cv = Canvas(32)
+    u, v = diag(cv)
+    pommel = np.hypot(u - 4.4, v) <= 1.9
+    cv.put(pommel, GOLD, np.where(u + v < 4.0, 5, 3), outline=(2, 0))
+    shaft = (u >= 5.5) & (u <= 27.0) & (np.abs(v) <= 1.1) & ~pommel
+    sheen = hash01(np.round((u - v) * 0.7), 13) < 0.12
+    cv.put(shaft, PEARL, np.where(v < 0, 4, 2) + sheen, outline=(1, 0))
+    wrap = shaft & (u >= 9.0) & (u <= 21.5) & (((u + 1.6 * v) % 3.6) < 1.1)
+    cv.put(wrap, GOLD, np.where(v < 0, 5, 3), outline=(2, 0))
+    for c in (7.6, 23.4):
+        band = (np.abs(u - c) <= 0.75) & (np.abs(v) <= 1.8)
+        cv.put(band, GOLD, np.where(v < 0, 5, 3), outline=(2, 0))
+    collar = (u >= 25.6) & (u <= 29.0) & (np.abs(v) <= 2.3)
+    cv.put(collar, GOLD, np.where(v < -0.5, 5, np.where(v > 0.5, 3, 4)), outline=(2, 0))
+    uc, R, gu, gv = 34.2, 6.2, 5.4, 3.7
+    du = u - uc
+    rr = np.hypot(du, v)
+    diamond = np.abs(du) / gu + np.abs(v) / gv
+    gem = diamond <= 1.0
+    halo = (np.abs(rr - R) <= 1.0) & ~collar & ~gem
+    cv.put(halo, GOLD, np.where(v < -1.5, 5, np.where(v < 1.5, 4, 3)), outline=(3, 1))
+    for pal, quad in ((GEM_AMBER, (du < 0) & (v < 0)), (GEM_CYAN, (du >= 0) & (v < 0)),
+                      (GEM_VIOLET, (du >= 0) & (v >= 0)), (GEM_ROSE, (du < 0) & (v >= 0))):
+        cv.put(gem & quad, pal, np.where(diamond < 0.45, 4, 3), outline=(2, 1))
+    cv.outline()
+    cv.rgb[gem & (np.abs(du + 0.9) < 1.3) & (np.abs(v + 1.0) < 0.5)] = WHITE
+    cv.rgb[gem & (rr < 0.8)] = WHITE
+    for ang, col in ((45, "#ff6a3a"), (135, "#3a9cff"), (225, "#5ee88a"), (315, "#ffe066")):
+        a = math.radians(ang)
+        cv.rgb[halo & (np.hypot(du - R * math.cos(a), v - R * math.sin(a)) < 1.05)] = rgb(col)
+    inner_glow(cv, gem, WHITE)
+    return cv.image()
+
+
+def book(cv, pal, *, x0, y0, x1, y1, thick, spine, corners, clasp=False, gold_frame=False, seed=1, prism=False):
+    """Книга в лёгком ракурсе: обложка спереди, справа и снизу видны страницы (на thick пикселей).
+    prism — обложка переливается по диагонали цветами всех стихий (тени и блики сохраняются)."""
     x, y = cv.x - 0.5, cv.y - 0.5
 
     def rect(dx, dy, ax0=x0, ay0=y0, ax1=x1, ay1=y1):
@@ -418,7 +593,7 @@ def book(cv, pal, *, x0, y0, x1, y1, thick, spine, corners, clasp=False, gold_fr
     idx = np.where(y >= y1 - 1, 2, idx)
     sp = x < x0 + spine
     idx = np.where(sp, np.where(x == x0 + 1, 4, np.where(x == x0 + spine - 1, 1, 2)), idx)
-    cv.put(cover, pal, idx, outline=(1, 0))
+    cover_id = cv.put(cover, pal, idx, outline=(1, 0))
     cv.outline()
     # Рамка-тиснение на лицевой стороне.
     fx0, fy0, fx1, fy1 = x0 + spine + 1, y0 + 2, x1 - 2, y1 - 2
@@ -434,6 +609,14 @@ def book(cv, pal, *, x0, y0, x1, y1, thick, spine, corners, clasp=False, gold_fr
     else:
         cv.rgb[frame] = pal[1]
         cv.rgb[inner & cover] = pal[4]
+    if prism:
+        m = cv.owner == cover_id
+        t = np.clip(((x - x0) + (y - y0)) / ((x1 - x0) + (y1 - y0)), 0, 1) * (len(PRISM) - 1)
+        k = np.minimum(np.floor(t).astype(int), len(PRISM) - 2)
+        f = (t - k)[..., None]
+        col = np.asarray(PRISM)[k] * (1 - f) + np.asarray(PRISM)[k + 1] * f
+        shade = cv.rgb.mean(axis=2, keepdims=True) / pal[5].mean()
+        cv.rgb[m] = np.clip(col * np.clip(shade, 0, 1.15) ** 1.1 * 0.82, 0, 1)[m]
     # Золотые полосы на корешке.
     for by in (y0 + 3, y1 - 3):
         band = sp & (y == by) & (x > x0)
@@ -462,27 +645,37 @@ def book(cv, pal, *, x0, y0, x1, y1, thick, spine, corners, clasp=False, gold_fr
     return (fx0 + fx1) // 2, (fy0 + fy1) // 2
 
 
+# Знак на обложке: цвета «#» основной, «+» блик, «-» тень и цвет тени-рельефа (индекс тона обложки).
+TOME_SYMBOL = {
+    "light": ({"#": GOLD[3], "+": GOLD[5], "-": GOLD[1]}, 1),
+    "dark": ({"#": AMETHYST[4], "+": AMETHYST[6], "-": AMETHYST[2]}, 0),
+    "wind": ({"#": rgb("#2a9a78"), "+": rgb("#8af0c8"), "-": rgb("#176650")}, 2),
+    "lightning": ({"#": rgb("#8fefff"), "+": rgb("#f4fdff"), "-": rgb("#3cb4e0")}, 0),
+    "space": ({"#": rgb("#c4c8ff"), "+": rgb("#ffffff"), "-": rgb("#7880e8")}, 0),
+}
+
+
 def tome(school):
     pal, sym = SCHOOLS[school]
     cv = Canvas(32)
-    # Зерно — от имени школы через crc32: hash() строк в Python случаен при каждом запуске.
+    # Зерно — от имени стихии через crc32: hash() строк в Python случаен при каждом запуске.
     cx, cy = book(cv, pal, x0=4, y0=2, x1=25, y1=26, thick=3, spine=4,
-                  corners=[(25, 2, -1, 1), (25, 26, -1, -1)], seed=zlib.crc32(school.encode()) % 97)
+                  corners=[(25, 2, -1, 1), (25, 26, -1, -1)], seed=zlib.crc32(school.encode()) % 97,
+                  prism=school == "fusion")
+    if school == "space":
+        # Звёздное небо на обложке: редкие светлые точки (не на рамке и не под знаком).
+        x, y = cv.x - 0.5, cv.y - 0.5
+        stars = (x > 8) & (x < 24) & (y > 3) & (y < 25) & (hash01(x, y, 41) < 0.05) & (cv.a > 0)
+        stars &= ~((np.abs(x - cx) < 8) & (np.abs(y - cy) < 8))
+        cv.rgb[stars] = rgb("#e8eaff")
     g = SYMBOLS[sym]()
-    if school == "light":
-        colors = {"#": GOLD[3], "+": GOLD[5], "-": GOLD[1]}
-        shadow = pal[1]
-    elif school == "dark":
-        colors = {"#": AMETHYST[4], "+": AMETHYST[6], "-": AMETHYST[2]}
-        shadow = pal[0]
-    else:
-        colors = {"#": GOLD[4], "+": GOLD[6], "-": GOLD[2]}
-        shadow = pal[0]
-    stamp(cv, g, cx - 6 + 1, cy - 6, colors, shadow)
-    if school == "dark":
+    colors, shade = TOME_SYMBOL.get(school, ({"#": GOLD[4], "+": GOLD[6], "-": GOLD[2]}, 0))
+    stamp(cv, g, cx - 6 + 1, cy - 6, colors, pal[shade])
+    glow = {"dark": AMETHYST[3], "lightning": rgb("#6fe3ff"), "space": rgb("#8a90ff")}.get(school)
+    if glow is not None:
         m = np.zeros_like(cv.a, dtype=bool)
         m[cy - 6:cy + 7, cx - 5:cx + 8] = g != "."
-        cv.tint(dilate(m, 1.5) & ~m, AMETHYST[3], 0.3)
+        cv.tint(dilate(m, 1.5) & ~m, glow, 0.3)
     return cv.image()
 
 
@@ -697,10 +890,31 @@ def mana_bar(full):
     return Image.fromarray(np.round(img * 255).astype(np.uint8), "RGBA")
 
 
+# Основные цвета стихий — обязаны совпадать с School.java (проверяется в check_school_hex).
 SCHOOL_HEX = {
-    "destruction": "#FF7A2E", "restoration": "#52E07F", "light": "#FFD84A", "dark": "#9A4DFF",
-    "alteration": "#4DA6FF", "illusion": "#E76BFF", "conjuration": "#3FE0D0",
+    "fire": "#FF6A1F", "water": "#2F8CFF", "wind": "#8CFFC8", "earth": "#D08B3A", "lightning": "#6FE3FF",
+    "light": "#FFD84A", "dark": "#8A2BE2", "space": "#4B55FF", "life": "#52E07F", "mind": "#FF5FD2",
+    "summon": "#3FE0D0", "fusion": "#FF4FA3",
 }
+# Стихии, что сливаются в значке «Слияния» (сектора диска).
+FUSION_DISC = ("fire", "lightning", "water", "life", "light")
+
+
+def check_school_hex():
+    """Сверить SCHOOL_HEX и SCHOOLS с School.java: id, порядок и цвета. Расхождение — ошибка (иначе значки «врут»)."""
+    src = (ROOT / "src/main/java/com/suchki/magic/School.java").read_text(encoding="utf-8")
+    java = {m.group(1): "#" + m.group(2).upper()
+            for m in re.finditer(r'^\s*[A-Z_]+\("([a-z_]+)",\s*0x([0-9A-Fa-f]{6}),', src, re.M)}
+    problems = []
+    if list(java) != list(SCHOOL_HEX):
+        problems.append(f"стихии: в School.java {list(java)}, в SCHOOL_HEX {list(SCHOOL_HEX)}")
+    if list(SCHOOLS) != list(SCHOOL_HEX):
+        problems.append(f"SCHOOLS {list(SCHOOLS)} ≠ SCHOOL_HEX {list(SCHOOL_HEX)}")
+    for k, v in java.items():
+        if SCHOOL_HEX.get(k, "").upper() != v:
+            problems.append(f"цвет {k}: School.java {v}, SCHOOL_HEX {SCHOOL_HEX.get(k)}")
+    if problems:
+        raise SystemExit("gen_textures: стихии не совпадают с School.java:\n" + "\n".join(problems))
 WHITE = np.ones(3)
 BLACK = np.zeros(3)
 
@@ -736,8 +950,9 @@ def tone_ramp(hexc):
     return np.array(out)
 
 
-def medallion(pal):
-    """Круглый медальон 32×32: золотой обод, диск в цвете pal (6 тонов) с бликом. Центр — пиксель 16."""
+def medallion(pal, parts=None, twist=1.4):
+    """Круглый медальон 32×32: золотой обод, диск в цвете pal (6 тонов) с бликом. Центр — пиксель 16.
+    parts — несколько палитр: диск делится на закрученные сектора (слияние стихий), pal тогда не нужен."""
     cv = Canvas(32)
     x, y = cv.x, cv.y
     cx = cy = 16.5
@@ -746,23 +961,41 @@ def medallion(pal):
     rim = (r <= 13.8) & (r > 11.5)
     disc = r <= 11.5
     cv.put(rim, GOLD, np.where(light > 0.25, 5, np.where(light > -0.3, 4, 3)) - (r < 12.4), outline=(2, 0))
-    cv.put(disc, pal, np.clip(np.round(2.6 + light * 2.2), 1, 4).astype(int), outline=None)
+    pals = list(parts) if parts else [pal]
+    th = np.arctan2(y - cy, x - cx)
+    sector = (np.floor(((th + twist * r / 11.5 + 0.75 * math.pi) % (2 * math.pi)) / (2 * math.pi / len(pals)))
+              .astype(int) % len(pals))
+    idx = np.clip(np.round(2.6 + light * 2.2), 1, 4).astype(int)
+    for k, p in enumerate(pals):
+        cv.put(disc & (sector == k), p, idx, outline=None)
     cv.outline()
-    cv.rgb[disc & (r > 10.9)] = pal[0]
-    gloss = disc & (np.abs(r - 9.4) < 0.6) & (np.arctan2(y - cy, x - cx) < -1.75) & (np.arctan2(y - cy, x - cx) > -2.9)
-    cv.rgb[gloss] = pal[5]
+    gloss = disc & (np.abs(r - 9.4) < 0.6) & (th < -1.75) & (th > -2.9)
+    for k, p in enumerate(pals):
+        cv.rgb[disc & (r > 10.9) & (sector == k)] = p[0]
+        cv.rgb[gloss & (sector == k)] = p[5]
     return cv, rim, disc
 
 
+def element_disc(element):
+    """Медальон стихии: у слияния — диск из закрученных секторов нескольких стихий."""
+    if element == "fusion":
+        return medallion(None, [tone_ramp(SCHOOL_HEX[e]) for e in FUSION_DISC])
+    return medallion(tone_ramp(SCHOOL_HEX[element]))
+
+
 def school_icon(school):
-    """Значок школы — в тех же тонах и с той же отделкой символа, что значки заклинаний (gen_spell_icons.py)."""
+    """Значок стихии — в тех же тонах и с той же отделкой символа, что значки заклинаний (gen_spell_icons.py)."""
     base = rgb(SCHOOL_HEX[school])
     pal = tone_ramp(SCHOOL_HEX[school])
-    cv, rim, disc = medallion(pal)
+    cv, rim, disc = element_disc(school)
     g = SYMBOLS[SCHOOLS[school][1]]()
-    colors = {"#": mix(base, WHITE, 0.58), "+": mix(base, WHITE, 0.87), "-": base}
-    if school == "destruction":                # пламя — как огонь в значках заклинаний
+    colors = {"#": mix(base, WHITE, 0.58), "+": mix(base, WHITE, 0.87), "-": mix(base, WHITE, 0.25)}
+    if school == "fire":                     # пламя — как огонь в значках заклинаний
         colors = {"#": rgb("#FFC447"), "+": rgb("#FFF5CF"), "-": base}
+    elif school == "dark":                   # тёмный знак на тёмном диске не читается — светлая сирень
+        colors = {"#": rgb("#c9a2ff"), "+": rgb("#f1e6ff"), "-": rgb("#9a5cf0")}
+    elif school == "fusion":                 # на пёстром диске — бело-розовый знак с тёмной половиной
+        colors = {"#": rgb("#ffe0f0"), "+": rgb("#ffffff"), "-": rgb("#5a1240")}
     stamp(cv, g, 10, 10, colors)
     sym = np.zeros((32, 32), dtype=bool)
     sym[10:23, 10:23] = g != "."
@@ -942,6 +1175,7 @@ def textures():
     t = {}
     t["item/apprentice_staff.png"] = apprentice_staff()
     t["item/archmage_staff.png"] = archmage_staff()
+    t["item/primordial_staff.png"] = primordial_staff()
     t["item/grimoire.png"] = grimoire()
     for school in SCHOOLS:
         t[f"item/tome_{school}.png"] = tome(school)
@@ -1028,26 +1262,56 @@ def check_item(name, im):
     return errors
 
 
+def stale_files(tex):
+    """Свои устаревшие файлы: книги и значки стихий, которых больше нет. Чужие файлы (новые текстуры кругов
+    в particle/ и т. п.) не трогаем — удаляем только то, что этот генератор когда-то писал по шаблону."""
+    out = []
+    for pattern in ("item/tome_*.png", "gui/school_*.png"):
+        out += [f for f in sorted(TEX.glob(pattern)) if f.relative_to(TEX).as_posix() not in tex]
+    return out
+
+
+def effect_icons_missing(tex):
+    """Эффекты из MagicEffects.java без значка mob_effect/<id>.png (своего или чужого)."""
+    src = (ROOT / "src/main/java/com/suchki/magic/MagicEffects.java").read_text(encoding="utf-8")
+    names = re.findall(r'\bregister\(\s*"([a-z0-9_]+)"\s*,', src)
+    return [n for n in names if f"mob_effect/{n}.png" not in tex and not (TEX / "mob_effect" / f"{n}.png").exists()]
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--preview", type=Path, help="только превью в эту папку (текстуры в src не трогаются)")
     args = ap.parse_args()
+    check_school_hex()
     tex = textures()
     errors = [e for rel, im in tex.items() if rel.startswith("item/") for e in check_item(rel, im)]
     if errors:
         raise SystemExit("Предметы не прошли проверку силуэта:\n" + "\n".join(errors))
+    missing = effect_icons_missing(tex)
+    if missing:
+        print("  ! нет значков эффектов (mob_effect/<id>.png): " + ", ".join(missing))
     if not args.preview:
         for rel, im in tex.items():
             save_png(im, TEX / rel)
-        print(f"записано {len(tex)} текстур в {TEX}")
+        stale = stale_files(tex)
+        for f in stale:
+            f.unlink()
+        print(f"записано {len(tex)} текстур в {TEX}" + (f", удалено устаревших: {len(stale)}" if stale else ""))
     else:
         args.preview.mkdir(parents=True, exist_ok=True)
         items = [(k, v) for k, v in tex.items() if k.startswith("item/")]
-        sheet(items[:8], 8, 4).save(args.preview / "items_a.png")
-        sheet(items[8:], 8, 4).save(args.preview / "items_b.png")
-        sheet(items, 3, 8, slot=True).save(args.preview / "items_slot.png")
-        icons = [(k, v) for k, v in tex.items() if k.startswith(("mob_effect/", "gui/school"))]
-        sheet(icons, 8, 6).save(args.preview / "icons.png")
+        tomes = [(k, v) for k, v in items if "/tome_" in k]
+        foci = [(k, v) for k, v in items if "/tome_" not in k]
+        sheet(foci, 8, 5).save(args.preview / "items_foci.png")
+        sheet(tomes, 8, 6).save(args.preview / "items_tomes.png")
+        sheet(items, 3, 9, slot=True).save(args.preview / "items_slot.png")
+        # Как предмет выглядит в слоте на мелком интерфейсе: 16×16 и обратно ×6.
+        small = [(k, v.resize((16, 16), Image.BOX)) for k, v in items if "staff" in k or "grimoire" in k]
+        sheet(small, 6, 4, slot=True).save(args.preview / "items_16px.png")
+        schools = [(k, v) for k, v in tex.items() if k.startswith("gui/school")]
+        sheet(schools, 6, 6, dark=True).save(args.preview / "schools.png")
+        effects = [(k, v) for k, v in tex.items() if k.startswith("mob_effect/")]
+        sheet(effects, 8, 4).save(args.preview / "effects.png")
         parts = [(k, v) for k, v in tex.items() if k.startswith("particle/") and v.width <= 32]
         sheet(parts, 8, 6, dark=True).save(args.preview / "particles_small.png")
         big = [(k, v) for k, v in tex.items() if k.startswith("particle/") and v.width > 32]

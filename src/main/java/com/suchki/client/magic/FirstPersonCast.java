@@ -16,7 +16,8 @@ import net.minecraft.world.item.ItemStack;
 
 /**
  * Каст от первого лица. Посох/книга двигаются по фазам (замах, накопление с дрожью, толчок; подъём и удар у
- * ритуала). С гримуаром свободная рука поднимается в кадр и колдует сама.
+ * ритуала) и по стойке (на цель, к небу, выпад, в сторону, по кругу). С гримуаром свободная рука поднимается
+ * в кадр и колдует сама.
  */
 public final class FirstPersonCast {
 	private FirstPersonCast() {}
@@ -56,7 +57,7 @@ public final class FirstPersonCast {
 	private static void staff(PoseStack pose, Pose p, float side) {
 		float w = p.weight;
 		float x = 0, y = 0, z = 0, rx = 0, rz = 0;
-		switch (p.style) {
+		switch (p.stance()) {
 			case BOLT -> {
 				if (p.casting()) {
 					float f = CastAnim.easeOut(p.form);
@@ -91,25 +92,84 @@ public final class FirstPersonCast {
 				rx = 15.0F * f;
 				rz = 8.0F * f;
 			}
-			case RITUAL, SUMMON -> {
+			case RITUAL, SUMMON, SKY -> {
+				// У небесного круга посох поднимается выше и чуть раскачивается — маг тянется к кругу над целью.
+				float high = p.stance() == CastAnim.Stance.SKY ? 1.25F : 1.0F;
 				if (p.casting()) {
 					float f = CastAnim.easeOut(p.form);
 					x = -0.15F * f;
-					y = 0.38F * f;
+					y = 0.38F * f * high + (high > 1 ? 0.015F * Mth.sin(p.time * 0.2F) : 0);
 					z = 0.05F * f;
-					rx = 25.0F * f;
+					rx = 25.0F * f * high;
 					rz = 6.0F * f;
 				} else {
-					float slam = CastAnim.easeOut(Mth.clamp(p.release / (p.style == com.suchki.magic.CastStyle.RITUAL ? 0.25F : 0.3F), 0, 1));
+					float slam = CastAnim.easeOut(Mth.clamp(p.release / (p.style == com.suchki.magic.CastStyle.SUMMON ? 0.3F : 0.25F), 0, 1));
 					x = -0.15F;
-					y = Mth.lerp(slam, 0.38F, -0.12F);
+					y = Mth.lerp(slam, 0.38F * high, -0.12F);
 					z = Mth.lerp(slam, 0.05F, -0.22F);
-					rx = Mth.lerp(slam, 25.0F, -38.0F);
+					rx = Mth.lerp(slam, 25.0F * high, -38.0F);
 					rz = 6.0F;
 				}
 			}
+			case POINT -> {
+				// Посох ровно на цель, без замаха; на выпуске — короткая отдача вверх.
+				float f = p.casting() ? CastAnim.easeOut(p.form) : 1.0F;
+				float kick = p.casting() || p.fizzle ? 0 : CastAnim.bump(Mth.clamp(p.release * 2.2F, 0, 1));
+				x = -0.2F * f;
+				y = 0.05F * f + 0.05F * kick;
+				z = -0.14F * f + 0.06F * kick;
+				rx = -10.0F * f + 14.0F * kick;
+				rz = 4.0F * f;
+			}
+			case THRUST -> {
+				if (p.casting()) {
+					// Посох к центру кадра, на накоплении отводится к себе.
+					float f = CastAnim.easeOut(p.form);
+					x = -0.26F * f;
+					y = 0.02F * f;
+					z = -0.06F * f + 0.12F * p.over;
+					rx = -30.0F * f;
+					rz = 4.0F * f;
+				} else {
+					float th = p.fizzle ? 0 : CastAnim.bump(Mth.clamp(p.release * 1.4F, 0, 1));
+					x = -0.26F;
+					y = 0.02F;
+					z = -0.06F + 0.12F * (1 - Math.min(1, p.release * 4)) - 0.42F * th;
+					rx = -30.0F - 10.0F * th;
+					rz = 4.0F;
+				}
+			}
+			case SPREAD -> {
+				if (p.casting()) {
+					// Посох уходит в сторону — руки раскинуты.
+					float f = CastAnim.easeOut(p.form);
+					x = 0.18F * f;
+					y = 0.08F * f + 0.03F * p.over;
+					z = 0.02F * f;
+					rx = 6.0F * f;
+					rz = -24.0F * f;
+				} else {
+					// Взмах из стороны к центру — «огонь».
+					float sw = p.fizzle ? 0 : CastAnim.easeOut(Mth.clamp(p.release / 0.3F, 0, 1));
+					x = Mth.lerp(sw, 0.18F, -0.18F);
+					y = Mth.lerp(sw, 0.08F, 0.04F);
+					z = Mth.lerp(sw, 0.02F, -0.2F);
+					rx = Mth.lerp(sw, 6.0F, -20.0F);
+					rz = Mth.lerp(sw, -24.0F, 10.0F);
+				}
+			}
+			case ORBIT -> {
+				float f = p.casting() ? CastAnim.easeOut(p.form) : 1.0F - CastAnim.easeOut(Mth.clamp(p.release * 2.0F, 0, 1));
+				float a = p.time * 0.3F;
+				x = (-0.18F + 0.05F * Mth.cos(a)) * f;
+				y = (0.1F + 0.05F * Mth.sin(a)) * f;
+				z = -0.04F * f;
+				rx = 8.0F * f;
+				rz = 10.0F * f * Mth.cos(a);
+			}
 		}
-		pose.translate(side * x * w + tremble(p, 0), y * w + tremble(p, 1.3F), z * w);
+		float rank = 1.0F + 0.1F * (p.tier() - 1);
+		pose.translate(side * x * w + tremble(p, 0) * rank, y * w + tremble(p, 1.3F) * rank, z * w);
 		pose.mulPose(Axis.XP.rotationDegrees(rx * w));
 		pose.mulPose(Axis.ZP.rotationDegrees(side * rz * w));
 	}
@@ -123,8 +183,8 @@ public final class FirstPersonCast {
 
 	private static void freeHand(PoseStack pose, Pose p, float side) {
 		float x = 0, y = 0, z = 0, rx = 0;
-		switch (p.style) {
-			case BOLT -> {
+		switch (p.stance()) {
+			case BOLT, POINT, THRUST -> {
 				if (p.casting()) {
 					float f = CastAnim.easeOut(p.form);
 					x = -0.1F * f;
@@ -147,11 +207,21 @@ public final class FirstPersonCast {
 				x = -0.2F;
 				y = p.casting() ? 0.0F : 0.1F * CastAnim.easeOut(Mth.clamp(p.release * 2.0F, 0, 1));
 			}
-			case RITUAL, SUMMON -> {
+			case RITUAL, SUMMON, SKY -> {
 				float f = p.casting() ? CastAnim.easeOut(p.form) : 1.0F - CastAnim.easeOut(Mth.clamp(p.release / 0.3F, 0, 1));
 				y = 0.3F * f;
 				x = -0.05F;
 				rx = 15.0F * f;
+			}
+			case SPREAD -> {
+				float f = p.casting() ? CastAnim.easeOut(p.form) : 1.0F - CastAnim.easeOut(Mth.clamp(p.release / 0.3F, 0, 1));
+				x = 0.12F * f;
+				y = 0.06F * f;
+			}
+			case ORBIT -> {
+				float a = p.time * 0.3F;
+				x = -0.1F + 0.05F * Mth.cos(a);
+				y = 0.05F + 0.05F * Mth.sin(a);
 			}
 		}
 		// Свободная рука ближе к центру и выше обычной — ладонь в кадре.
