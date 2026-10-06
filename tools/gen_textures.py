@@ -4,8 +4,8 @@
 Всё рисуется кодом — свои формы и палитры, ничего не берётся со стороны.
 Запуск из корня мода:
     python tools/gen_textures.py                 — перезаписать текстуры
-    python tools/gen_textures.py --preview DIR   — ещё и увеличенные превью в DIR
-Нужны Pillow и numpy.
+    python tools/gen_textures.py --preview DIR   — только увеличенные превью в DIR (src не трогается)
+Нужны Pillow и numpy. Генерация детерминирована: повторный запуск даёт побайтно те же файлы.
 
 Предметы — пиксель-арт: свет сверху-слева, выборочный контур (сверху-слева светлее, снизу-справа темнее),
 кристаллы с гранями и лёгким ореолом. Частицы — белые (цвет задаёт код), мягкое свечение со сглаживанием.
@@ -13,6 +13,7 @@
 
 import argparse
 import math
+import zlib
 from pathlib import Path
 
 import numpy as np
@@ -458,8 +459,9 @@ def book(cv, pal, *, x0, y0, x1, y1, thick, spine, corners, clasp=False, gold_fr
 def tome(school):
     pal, sym = SCHOOLS[school]
     cv = Canvas(32)
+    # Зерно — от имени школы через crc32: hash() строк в Python случаен при каждом запуске.
     cx, cy = book(cv, pal, x0=4, y0=2, x1=25, y1=26, thick=3, spine=4,
-                  corners=[(25, 2, -1, 1), (25, 26, -1, -1)], seed=hash(school) % 97)
+                  corners=[(25, 2, -1, 1), (25, 26, -1, -1)], seed=zlib.crc32(school.encode()) % 97)
     g = SYMBOLS[sym]()
     if school == "light":
         colors = {"#": GOLD[3], "+": GOLD[5], "-": GOLD[1]}
@@ -690,8 +692,8 @@ def mana_bar(full):
     return Image.fromarray(np.round(img * 255).astype(np.uint8), "RGBA")
 
 
-def school_icon(school):
-    pal, sym = SCHOOLS[school]
+def medallion(pal):
+    """Круглый медальон 32×32: золотой обод, диск в цвете pal (6 тонов) с бликом. Центр — пиксель 16."""
     cv = Canvas(32)
     x, y = cv.x, cv.y
     cx = cy = 16.5
@@ -705,6 +707,12 @@ def school_icon(school):
     cv.rgb[disc & (r > 10.9)] = pal[0]
     gloss = disc & (np.abs(r - 9.4) < 0.6) & (np.arctan2(y - cy, x - cx) < -1.75) & (np.arctan2(y - cy, x - cx) > -2.9)
     cv.rgb[gloss] = pal[5]
+    return cv, rim, disc
+
+
+def school_icon(school):
+    pal, sym = SCHOOLS[school]
+    cv, rim, disc = medallion(pal)
     g = SYMBOLS[sym]()
     light_main = pal[5] * 0.45 + 0.55
     colors = {"#": light_main, "+": np.ones(3), "-": pal[2]}
@@ -931,17 +939,22 @@ def sheet(images, scale, cols, dark=False, pad=8, slot=False):
     return out
 
 
+def save_png(im, path):
+    """PNG без метаданных (Pillow не пишет время): одинаковая картинка → побайтно одинаковый файл."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    im.save(path, format="PNG")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--preview", type=Path, help="папка для увеличенных превью")
+    ap.add_argument("--preview", type=Path, help="только превью в эту папку (текстуры в src не трогаются)")
     args = ap.parse_args()
     tex = textures()
-    for rel, im in tex.items():
-        path = TEX / rel
-        path.parent.mkdir(parents=True, exist_ok=True)
-        im.save(path)
-    print(f"записано {len(tex)} текстур в {TEX}")
-    if args.preview:
+    if not args.preview:
+        for rel, im in tex.items():
+            save_png(im, TEX / rel)
+        print(f"записано {len(tex)} текстур в {TEX}")
+    else:
         args.preview.mkdir(parents=True, exist_ok=True)
         items = [(k, v) for k, v in tex.items() if k.startswith("item/")]
         sheet(items[:8], 8, 4).save(args.preview / "items_a.png")
