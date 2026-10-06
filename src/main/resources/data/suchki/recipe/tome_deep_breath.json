@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_alteration",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:pufferfish",
+    "minecraft:kelp",
+    "minecraft:gold_ingot",
+    "minecraft:lapis_lazuli",
+    "minecraft:lapis_lazuli"
+  ],
+  "result": {
+    "id": "suchki:tome_alteration",
+    "count": 1,
+    "components": {
+      "suchki:spell": "deep_breath"
+    }
+  }
+}

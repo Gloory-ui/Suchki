@@ -42,6 +42,7 @@ public final class SkillXp {
 		});
 		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, base, taken, blocked) -> {
 			if (!(source.getEntity() instanceof ServerPlayer sp) || !(entity instanceof Mob) || taken <= 0) return;
+			if (source.is(com.suchki.magic.MagicDamage.TAG)) return; // за магию опыт идёт Магу (за потраченную ману)
 			Skills.addXp(sp, source.getDirectEntity() instanceof Projectile ? "archer" : "warrior", taken);
 		});
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {

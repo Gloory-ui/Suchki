@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_conjuration",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:bone",
+    "minecraft:beef"
+  ],
+  "result": {
+    "id": "suchki:tome_conjuration",
+    "count": 1,
+    "components": {
+      "suchki:spell": "familiar"
+    }
+  }
+}

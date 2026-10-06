@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_destruction",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:lightning_rod",
+    "minecraft:copper_ingot",
+    "minecraft:gold_ingot",
+    "minecraft:lapis_lazuli",
+    "minecraft:lapis_lazuli"
+  ],
+  "result": {
+    "id": "suchki:tome_destruction",
+    "count": 1,
+    "components": {
+      "suchki:spell": "chain_lightning"
+    }
+  }
+}

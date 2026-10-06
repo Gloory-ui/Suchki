@@ -19,6 +19,7 @@ public class Suchki implements ModInitializer {
 		com.suchki.potion.StrongPotions.init();
 		Perks.register();
 		com.suchki.skill.Skills.init();
+		com.suchki.magic.Magic.init();
 		com.suchki.enchant.AreaBreaking.register();
 		com.suchki.enchant.SpringJump.register();
 		com.suchki.enchant.LibrarianBooks.register();

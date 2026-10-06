@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_restoration",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:iron_ingot",
+    "minecraft:glistering_melon_slice"
+  ],
+  "result": {
+    "id": "suchki:tome_restoration",
+    "count": 1,
+    "components": {
+      "suchki:spell": "ward"
+    }
+  }
+}

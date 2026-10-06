@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_illusion",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:fermented_spider_eye",
+    "minecraft:glass",
+    "minecraft:gold_ingot",
+    "minecraft:lapis_lazuli",
+    "minecraft:lapis_lazuli"
+  ],
+  "result": {
+    "id": "suchki:tome_illusion",
+    "count": 1,
+    "components": {
+      "suchki:spell": "invisibility"
+    }
+  }
+}

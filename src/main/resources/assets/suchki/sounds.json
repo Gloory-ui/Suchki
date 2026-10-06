@@ -1,0 +1,657 @@
+{
+  "magic.charge.destruction": {
+    "subtitle": "subtitles.suchki.magic.charge.destruction",
+    "sounds": [
+      {
+        "name": "minecraft:fire/fire",
+        "volume": 0.7,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "magic.charge.restoration": {
+    "subtitle": "subtitles.suchki.magic.charge.restoration",
+    "sounds": [
+      {
+        "name": "minecraft:block/conduit/ambient",
+        "volume": 0.8,
+        "pitch": 1.4
+      }
+    ]
+  },
+  "magic.charge.light": {
+    "subtitle": "subtitles.suchki.magic.charge.light",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/ambient",
+        "volume": 0.8,
+        "pitch": 1.6
+      }
+    ]
+  },
+  "magic.charge.dark": {
+    "subtitle": "subtitles.suchki.magic.charge.dark",
+    "sounds": [
+      {
+        "name": "minecraft:portal/portal",
+        "volume": 0.35,
+        "pitch": 0.6
+      }
+    ]
+  },
+  "magic.charge.alteration": {
+    "subtitle": "subtitles.suchki.magic.charge.alteration",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/ambient1",
+        "volume": 0.8,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/ambient2",
+        "volume": 0.8,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/ambient3",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "magic.charge.illusion": {
+    "subtitle": "subtitles.suchki.magic.charge.illusion",
+    "sounds": [
+      {
+        "name": "minecraft:block/conduit/ambient",
+        "volume": 0.8,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "magic.charge.conjuration": {
+    "subtitle": "subtitles.suchki.magic.charge.conjuration",
+    "sounds": [
+      {
+        "name": "minecraft:block/vault/ambient1",
+        "volume": 0.9,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/vault/ambient2",
+        "volume": 0.9,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/vault/ambient3",
+        "volume": 0.9,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "magic.ready": {
+    "subtitle": "subtitles.suchki.magic.ready",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate1",
+        "volume": 0.9,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate2",
+        "volume": 0.9,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate3",
+        "volume": 0.9,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate4",
+        "volume": 0.9,
+        "pitch": 1.6
+      }
+    ]
+  },
+  "magic.stage": {
+    "subtitle": "subtitles.suchki.magic.stage",
+    "sounds": [
+      {
+        "name": "minecraft:note/icechime",
+        "volume": 0.6,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "magic.peak": {
+    "subtitle": "subtitles.suchki.magic.peak",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/power1",
+        "volume": 0.9,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:block/beacon/power2",
+        "volume": 0.9,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:block/beacon/power3",
+        "volume": 0.9,
+        "pitch": 1.5
+      }
+    ]
+  },
+  "magic.fizzle": {
+    "subtitle": "subtitles.suchki.magic.fizzle",
+    "sounds": [
+      {
+        "name": "minecraft:random/fizz",
+        "volume": 0.5,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:block/candle/extinguish1",
+        "volume": 0.8,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block/candle/extinguish2",
+        "volume": 0.8,
+        "pitch": 0.9
+      }
+    ]
+  },
+  "magic.learn": {
+    "subtitle": "subtitles.suchki.magic.learn",
+    "sounds": [
+      {
+        "name": "minecraft:block/enchantment_table/enchant1",
+        "volume": 1.0,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/enchantment_table/enchant2",
+        "volume": 1.0,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/enchantment_table/enchant3",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "magic.cast.fire": {
+    "subtitle": "subtitles.suchki.magic.cast.fire",
+    "sounds": [
+      {
+        "name": "minecraft:mob/ghast/fireball4",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "magic.cast.frost": {
+    "subtitle": "subtitles.suchki.magic.cast.frost",
+    "sounds": [
+      {
+        "name": "minecraft:block/powder_snow/break1",
+        "volume": 1.0,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:block/powder_snow/break2",
+        "volume": 1.0,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:random/glass1",
+        "volume": 0.5,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:random/glass2",
+        "volume": 0.5,
+        "pitch": 1.6
+      }
+    ]
+  },
+  "magic.cast.shock": {
+    "subtitle": "subtitles.suchki.magic.cast.shock",
+    "sounds": [
+      {
+        "name": "minecraft:item/trident/thunder1",
+        "volume": 0.5,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:item/trident/thunder2",
+        "volume": 0.5,
+        "pitch": 1.6
+      }
+    ]
+  },
+  "magic.cast.holy": {
+    "subtitle": "subtitles.suchki.magic.cast.holy",
+    "sounds": [
+      {
+        "name": "minecraft:block/bell/resonate",
+        "volume": 0.7,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:block/beacon/activate",
+        "volume": 0.8,
+        "pitch": 1.4
+      }
+    ]
+  },
+  "magic.cast.dark": {
+    "subtitle": "subtitles.suchki.magic.cast.dark",
+    "sounds": [
+      {
+        "name": "minecraft:mob/wither/shoot",
+        "volume": 0.5,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:mob/evocation_illager/cast1",
+        "volume": 0.8,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:mob/evocation_illager/cast2",
+        "volume": 0.8,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "magic.cast.arcane": {
+    "subtitle": "subtitles.suchki.magic.cast.arcane",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/charge1",
+        "volume": 0.8,
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/charge2",
+        "volume": 0.8,
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/charge3",
+        "volume": 0.8,
+        "pitch": 1.3
+      }
+    ]
+  },
+  "magic.cast.heal": {
+    "subtitle": "subtitles.suchki.magic.cast.heal",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate1",
+        "volume": 1.0,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate2",
+        "volume": 1.0,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:block/beacon/power1",
+        "volume": 0.6,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "magic.cast.illusion": {
+    "subtitle": "subtitles.suchki.magic.cast.illusion",
+    "sounds": [
+      {
+        "name": "minecraft:mob/illusion_illager/mirror_move1",
+        "volume": 0.9,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:mob/illusion_illager/mirror_move2",
+        "volume": 0.9,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:mob/illusion_illager/prepare_blind",
+        "volume": 0.7,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "magic.cast.summon": {
+    "subtitle": "subtitles.suchki.magic.cast.summon",
+    "sounds": [
+      {
+        "name": "minecraft:mob/evocation_illager/prepare_summon",
+        "volume": 0.9,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:block/trial_spawner/spawn1",
+        "volume": 0.8,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/trial_spawner/spawn2",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "magic.cast.teleport": {
+    "subtitle": "subtitles.suchki.magic.cast.teleport",
+    "sounds": [
+      {
+        "name": "minecraft:mob/endermen/portal",
+        "volume": 0.8,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:mob/endermen/portal2",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "magic.cast.earth": {
+    "subtitle": "subtitles.suchki.magic.cast.earth",
+    "sounds": [
+      {
+        "name": "minecraft:random/explode1",
+        "volume": 0.6,
+        "pitch": 0.5
+      },
+      {
+        "name": "minecraft:random/explode2",
+        "volume": 0.6,
+        "pitch": 0.5
+      },
+      {
+        "name": "minecraft:dig/stone1",
+        "volume": 1.0,
+        "pitch": 0.6
+      }
+    ]
+  },
+  "magic.impact.fire": {
+    "subtitle": "subtitles.suchki.magic.impact.fire",
+    "sounds": [
+      {
+        "name": "minecraft:random/explode1",
+        "volume": 0.3,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:fire/ignite",
+        "volume": 0.9,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "magic.impact.frost": {
+    "subtitle": "subtitles.suchki.magic.impact.frost",
+    "sounds": [
+      {
+        "name": "minecraft:random/glass1",
+        "volume": 0.8,
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:random/glass2",
+        "volume": 0.8,
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:random/glass3",
+        "volume": 0.8,
+        "pitch": 1.3
+      }
+    ]
+  },
+  "magic.impact.shock": {
+    "subtitle": "subtitles.suchki.magic.impact.shock",
+    "sounds": [
+      {
+        "name": "minecraft:item/trident/thunder1",
+        "volume": 0.35,
+        "pitch": 1.9
+      },
+      {
+        "name": "minecraft:item/trident/thunder2",
+        "volume": 0.35,
+        "pitch": 1.9
+      }
+    ]
+  },
+  "magic.impact.holy": {
+    "subtitle": "subtitles.suchki.magic.impact.holy",
+    "sounds": [
+      {
+        "name": "minecraft:block/bell/bell_use01",
+        "volume": 0.6,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:block/bell/bell_use02",
+        "volume": 0.6,
+        "pitch": 1.6
+      }
+    ]
+  },
+  "magic.impact.dark": {
+    "subtitle": "subtitles.suchki.magic.impact.dark",
+    "sounds": [
+      {
+        "name": "minecraft:block/sculk/charge1",
+        "volume": 1.0,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block/sculk/charge2",
+        "volume": 1.0,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block/sculk/charge3",
+        "volume": 1.0,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "magic.impact.arcane": {
+    "subtitle": "subtitles.suchki.magic.impact.arcane",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/break1",
+        "volume": 1.0,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:block/amethyst/break2",
+        "volume": 1.0,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:block/amethyst/break3",
+        "volume": 1.0,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "magic.explosion": {
+    "subtitle": "subtitles.suchki.magic.explosion",
+    "sounds": [
+      {
+        "name": "minecraft:random/explode1",
+        "volume": 1.0,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:random/explode2",
+        "volume": 1.0,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:random/explode3",
+        "volume": 1.0,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:random/explode4",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "magic.meteor_fall": {
+    "subtitle": "subtitles.suchki.magic.meteor_fall",
+    "sounds": [
+      {
+        "name": "minecraft:mob/ghast/fireball4",
+        "volume": 1.0,
+        "pitch": 0.5
+      }
+    ]
+  },
+  "magic.pillar": {
+    "subtitle": "subtitles.suchki.magic.pillar",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/activate",
+        "volume": 1.0,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block/conduit/activate",
+        "volume": 1.0,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "magic.loop.flames": {
+    "subtitle": "subtitles.suchki.magic.loop.flames",
+    "sounds": [
+      {
+        "name": "minecraft:mob/blaze/breathe1",
+        "volume": 0.8,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:mob/blaze/breathe2",
+        "volume": 0.8,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:mob/blaze/breathe3",
+        "volume": 0.8,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:mob/blaze/breathe4",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "magic.loop.beam": {
+    "subtitle": "subtitles.suchki.magic.loop.beam",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/ambient",
+        "volume": 0.9,
+        "pitch": 2.0
+      }
+    ]
+  },
+  "magic.loop.drain": {
+    "subtitle": "subtitles.suchki.magic.loop.drain",
+    "sounds": [
+      {
+        "name": "minecraft:ambient/nether/soulsand_valley/whisper1",
+        "volume": 1.0,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:ambient/nether/soulsand_valley/whisper2",
+        "volume": 1.0,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:ambient/nether/soulsand_valley/whisper3",
+        "volume": 1.0,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "magic.loop.heal": {
+    "subtitle": "subtitles.suchki.magic.loop.heal",
+    "sounds": [
+      {
+        "name": "minecraft:block/conduit/ambient",
+        "volume": 0.8,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "magic.loop.ward": {
+    "subtitle": "subtitles.suchki.magic.loop.ward",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/ambient",
+        "volume": 0.8,
+        "pitch": 0.7
+      }
+    ]
+  },
+  "magic.loop.wind": {
+    "subtitle": "subtitles.suchki.magic.loop.wind",
+    "sounds": [
+      {
+        "name": "minecraft:mob/breeze/whirl",
+        "volume": 0.7,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "magic.vanish": {
+    "subtitle": "subtitles.suchki.magic.vanish",
+    "sounds": [
+      {
+        "name": "minecraft:mob/illusion_illager/mirror_move1",
+        "volume": 0.7,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:block/candle/extinguish3",
+        "volume": 1.0,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "magic.ward_hit": {
+    "subtitle": "subtitles.suchki.magic.ward_hit",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/break1",
+        "volume": 1.0,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block/amethyst/break2",
+        "volume": 1.0,
+        "pitch": 0.8
+      }
+    ]
+  }
+}

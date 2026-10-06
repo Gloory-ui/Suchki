@@ -1,0 +1,6 @@
+{
+  "parent": "suchki:item/staff",
+  "textures": {
+    "layer0": "suchki:item/archmage_staff"
+  }
+}

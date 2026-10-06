@@ -153,6 +153,7 @@ public final class Skills {
 		}
 		set(player, s.switchTo(role, now));
 		applyAttributes(player);
+		com.suchki.magic.Magic.onRoleChosen(player, role);
 		player.sendSystemMessage(Component.translatable("suchki.skill.role_chosen", SkillTree.role(role).name())
 				.withStyle(ChatFormatting.GREEN));
 	}

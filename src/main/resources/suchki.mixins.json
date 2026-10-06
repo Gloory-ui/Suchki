@@ -16,6 +16,10 @@
 		"ItemStackMixin",
 		"LivingEntityInvoker",
 		"LivingEntityMixin",
+		"MagicLivingMixin",
+		"MagicMobMixin",
+		"MannequinInvoker",
+		"MobAccessor",
 		"SkillArrowMixin",
 		"SkillBreedMixin",
 		"SkillBrewTriggerMixin",
@@ -25,7 +29,8 @@
 		"SkillPlaceTriggerMixin",
 		"SkillPlayerMixin",
 		"SkillPotionMixin",
-		"SkillTriggersMixin"
+		"SkillTriggersMixin",
+		"SpectralSlotMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

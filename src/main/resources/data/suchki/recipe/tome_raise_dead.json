@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_dark",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:rotten_flesh",
+    "minecraft:rotten_flesh",
+    "minecraft:bone",
+    "minecraft:gold_ingot",
+    "minecraft:lapis_lazuli",
+    "minecraft:lapis_lazuli"
+  ],
+  "result": {
+    "id": "suchki:tome_dark",
+    "count": 1,
+    "components": {
+      "suchki:spell": "raise_dead"
+    }
+  }
+}

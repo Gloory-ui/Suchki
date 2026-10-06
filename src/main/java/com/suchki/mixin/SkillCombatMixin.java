@@ -38,7 +38,12 @@ public abstract class SkillCombatMixin {
 			if (victim instanceof Enemy) mult += s.perk(Perk.MONSTER_DAMAGE);
 		}
 		if (victim instanceof Player p) mult *= Math.max(0.0, 1.0 - Skills.perk(p, Perk.INCOMING_DAMAGE));
-		return (float) (damage * mult);
+		// Проклятие (магия Тьмы): +25% получаемого урона за уровень.
+		mult *= 1.0 + com.suchki.magic.MagicEffects.hexBonus(victim);
+		float result = (float) (damage * mult);
+		// Оберег (магия Восстановления): гасит урон спереди, пока маг держит каст.
+		if (victim instanceof net.minecraft.server.level.ServerPlayer sp) result = com.suchki.magic.Magic.ward(sp, source, result);
+		return result;
 	}
 
 	@ModifyVariable(method = "addEffect(Lnet/minecraft/world/effect/MobEffectInstance;Lnet/minecraft/world/entity/Entity;)Z",

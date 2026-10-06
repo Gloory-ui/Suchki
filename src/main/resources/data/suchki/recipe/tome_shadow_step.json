@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_dark",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:ender_pearl",
+    "minecraft:ink_sac",
+    "minecraft:gold_ingot",
+    "minecraft:lapis_lazuli",
+    "minecraft:lapis_lazuli"
+  ],
+  "result": {
+    "id": "suchki:tome_dark",
+    "count": 1,
+    "components": {
+      "suchki:spell": "shadow_step"
+    }
+  }
+}

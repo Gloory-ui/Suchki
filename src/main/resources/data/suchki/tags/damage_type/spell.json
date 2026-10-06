@@ -1,0 +1,11 @@
+{
+  "values": [
+    "suchki:spell_fire",
+    "suchki:spell_frost",
+    "suchki:spell_shock",
+    "suchki:spell_holy",
+    "suchki:spell_dark",
+    "suchki:spell_arcane",
+    "suchki:spell_earth"
+  ]
+}
