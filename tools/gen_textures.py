@@ -330,6 +330,15 @@ def claws(u, v, u0, u1, inner, outer, bend_from, bend):
     return (u >= u0) & (u <= u1) & (av >= inner) & (av <= outer)
 
 
+def inner_glow(cv, crystal, color):
+    """Свечение кристалла только внутри силуэта: светлеют его тёмный край и соседние пиксели оправы.
+    Снаружи ничего не рисуем — в игре каждый непрозрачный пиксель предмета выдавливается в кубик."""
+    cv.tint(crystal & cv.border, color, 0.35)
+    near = dilate(crystal, 1) & ~crystal & (cv.a > 0)
+    cv.tint(near, color, 0.4)
+    cv.tint(dilate(crystal, 2) & ~dilate(crystal, 1) & (cv.a > 0), color, 0.18)
+
+
 def apprentice_staff():
     cv = Canvas(32)
     u, v = diag(cv)
@@ -352,9 +361,7 @@ def apprentice_staff():
     cv.outline()
     spec = crystal & (np.abs(u - 34.6) < 0.4) & (np.abs(v + 1.06) < 0.1)
     cv.rgb[spec] = AMETHYST[6]
-    cv.glow(crystal, AMETHYST[5], [(1, 0.45), (2, 0.18)])
-    for (x, y, al) in [(30, 0, 0.9), (23, 1, 0.6), (31, 9, 0.6)]:
-        cv.px(x, y, AMETHYST[6], al)
+    inner_glow(cv, crystal, AMETHYST[5])
     return cv.image()
 
 
@@ -382,9 +389,7 @@ def archmage_staff():
     cv.outline()
     spec = gem & (np.abs(u - (uc + 1.4)) < 0.75) & (np.abs(v + 0.9) < 0.5)
     cv.rgb[spec] = AQUA[6]
-    cv.glow(gem, AQUA[5], [(1, 0.5), (2, 0.24), (3, 0.09)])
-    for (x, y, al) in [(31, 0, 0.85), (24, 1, 0.55), (31, 8, 0.55), (21, 4, 0.35)]:
-        cv.px(x, y, AQUA[6], al)
+    inner_glow(cv, gem, AQUA[5])
     return cv.image()
 
 
@@ -556,11 +561,10 @@ def spectral(kind):
         fuller = (u > 16.5) & (u < 34.5) & (np.abs(v) < 0.4)
         cv.rgb[fuller] = SPECTRAL[5]
         cv.a[fuller] = 0.74
-    sparks = {"blade": [(26, 1), (20, 9), (31, 8)], "pickaxe": [(11, 3), (30, 19), (24, 2)],
-              "axe": [(8, 6), (21, 0), (28, 10)], "shovel": [(31, 1), (22, 6), (31, 11)]}[kind]
-    for (x, y) in sparks:
-        if cv.a[y, x] == 0:
-            cv.px(x, y, SPECTRAL[6], 0.8)
+    # Искорки — только внутри силуэта (снаружи пиксель стал бы отдельным кубиком в руке).
+    sparks = (cv.owner == hd) & ~cv.border & (hash01(cv.x, cv.y, zlib.crc32(kind.encode()) % 97) < 0.07)
+    cv.rgb[sparks] = SPECTRAL[6]
+    cv.a[sparks] = 0.88
     return cv.image()
 
 
@@ -990,11 +994,48 @@ def save_png(im, path):
     im.save(path, format="PNG")
 
 
+def check_item(name, im):
+    """Предмет в игре: каждый пиксель с альфой > 0 выдавливается в 3D-кубик. Поэтому силуэт — одна
+    8-связная компонента (никаких отдельных искр), а полупрозрачность — только у призрачных предметов
+    и не слабее 0,6 (иначе это ореол). Возвращает список нарушений."""
+    a = np.asarray(im)[..., 3]
+    solid = a > 0
+    seen = np.zeros_like(solid)
+    parts = 0
+    for y0, x0 in zip(*np.nonzero(solid)):
+        if seen[y0, x0]:
+            continue
+        parts += 1
+        stack = [(y0, x0)]
+        seen[y0, x0] = True
+        while stack:
+            y, x = stack.pop()
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    yy, xx = y + dy, x + dx
+                    if 0 <= yy < a.shape[0] and 0 <= xx < a.shape[1] and solid[yy, xx] and not seen[yy, xx]:
+                        seen[yy, xx] = True
+                        stack.append((yy, xx))
+    errors = []
+    if parts != 1:
+        errors.append(f"{name}: {parts} отдельных частей вместо одной")
+    partial = (a > 0) & (a < 255)
+    if "spectral" in name:
+        if np.any(a[solid] < 153):
+            errors.append(f"{name}: пиксели с альфой ниже 0,6 (ореол)")
+    elif partial.any():
+        errors.append(f"{name}: {int(partial.sum())} полупрозрачных пикселей")
+    return errors
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--preview", type=Path, help="только превью в эту папку (текстуры в src не трогаются)")
     args = ap.parse_args()
     tex = textures()
+    errors = [e for rel, im in tex.items() if rel.startswith("item/") for e in check_item(rel, im)]
+    if errors:
+        raise SystemExit("Предметы не прошли проверку силуэта:\n" + "\n".join(errors))
     if not args.preview:
         for rel, im in tex.items():
             save_png(im, TEX / rel)
