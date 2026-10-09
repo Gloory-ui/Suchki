@@ -83,10 +83,44 @@ public final class DevTests {
 
 	public static void register() {
 		CommandRegistrationCallback.EVENT.register((dispatcher, ctx, env) -> dispatcher.register(
+				Commands.literal("suchki_spells_dump").executes(c -> dumpSpells(c.getSource()))));
+		CommandRegistrationCallback.EVENT.register((dispatcher, ctx, env) -> dispatcher.register(
 				Commands.literal("suchki_test").executes(c -> runCommand(c.getSource(), ""))
 						.then(Commands.argument("filter", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
 								.executes(c -> runCommand(c.getSource(),
 										com.mojang.brigadier.arguments.StringArgumentType.getString(c, "filter"))))));
+	}
+
+	/** /suchki_spells_dump — записать все заклинания (ранг, стихия, цена, якорь…) в magic_spells.json для документации. */
+	private static int dumpSpells(net.minecraft.commands.CommandSourceStack source) {
+		com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+		for (com.suchki.magic.Spell s : com.suchki.magic.Spells.all()) {
+			com.google.gson.JsonObject o = new com.google.gson.JsonObject();
+			o.addProperty("id", s.id);
+			o.addProperty("school", s.school.id);
+			o.addProperty("tier", s.tier);
+			o.addProperty("style", s.style.name());
+			o.addProperty("anchor", s.anchor.name());
+			o.addProperty("layers", s.layers);
+			o.addProperty("mana", s.mana);
+			o.addProperty("charge", s.chargeTicks);
+			o.addProperty("cooldown", s.cooldownTicks);
+			o.addProperty("range", s.range);
+			o.addProperty("destroys", s.destroys);
+			o.addProperty("copies", s.maxCopies);
+			com.google.gson.JsonArray combo = new com.google.gson.JsonArray();
+			s.combo.forEach(c -> combo.add(c.id));
+			o.add("combo", combo);
+			arr.add(o);
+		}
+		try {
+			java.nio.file.Files.writeString(java.nio.file.Path.of("magic_spells.json"),
+					new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(arr), java.nio.charset.StandardCharsets.UTF_8);
+		} catch (java.io.IOException e) {
+			return 0;
+		}
+		source.sendSuccess(() -> Component.literal("Записано заклинаний: " + arr.size()), false);
+		return 1;
 	}
 
 	/** /suchki_test [фильтр] — фильтр: часть названия проверки (например «Огонь» или «Магия:»). */
