@@ -91,6 +91,15 @@ public final class DevTests {
 
 	/** /suchki_test [фильтр] — фильтр: часть названия проверки (например «Огонь» или «Магия:»). */
 	private static int runCommand(net.minecraft.commands.CommandSourceStack source, String filter) {
+		// Фильтр можно передать файлом suchki_test_filter.txt (UTF-8) в папке сервера — консоль портит кириллицу.
+		java.nio.file.Path file = java.nio.file.Path.of("suchki_test_filter.txt");
+		if (filter.isBlank() && java.nio.file.Files.exists(file)) {
+			try {
+				filter = java.nio.file.Files.readString(file, java.nio.charset.StandardCharsets.UTF_8).trim();
+			} catch (java.io.IOException ignored) {
+				// без фильтра
+			}
+		}
 		BlockPos origin = BlockPos.containing(source.getPosition()).above(30);
 		List<String> report = run(source.getLevel(), origin, filter);
 		report.forEach(line -> source.sendSuccess(() -> Component.literal(line), false));
@@ -157,7 +166,7 @@ public final class DevTests {
 		long fails = r.lines.stream().filter(l -> l.startsWith("FAIL")).count();
 		long oks = r.lines.stream().filter(l -> l.startsWith("OK")).count();
 		long skips = r.lines.stream().filter(l -> l.startsWith("SKIP")).count();
-		r.lines.add("Итого: " + oks + " OK, " + fails + " FAIL" + (skips > 0 ? ", " + skips + " SKIP" : ""));
+		r.lines.add("Итого: " + oks + " OK, " + fails + " FAIL" + (skips > 0 ? ", " + skips + " SKIP" : "") + (filter.isBlank() ? "" : " (фильтр «" + filter + "»)"));
 		return r.lines;
 	}
 

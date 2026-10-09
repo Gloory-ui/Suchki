@@ -49,7 +49,8 @@ mkfifo "$FIFO"
 		sleep 1
 	done
 	if grep -q 'Done (' "$LOG"; then
-		echo "suchki_test $FILTER" >&3
+		printf '%s' "$FILTER" > "$W/run/suchki_test_filter.txt"
+		echo "suchki_test" >&3
 		for i in $(seq 1 1200); do
 			grep -q 'Итого:' "$LOG" && break
 			kill -0 $J 2>/dev/null || break
