@@ -7,3 +7,4 @@ run/
 .vscode/
 bin/
 mods-для-теста/
+tools/__pycache__/

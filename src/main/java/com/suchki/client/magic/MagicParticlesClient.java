@@ -1,7 +1,9 @@
 package com.suchki.client.magic;
 
+import com.suchki.magic.FxNet;
 import com.suchki.magic.MagicParticles;
 import com.suchki.magic.MagicParticles.Glow;
+import com.suchki.magic.School;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -23,8 +25,9 @@ public final class MagicParticlesClient {
 		reg.register(MagicParticles.SPARK, sprites -> (o, level, x, y, z, dx, dy, dz, rnd) -> new Spark(level, x, y, z, dx, dy, dz, o, sprites, 0));
 		reg.register(MagicParticles.MOTE, sprites -> (o, level, x, y, z, dx, dy, dz, rnd) -> new Spark(level, x, y, z, dx, dy, dz, o, sprites, 1));
 		reg.register(MagicParticles.GLYPH, sprites -> (o, level, x, y, z, dx, dy, dz, rnd) -> new Spark(level, x, y, z, dx, dy, dz, o, sprites, 2));
-		reg.register(MagicParticles.RUNE, sprites -> (o, level, x, y, z, dx, dy, dz, rnd) -> new Circle(level, x, y, z, dx, dy, dz, o, sprites, false));
-		reg.register(MagicParticles.RING, sprites -> (o, level, x, y, z, dx, dy, dz, rnd) -> new Circle(level, x, y, z, dx, dy, dz, o, sprites, true));
+		// Руна и кольцо — не плоские картинки, а настоящий круг, рисуемый штрихами, и ударная волна мира.
+		reg.register(MagicParticles.RUNE, sprites -> (o, level, x, y, z, dx, dy, dz, rnd) -> rune(o, x, y, z, dx, dy, dz));
+		reg.register(MagicParticles.RING, sprites -> (o, level, x, y, z, dx, dy, dz, rnd) -> ring(o, x, y, z, dx, dy, dz));
 		reg.register(MagicParticles.PILLAR, sprites -> (o, level, x, y, z, dx, dy, dz, rnd) -> new Pillar(level, x, y, z, o, sprites));
 	}
 
@@ -100,83 +103,52 @@ public final class MagicParticlesClient {
 	}
 
 	/**
-	 * Магический круг (руна) или ударная волна (кольцо). Повёрнут по нормали; руна вращается и рисуется двумя
-	 * слоями навстречу друг другу, кольцо расходится от центра.
+	 * Частица-руна: круг стихии, ближайшей по цвету, сложность — по размеру. Рисуется за треть жизни, держится
+	 * и гаснет. Частицу не создаём — круг живёт в {@link CircleRenderer}.
 	 */
-	static final class Circle extends SingleQuadParticle {
-		private final boolean ring;
-		private final SpriteSet sprites;
-		private final Quaternionf base;
-		private final float radius;
-		private final int color;
-		private final float spin;
+	static SingleQuadParticle rune(Glow o, double x, double y, double z, double dx, double dy, double dz) {
+		CircleRenderer.Inst in = new CircleRenderer.Inst();
+		in.pos = new Vec3(x, y, z);
+		in.normal = normal(dx, dy, dz);
+		in.radius = o.size();
+		in.school = closest(o.color());
+		in.tier = Mth.clamp(1 + Math.round(o.size() * 1.1F), 1, 7);
+		in.color = o.color();
+		in.light = MagicRender.lighten(o.color(), 0.6F);
+		int life = Math.max(6, o.life());
+		in.draw = Math.max(2, life / 3);
+		in.fade = Math.max(2, Math.min(10, life / 3));
+		in.hold = Math.max(0, life - in.draw - in.fade);
+		in.spinRev = 0.12F;
+		in.seed = (int) (x * 31 + z * 17);
+		in.underlay = in.normal.y > 0.7 ? 0.6F : 0;
+		in.start = CircleRenderer.now(0);
+		CircleRenderer.add(in);
+		return null;
+	}
 
-		Circle(ClientLevel level, double x, double y, double z, double dx, double dy, double dz, Glow o, SpriteSet sprites, boolean ring) {
-			super(level, x, y, z, sprites.first());
-			this.ring = ring;
-			this.sprites = sprites;
-			Vec3 n = normal(dx, dy, dz);
-			this.base = new Quaternionf().rotationTo(0, 0, 1, (float) n.x, (float) n.y, (float) n.z);
-			this.radius = o.size();
-			this.color = o.color();
-			this.lifetime = Math.max(4, o.life());
-			this.hasPhysics = false;
-			this.gravity = 0.0F;
-			this.spin = (random.nextBoolean() ? 1 : -1) * (ring ? 0.0F : 0.6F / Math.max(1.0F, radius));
-			setSize(radius * 2.2F, radius * 2.2F);
-		}
+	/** Частица-кольцо: ударная волна мира (яркая кромка, расходится от центра). */
+	static SingleQuadParticle ring(Glow o, double x, double y, double z, double dx, double dy, double dz) {
+		Vec3 at = new Vec3(x, y, z);
+		WorldFxRenderer.add(new FxNet.WorldFx(FxNet.WorldFx.RING, at, normal(dx, dy, dz), o.size() * 0.08F, o.size(), o.color(),
+				MagicRender.lighten(o.color(), 0.6F), Math.max(4, o.life()), 0));
+		return null;
+	}
 
-		@Override
-		protected Layer getLayer() {
-			return MagicRender.GLOW_LAYER;
-		}
-
-		@Override
-		public int getLightColor(float pt) {
-			return 0xF000F0;
-		}
-
-		@Override
-		public void tick() {
-			xo = x;
-			yo = y;
-			zo = z;
-			if (age++ >= lifetime) remove();
-		}
-
-		@Override
-		public void extract(QuadParticleRenderState state, Camera camera, float pt) {
-			float age = this.age + pt;
-			float t = Mth.clamp(age / lifetime, 0.0F, 1.0F);
-			Vec3 cam = camera.position();
-			float px = (float) (Mth.lerp(pt, xo, x) - cam.x);
-			float py = (float) (Mth.lerp(pt, yo, y) - cam.y);
-			float pz = (float) (Mth.lerp(pt, zo, z) - cam.z);
-			if (ring) {
-				float k = 1.0F - (1.0F - t) * (1.0F - t) * (1.0F - t);
-				float size = Math.max(0.1F, radius * (0.08F + 0.92F * k));
-				float a = (1.0F - t) * 0.95F;
-				add(state, sprites.first(), base, px, py, pz, size, color, a);
-				add(state, sprites.first(), base, px, py, pz, size * 0.96F, MagicRender.lighten(color, 0.6F), a * 0.5F);
-				return;
+	/** Стихия с самым похожим цветом (для узора руны). */
+	static School closest(int rgb) {
+		School best = School.FIRE;
+		int bestD = Integer.MAX_VALUE;
+		for (School s : School.values()) {
+			if (s == School.FUSION) continue;
+			int dr = (s.color >> 16 & 255) - (rgb >> 16 & 255), dg = (s.color >> 8 & 255) - (rgb >> 8 & 255), db = (s.color & 255) - (rgb & 255);
+			int d = dr * dr + dg * dg + db * db;
+			if (d < bestD) {
+				bestD = d;
+				best = s;
 			}
-			// Появление 6 тиков (раскрывается из центра), исчезновение — последние 10 тиков.
-			float appear = Math.min(1.0F, age / 6.0F);
-			appear = 1.0F - (1.0F - appear) * (1.0F - appear);
-			float fade = Math.min(1.0F, (lifetime - age) / 10.0F);
-			float a = Math.max(0.0F, Math.min(appear, fade)) * (0.85F + 0.15F * Mth.sin(age * 0.25F));
-			float size = radius * (0.6F + 0.4F * appear);
-			Quaternionf outer = new Quaternionf(base).rotateZ(age * spin * 0.05F);
-			Quaternionf inner = new Quaternionf(base).rotateZ(-age * spin * 0.09F);
-			add(state, sprites.get(0, 1), outer, px, py, pz, size, color, a);
-			add(state, sprites.get(1, 1), inner, px, py, pz, size, MagicRender.lighten(color, 0.35F), a * 0.9F);
 		}
-
-		private static void add(QuadParticleRenderState state, TextureAtlasSprite s, Quaternionf q, float x, float y, float z, float size,
-				int rgb, float alpha) {
-			state.add(MagicRender.GLOW_LAYER, x, y, z, q.x, q.y, q.z, q.w, size, s.getU0(), s.getU1(), s.getV0(), s.getV1(),
-					ARGB.colorFromFloat(alpha, r(rgb), g(rgb), b(rgb)), 0xF000F0);
-		}
+		return best;
 	}
 
 	/** Столп света от земли вверх: стопка полос, повёрнутых к камере, со «стекающим» узором. */

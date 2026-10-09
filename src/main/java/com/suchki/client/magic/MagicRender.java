@@ -2,6 +2,8 @@ package com.suchki.client.magic;
 
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -47,13 +49,48 @@ public final class MagicRender {
 			.withVertexFormat(DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS)
 			.build());
 
+	/** Полупрозрачная тёмная геометрия (подложка кругов, чёрное ядро): обычное смешивание, глубина не пишется. */
+	public static final RenderPipeline SHADE_GEOMETRY = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+			.withLocation(Identifier.fromNamespaceAndPath(Suchki.MOD_ID, "pipeline/shade_geometry"))
+			.withVertexShader("core/entity")
+			.withFragmentShader("core/entity")
+			.withShaderDefine("EMISSIVE")
+			.withShaderDefine("NO_OVERLAY")
+			.withShaderDefine("NO_CARDINAL_LIGHTING")
+			.withSampler("Sampler0")
+			.withBlend(BlendFunction.TRANSLUCENT)
+			.withDepthWrite(false)
+			.withCull(false)
+			.withVertexFormat(DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS)
+			.build());
+
 	private static final Map<Identifier, RenderType> GLOW_TYPES = new HashMap<>();
+	private static final Map<Identifier, RenderType> ADD_TYPES = new HashMap<>();
+	private static final Map<Identifier, RenderType> SHADE_TYPES = new HashMap<>();
 
 	public static final Identifier SPARK = tex("spark");
 	public static final Identifier RUNE = tex("rune_circle");
 	public static final Identifier RUNE_INNER = tex("rune_circle_inner");
 	public static final Identifier RING = tex("ring");
 	public static final Identifier BEAM = tex("beam");
+	/** Профиль линии круга (U поперёк штриха). */
+	public static final Identifier LINE = tex("circle_line");
+	/** Широкое мягкое свечение под линией. */
+	public static final Identifier LINE_GLOW = tex("circle_glow");
+	/** Блик: горячая точка с лучами (остриё пера, вспышки). */
+	public static final Identifier FLARE = tex("circle_flare");
+	/** Мягкое пятно света (подсветка под кругом). */
+	public static final Identifier DISC = tex("circle_disc");
+	/** Круглый узел без лучей. */
+	public static final Identifier DOT = tex("circle_dot");
+	/** Профиль ударной волны: яркая кромка снаружи (U=1). */
+	public static final Identifier WAVE = tex("fx_wave");
+	/** Бесшовный шум (оболочки, смерч). */
+	public static final Identifier NOISE = tex("fx_noise");
+	/** Бесшовные полосы вдоль V (лучи, столпы). */
+	public static final Identifier STREAK = tex("fx_streak");
+	/** Бесшовные соты (барьер). */
+	public static final Identifier HEX = tex("fx_hex");
 
 	private MagicRender() {}
 
@@ -64,6 +101,24 @@ public final class MagicRender {
 	public static RenderType glow(Identifier texture) {
 		return GLOW_TYPES.computeIfAbsent(texture, t -> RenderType.create("suchki_glow",
 				RenderSetup.builder(GLOW_GEOMETRY).withTexture("Sampler0", t).sortOnUpload().createRenderSetup()));
+	}
+
+	/**
+	 * Свечение без сортировки и со сглаженной текстурой (линейная выборка; {@code repeat} — текстура повторяется).
+	 * Для сложения порядок не важен, а тысячи штрихов сортировать незачем.
+	 */
+	public static RenderType additive(Identifier texture, boolean repeat) {
+		return ADD_TYPES.computeIfAbsent(texture, t -> RenderType.create("suchki_additive",
+				RenderSetup.builder(GLOW_GEOMETRY).withTexture("Sampler0", t, () -> repeat
+						? RenderSystem.getSamplerCache().getRepeat(FilterMode.LINEAR)
+						: RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR)).createRenderSetup()));
+	}
+
+	/** Полупрозрачная тёмная подложка/тело (обычное смешивание). */
+	public static RenderType shade(Identifier texture) {
+		return SHADE_TYPES.computeIfAbsent(texture, t -> RenderType.create("suchki_shade",
+				RenderSetup.builder(SHADE_GEOMETRY).withTexture("Sampler0", t, () -> RenderSystem.getSamplerCache()
+						.getClampToEdge(FilterMode.LINEAR)).createRenderSetup()));
 	}
 
 	/** Вершина для {@link #GLOW_GEOMETRY}. Цвет ARGB. */
