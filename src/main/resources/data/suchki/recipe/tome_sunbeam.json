@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_light",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:sunflower",
+    "minecraft:amethyst_shard",
+    "minecraft:glowstone",
+    "minecraft:gold_ingot"
+  ],
+  "result": {
+    "id": "suchki:tome_light",
+    "count": 1,
+    "components": {
+      "suchki:spell": "sunbeam"
+    }
+  }
+}

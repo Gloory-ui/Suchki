@@ -570,13 +570,15 @@ public final class WindSpells {
 		MagicFx.shockwave(c.level, at, dir, 0.5F, 4.0F, MIST, 10);
 		MagicFx.soundFar(c.level, at, MagicSounds.LOOP_WIND, 24, 1.8F);
 		for (LivingEntity e : c.foesAround(at, 4.0)) if (e != t) Cast.knock(e, at, 0.6, 0.2);
-		Terrain.crater(c, hold, 1.5, 0.75, Terrain.Rim.NONE);
+		// Воронка — в земле под целью (центр чуть ниже ступней, иначе эллипсоид едва задевает пол).
+		Terrain.crater(c, hold.add(0, -0.4, 0), 1.5, 1.0, Terrain.Rim.NONE);
 		Zones.add(c, at, 1, GRIND_TICKS + 1, (z, age) -> {
 			if (!t.isAlive()) {
 				z.stop();
 				return;
 			}
-			if (!boss) {
+			// Держит только пока мелет: в последний тик зоны бросок не должен гаситься.
+			if (!boss && age < GRIND_TICKS) {
 				t.setDeltaMovement(Vec3.ZERO);
 				if (t.position().distanceToSqr(hold) > 0.04) t.teleportTo(hold.x, hold.y, hold.z);
 			}

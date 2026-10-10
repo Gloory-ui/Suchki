@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_lightning",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:lightning_rod",
+    "minecraft:lightning_rod",
+    "minecraft:glowstone_dust",
+    "minecraft:copper_block",
+    "minecraft:ghast_tear"
+  ],
+  "result": {
+    "id": "suchki:tome_lightning",
+    "count": 1,
+    "components": {
+      "suchki:spell": "lightning_strike"
+    }
+  }
+}

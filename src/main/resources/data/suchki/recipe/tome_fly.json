@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_wind",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:phantom_membrane",
+    "minecraft:phantom_membrane",
+    "minecraft:feather",
+    "minecraft:feather",
+    "minecraft:wind_charge",
+    "minecraft:gold_ingot"
+  ],
+  "result": {
+    "id": "suchki:tome_wind",
+    "count": 1,
+    "components": {
+      "suchki:spell": "fly"
+    }
+  }
+}

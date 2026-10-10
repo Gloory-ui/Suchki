@@ -287,6 +287,14 @@ public final class LightningSpells {
 		MagicFx.shockwave(c.level, at.add(0, 0.15, 0), SpellKit.UP, 0.2F, 1.5F + 2.5F * width, color, 8);
 	}
 
+	/**
+	 * Выжженная ямка от удара молнии в землю. Центр опущен в верхний блок земли: иначе маленькая воронка вокруг точки
+	 * на поверхности задевает только воздух над ней.
+	 */
+	static void scar(Cast c, Vec3 ground, double r) {
+		Terrain.crater(c, ground.add(0, -0.6, 0), r, 0.75, Terrain.Rim.FIRE);
+	}
+
 	/** Поворот направления {@code from} к {@code to} не больше чем на {@code max} радиан. */
 	static Vec3 turn(Vec3 from, Vec3 to, double max) {
 		Vec3 a = from.normalize();
@@ -513,7 +521,7 @@ public final class LightningSpells {
 			paralyze(c, e, 20);
 			hit.add(e.getUUID());
 		}
-		Terrain.crater(c, ground, 1.2, 0.75, Terrain.Rim.FIRE);
+		scar(c, ground, 1.2);
 		glassify(c, ground, 2.2);
 		// Разветвления: ещё двум врагам рядом.
 		Zones.later(c, 3, () -> {
@@ -945,7 +953,7 @@ public final class LightningSpells {
 			c.hurt(e, wet(e) ? dmg * 1.3F : dmg, MagicDamage.SHOCK);
 			paralyze(c, e, 10);
 		}
-		Terrain.crater(c, at, 1.0, 0.75, Terrain.Rim.FIRE);
+		scar(c, at, 1.0);
 	}
 
 	private static void indraSpear(Cast c, Vec3 ground, Vec3 sky) {
@@ -989,7 +997,7 @@ public final class LightningSpells {
 				for (LivingEntity e : c.foesAround(at, 3.0)) {
 					if (feet(e, at) <= 2.0) c.hurt(e, c.amount(10.0F), MagicDamage.SHOCK);
 				}
-				Terrain.crater(c, at, 1.0, 0.75, Terrain.Rim.FIRE);
+				scar(c, at, 1.0);
 				MagicFx.sound(c.level, at, MagicSounds.THUNDER, 4.0F, 0.9F + 0.03F * n);
 			});
 		}

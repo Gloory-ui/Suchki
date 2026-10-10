@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_lightning",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:lightning_rod",
+    "minecraft:redstone",
+    "minecraft:string",
+    "minecraft:copper_ingot"
+  ],
+  "result": {
+    "id": "suchki:tome_lightning",
+    "count": 1,
+    "components": {
+      "suchki:spell": "paralyze"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_wind",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:breeze_rod",
+    "minecraft:breeze_rod",
+    "minecraft:wind_charge",
+    "minecraft:wind_charge",
+    "minecraft:phantom_membrane",
+    "minecraft:diamond"
+  ],
+  "result": {
+    "id": "suchki:tome_wind",
+    "count": 1,
+    "components": {
+      "suchki:spell": "howling_cyclone"
+    }
+  }
+}
