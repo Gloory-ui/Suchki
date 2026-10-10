@@ -30,6 +30,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -135,7 +136,8 @@ final class SpellTestKit {
 		int n = 0;
 		for (BlockPos p : BlockPos.betweenClosed(c.offset(-r, -r, -r), c.offset(r, r, r))) {
 			BlockState s = level.getBlockState(p);
-			if (!s.isAir() && s.getFluidState().isEmpty()) n++;
+			// Огонь на краях воронок — не блок: иначе пламя на выжженной земле «добавляет» блоков.
+			if (!s.isAir() && s.getFluidState().isEmpty() && !(s.getBlock() instanceof BaseFireBlock)) n++;
 		}
 		return n;
 	}

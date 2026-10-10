@@ -88,6 +88,8 @@ public final class FireSpells {
 	// Солнечное колесо: радиус, путь (тиков = блоков), радиус задевания.
 	private static final double WHEEL_R = 3.0;
 	private static final int WHEEL_RANGE = 48;
+	// Колесо прожигает только мягкое (земля, камень, дерево — твёрдость до 3); руды и глубинный сланец не трогает.
+	private static final float WHEEL_HARDNESS = 3.0F;
 	private static final double WHEEL_HIT = 3.2;
 	private static final int BLOCKED = Integer.MIN_VALUE;
 	// Гелиогенезис: высота солнца и этапы (рождение, висит, падает).
@@ -543,7 +545,7 @@ public final class FireSpells {
 				// Стена: при разрешённом разрушении колесо прожигает в ней проход, иначе взрывается о неё.
 				// Проход прожигается от земли до середины колеса; несокрушимая стена — сразу взрыв.
 				Vec3 low = ctr.subtract(0, WHEEL_R - 2.0, 0);
-				if (Terrain.griefing(c.level) && stuck[0]++ < 4 && Terrain.tunnel(c, low, low.add(dir.scale(3.0)), 2.0, Terrain.Rim.FIRE) > 0) {
+				if (Terrain.griefing(c.level) && stuck[0]++ < 4 && Terrain.tunnel(c, low, low.add(dir.scale(3.0)), 2.0, Terrain.Rim.FIRE, WHEEL_HARDNESS) > 0) {
 					return;
 				}
 				wheelEnd(c, ctr);
@@ -553,7 +555,7 @@ public final class FireSpells {
 			stuck[0] = 0;
 			feet[0] = ny;
 			Vec3 moved = new Vec3(next.x, ny + WHEEL_R, next.z);
-			Terrain.tunnel(c, ctr, moved, 1.5, Terrain.Rim.NONE);
+			Terrain.tunnel(c, ctr, moved, 1.5, Terrain.Rim.NONE, WHEEL_HARDNESS);
 			if (age % 2 == 0) Terrain.scorch(c, new Vec3(next.x, ny, next.z), 2.0, 0.35F);
 			z.center = moved;
 		});

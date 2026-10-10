@@ -316,7 +316,9 @@ public final class Magic {
 	}
 
 	public static float spellBonus(Player player) {
-		return (float) (1.0 + perk(player, Perk.SPELL_POWER));
+		// Печать бессмертия («Жизнь», V) добавляет +15% силы заклинаний, пока держится.
+		double seal = player.hasEffect(MagicEffects.UNDYING) ? 0.15 : 0.0;
+		return (float) (1.0 + perk(player, Perk.SPELL_POWER) + seal);
 	}
 
 	public static float costMultiplier(Player player, FocusItem focus) {

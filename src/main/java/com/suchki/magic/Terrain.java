@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalBlockTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -121,6 +122,14 @@ public final class Terrain {
 
 	/** Тоннель вдоль отрезка радиуса {@code radius}. */
 	public static int tunnel(Cast c, Vec3 from, Vec3 to, double radius, Rim rim) {
+		return tunnel(c, from, to, radius, rim, Float.MAX_VALUE);
+	}
+
+	/**
+	 * Тоннель только сквозь мягкое: блоки с твёрдостью не выше {@code maxHardness}, руды не трогаются
+	 * (катящееся колесо прожигает землю и камень, но не вырывает руду и не грызёт глубинный сланец).
+	 */
+	public static int tunnel(Cast c, Vec3 from, Vec3 to, double radius, Rim rim, float maxHardness) {
 		if (!griefing(c.level)) return 0;
 		double r = Math.min(6.0, radius * SuchkiConfig.INSTANCE.magicCraterScale);
 		float maxRes = resistanceFor(c);
@@ -143,6 +152,9 @@ public final class Terrain {
 						if (along < 0 || along > len) continue;
 						if (pc.subtract(dir.scale(along)).lengthSqr() > r * r) continue;
 						BlockState s = c.level.getBlockState(p);
+						if (maxHardness < Float.MAX_VALUE && (s.getDestroySpeed(c.level, p) > maxHardness || s.is(ConventionalBlockTags.ORES))) {
+							continue;
+						}
 						if (breakable(c.level, c.caster, p, s, maxRes)) list.add(p);
 					}
 				}

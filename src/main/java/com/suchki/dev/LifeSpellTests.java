@@ -241,8 +241,10 @@ final class LifeSpellTests {
 				"Смертельный удар оставил половину здоровья, печать израсходована (" + hp(v) + ")");
 		r.check(v.hasEffect(MobEffects.ABSORPTION) && v.hasEffect(MobEffects.REGENERATION), "Спасённому — Регенерация и Поглощение");
 		r.check(z.getDeltaMovement().horizontalDistance() > 0.3, "Золотой взрыв отбросил врага рядом");
+		float plain = Magic.spellBonus(p);
 		Magic.castNow(p, s, 1.0F, 2);
 		r.check(v.hasEffect(MagicEffects.UNDYING) && p.hasEffect(MagicEffects.UNDYING), "Мультикаст ×2: печать и на мага");
+		r.check(Math.abs(Magic.spellBonus(p) - plain - 0.15F) < 0.001F, "Под печатью сила заклинаний мага +15% (" + plain + " → " + Magic.spellBonus(p) + ")");
 		p.removeAllEffects();
 		clean();
 	}

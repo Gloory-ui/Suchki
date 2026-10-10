@@ -267,6 +267,20 @@ final class FireSpellTests {
 				run(60);
 			});
 			r.check(solid(level, wall, 3) == before2, "Солнечное Колесо: без разрушения стена цела (колесо взрывается о неё)");
+			tidy(level, at, p);
+
+			// Твёрдое колесо не прожигает: о стену из руды и глубинного сланца оно взрывается (малая воронка у стены),
+			// а враг за стеной, вне радиуса взрыва, остаётся цел.
+			for (BlockPos b : BlockPos.betweenClosed(at.offset(-3, 0, 12), at.offset(3, 5, 13))) {
+				level.setBlock(b, ((b.getX() + b.getY()) & 1) == 0 ? Blocks.IRON_ORE.defaultBlockState() : Blocks.DEEPSLATE.defaultBlockState(), 2);
+			}
+			Zombie behind = dummy(level, EntityType.ZOMBIE, at.offset(0, 0, 22));
+			griefing(true, () -> {
+				Magic.castNow(p, spell("sun_wheel"), 1.0F);
+				run(60);
+			});
+			r.check(lost(behind, behind.getMaxHealth()) == 0.0F, "Солнечное Колесо: стену из руды и глубинного сланца не прожигает — враг за ней цел (" + hp(behind) + ")");
+			behind.discard();
 			for (BlockPos b : BlockPos.betweenClosed(at.offset(-3, 0, 12), at.offset(3, 5, 13))) level.setBlock(b, Blocks.AIR.defaultBlockState(), 2);
 			tidy(level, at, p);
 
