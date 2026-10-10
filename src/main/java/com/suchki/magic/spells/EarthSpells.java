@@ -582,6 +582,9 @@ public final class EarthSpells {
 			}
 			int first = stuck.computeIfAbsent(e, k -> age);
 			boolean rooted = age - first < 60;
+			// Корни отпускают ровно через 3 с: сильное замедление снимаем, иначе слабое его не перекроет.
+			MobEffectInstance held = e.getEffect(MobEffects.SLOWNESS);
+			if (!rooted && held != null && held.getAmplifier() > 3 && held.getDuration() <= 25) e.removeEffect(MobEffects.SLOWNESS);
 			e.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 25, rooted ? 6 : 3, false, true), c.caster);
 			Vec3 v = e.getDeltaMovement();
 			double keep = rooted ? 0.0 : 0.5;
@@ -739,6 +742,7 @@ public final class EarthSpells {
 		g.snapTo(spot.x, spot.y, spot.z, c.caster.getYRot(), 0);
 		g.setYHeadRot(c.caster.getYRot());
 		Minions.summon(c, g, Math.round(1800 * c.power));
+		com.suchki.Suchki.LOGGER.info("DEBUG colossus at {} removed={} alive={} inLevel={} hp={}", spot, g.isRemoved(), g.isAlive(), c.level.getEntity(g.getUUID()) != null, g.getHealth());
 		OWNERS.put(g, c.caster);
 		float s = small ? 1.3F : 1.8F;
 		MagicFx.pillar(level, spot, 1.2F * s, 5.0F * s, OCHRE, SAND, 20);

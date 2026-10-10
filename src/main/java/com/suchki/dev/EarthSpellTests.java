@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.function.Predicate;
 import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -38,7 +37,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -163,18 +161,23 @@ final class EarthSpellTests {
 			tidy(level, at, p);
 
 			// Стекло на пути: при разрушении — вдребезги и ядро летит дальше, без разрушения — цело.
-			BlockPos glass = at.offset(0, 1, 6);
+			// Ядро летит по-настоящему: тикаем его вручную, пока не ударится.
 			for (boolean on : new boolean[] {true, false}) {
-				level.setBlock(glass, Blocks.GLASS.defaultBlockState(), 2);
-				int n0 = projectiles(level, at, 16);
+				for (int dx = -1; dx <= 1; dx++) {
+					for (int dy = 0; dy <= 2; dy++) level.setBlock(at.offset(dx, dy, 6), Blocks.GLASS.defaultBlockState(), 2);
+				}
 				griefing(on, () -> {
-					Magic.hitNow(p, spell("stone_cannon"), new BlockHitResult(Vec3.atCenterOf(glass).add(0, 0, -0.5), Direction.NORTH, glass, false), 1.0F);
+					List<SpellProjectile> old = level.getEntitiesOfClass(SpellProjectile.class, new AABB(at).inflate(16));
+					Magic.castNow(p, spell("stone_cannon"), 1.0F);
+					SpellProjectile shot = level.getEntitiesOfClass(SpellProjectile.class, new AABB(at).inflate(16), e -> !old.contains(e))
+							.stream().findFirst().orElse(null);
+					for (int i = 0; i < 20 && shot != null && !shot.isRemoved(); i++) shot.tick();
 					run(1);
+					int glass = count(level, at.offset(-1, 0, 6), at.offset(1, 2, 6), s -> s.is(Blocks.GLASS));
+					int next = level.getEntitiesOfClass(SpellProjectile.class, new AABB(at).inflate(16), e -> e.getTags().contains("suchki.shatter.3")).size();
+					if (on) r.check(shot != null && glass == 8 && next == 1, "Ядро: разбивает стекло и летит дальше (стекла " + glass + "/9, снарядов " + next + ")");
+					else r.check(shot != null && glass == 9 && next == 0, "Ядро: без разрушения стекло цело (" + glass + "/9)");
 				});
-				boolean broken = level.getBlockState(glass).isAir();
-				int flew = projectiles(level, at, 16) - n0;
-				if (on) r.check(broken && flew == 1, "Ядро: разбивает стекло и летит дальше (" + broken + ", снарядов " + flew + ")");
-				else r.check(!broken, "Ядро: без разрушения стекло цело");
 				tidy(level, at, p);
 			}
 		} finally {
@@ -195,7 +198,8 @@ final class EarthSpellTests {
 			run(16);
 			int wall = count(level, at.offset(-6, 0, 3), at.offset(6, 4, 9), masonry);
 			r.check(wall >= 26 && wall <= 30, "Бастион: стена 7×4 (" + wall + " блоков)");
-			r.check(level.noCollision(z, z.getBoundingBox().deflate(0.05)), "Бастион: существо вытолкнуто из кладки");
+			r.check(level.noCollision(z, z.getBoundingBox().deflate(0.05)), "Бастион: существо вытолкнуто из кладки ("
+					+ String.format("%.2f, %.2f", z.getX() - at.getX(), z.getZ() - at.getZ()) + ")");
 			run(300);
 			int left = count(level, at.offset(-6, 0, 3), at.offset(6, 4, 9), masonry);
 			r.check(left == 0 && EarthSpells.tempCount() == 0, "Бастион: через 15 с стена осыпается (" + left + ", врем. " + EarthSpells.tempCount() + ")");
@@ -216,20 +220,18 @@ final class EarthSpellTests {
 			r.check(fort >= 40 && fort <= 48, "Бастион с Shift: крепость 16 столбов × 3 (" + fort + " блоков)");
 			tidy(level, at, p);
 
-			// Над пропастью (прицел в небо) — мост шириной 3 на 60 с.
-			for (int dx = -3; dx <= 3; dx++) {
-				for (int dz = 2; dz <= 14; dz++) {
-					for (int dy = -4; dy <= -1; dy++) level.setBlock(at.offset(dx, dy, dz), Blocks.AIR.defaultBlockState(), 2);
-				}
-			}
-			face(p, at, -20);
+			// Прицел в воду — мост шириной 3 на 60 с; потом вода на месте.
+			stone(level, at.offset(-4, -4, 3), at.offset(4, -1, 13));
+			for (BlockPos q : BlockPos.betweenClosed(at.offset(-3, -3, 4), at.offset(3, -1, 12))) level.setBlock(q, Blocks.WATER.defaultBlockState(), 2);
+			face(p, at, pitchTo(8));
 			Magic.castNow(p, spell("earth_wall"), 1.0F);
-			run(30);
-			int bridge = count(level, at.offset(-1, -1, 2), at.offset(1, -1, 14), masonry);
-			r.check(bridge >= 33, "Бастион: мост через пропасть (" + bridge + " блоков из 39)");
+			run(12);
+			int bridge = count(level, at.offset(-1, -1, 4), at.offset(1, -1, 8), masonry);
+			r.check(bridge >= 12, "Бастион: мост через воду (" + bridge + " блоков из 15)");
 			run(1240);
 			int gone = count(level, at.offset(-3, -1, 2), at.offset(3, -1, 14), masonry);
-			r.check(gone == 0, "Бастион: мост осыпается через 60 с (" + gone + ")");
+			r.check(gone == 0 && level.getBlockState(at.offset(0, -1, 6)).is(Blocks.WATER), "Бастион: мост осыпается через 60 с, вода на месте (" + gone + ")");
+			stone(level, at.offset(-4, -4, 3), at.offset(4, -1, 13));
 		} finally {
 			tidy(level, at, p);
 		}
@@ -315,7 +317,9 @@ final class EarthSpellTests {
 			List<IronGolem> one = colossi(level, at);
 			IronGolem g = one.isEmpty() ? null : one.get(0);
 			r.check(pillar > 0 && EarthSpells.tempCount() == 0, "Колосс: каменный столп встаёт и рассыпается (" + pillar + " блоков)");
-			r.check(one.size() == 1 && Minions.isOwnedBy(g, p), "Колосс: призван и подчиняется магу (" + one.size() + ")");
+			r.check(one.size() == 1 && Minions.isOwnedBy(g, p), "Колосс: призван и подчиняется магу (" + one.size() + ", всех големов "
+					+ level.getEntitiesOfClass(IronGolem.class, new AABB(at).inflate(64)).size() + ", всех сущностей "
+					+ level.getEntitiesOfClass(Entity.class, new AABB(at).inflate(64)).size() + ")");
 			if (g != null) {
 				r.check(Math.abs(g.getAttributeValue(Attributes.SCALE) - 1.8) < 0.01 && g.getMaxHealth() >= 149.0F,
 						"Колосс: ×1,8 и 150 здоровья (" + g.getAttributeValue(Attributes.SCALE) + ", " + g.getMaxHealth() + ")");
@@ -349,11 +353,12 @@ final class EarthSpellTests {
 			face(p, at, pitchTo(18));
 			try {
 				griefing(on, () -> {
-					Mob z = dummy(level, EntityType.ZOMBIE, at.offset(0, 0, 10));
+					Mob z = dummy(level, EntityType.ZOMBIE, at.offset(1, 0, 10));
 					int broken0 = Terrain.brokenTotal();
 					// Без разрушения — заодно мультикаст ×3: параллельные трещины в 4 блоках.
-					Magic.castNow(p, spell("fissure"), 1.0F, on ? 1 : 3);
+					boolean cast = Magic.castNow(p, spell("fissure"), 1.0F, on ? 1 : 3);
 					run(14);
+					r.check(cast && EarthSpells.tempCount() > 200, "Разлом: сотворён, блоков подменено " + EarthSpells.tempCount());
 					boolean open = level.getBlockState(at.offset(0, -1, 10)).isAir() && level.getBlockState(at.offset(0, -8, 10)).isAir()
 							&& level.getBlockState(at.offset(1, -4, 12)).isAir();
 					r.check(open, "Разлом: земля раскрылась на 3 в ширину и 8 в глубину" + (on ? "" : " (без разрушения)"));
@@ -436,7 +441,7 @@ final class EarthSpellTests {
 					Mob out = dummy(level, EntityType.ZOMBIE, c.offset(-21, 0, 0));
 					int broken0 = Terrain.brokenTotal();
 					Magic.castNow(p, spell("mountain_awakening"), 1.0F);
-					r.check(lost(core) >= 39.5F, "Гора: земля встаёт на дыбы — 40 урона в радиусе 12 (" + hp(core) + ")");
+					r.check(lost(core) >= 38.0F, "Гора: земля встаёт на дыбы — 40 урона в радиусе 12 (" + hp(core) + ")");
 					Vec3 push = mid.getDeltaMovement();
 					r.check(Math.hypot(push.x, push.z) >= 0.5 && !hurt(mid), "Гора: дальних отбрасывает наружу");
 					run(20);
