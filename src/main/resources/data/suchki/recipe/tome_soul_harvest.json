@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_dark",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:wither_rose",
+    "minecraft:soul_soil",
+    "minecraft:echo_shard"
+  ],
+  "result": {
+    "id": "suchki:tome_dark",
+    "count": 1,
+    "components": {
+      "suchki:spell": "soul_harvest"
+    }
+  }
+}
