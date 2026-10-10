@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_earth",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:stone_bricks",
+    "minecraft:stone_bricks",
+    "minecraft:cobblestone",
+    "minecraft:clay_ball",
+    "minecraft:brick"
+  ],
+  "result": {
+    "id": "suchki:tome_earth",
+    "count": 1,
+    "components": {
+      "suchki:spell": "earth_wall"
+    }
+  }
+}

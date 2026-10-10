@@ -140,8 +140,8 @@ final class SpaceSpellTests {
 		if (spawn.newLevel() == level && dest.distanceTo(home) < 2) {
 			r.check(!ok, "Метка Возвращения: уже у точки возрождения — срыв");
 		} else {
-			// Точка появления мира каждый раз выбирается заново в радиусе появления (до 10 блоков).
-			r.check(ok && p.level() == spawn.newLevel() && p.position().distanceTo(home) > 2 && p.position().distanceTo(dest) < 24,
+			// Точка появления мира каждый раз выбирается заново в квадрате появления (±10 блоков).
+			r.check(ok && p.level() == spawn.newLevel() && p.position().distanceTo(home) > 2 && p.position().distanceTo(dest) < 30,
 					String.format("Метка Возвращения: без метки — к точке возрождения (до неё %.1f)", p.position().distanceTo(dest)));
 		}
 		face(p, o, 0, 0);
@@ -171,15 +171,17 @@ final class SpaceSpellTests {
 		run(2);
 		r.check(closed && after.getZ() < o.getZ() + 4, "Переход Дверей: повторный каст закрывает двери");
 
-		// «Охотничьи угодья»: дверь под врагом, вторая — в 25 блоках над ним.
+		// «Охотничьи угодья»: дверь под врагом, вторая — в 25 блоках над ним (прочие мишени убраны с линии прицела).
+		z.discard();
+		after.discard();
 		Zombie prey = dummy(level, EntityType.ZOMBIE, o.offset(-3, 0, 7));
 		face(p, o, 23, 5);
 		p.setShiftKeyDown(true);
 		boolean hunt = Magic.castNow(p, s, 1.0F);
 		p.setShiftKeyDown(false);
 		run(2);
-		r.check(hunt && prey.getY() > o.getY() + 12, String.format("Переход Дверей (Shift): пол ушёл из-под врага — он падает с высоты %.0f (%s, %s)",
-				prey.getY() - o.getY(), hunt, prey.position().subtract(Vec3.atBottomCenterOf(o))));
+		r.check(hunt && prey.getY() > o.getY() + 12, String.format("Переход Дверей (Shift): пол ушёл из-под врага — он падает с высоты %.0f",
+				prey.getY() - o.getY()));
 		run(70);
 	}
 

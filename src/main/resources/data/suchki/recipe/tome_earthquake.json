@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_earth",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:cracked_stone_bricks",
+    "minecraft:cracked_stone_bricks",
+    "minecraft:tuff",
+    "minecraft:tnt",
+    "minecraft:obsidian",
+    "minecraft:diamond"
+  ],
+  "result": {
+    "id": "suchki:tome_earth",
+    "count": 1,
+    "components": {
+      "suchki:spell": "earthquake"
+    }
+  }
+}
