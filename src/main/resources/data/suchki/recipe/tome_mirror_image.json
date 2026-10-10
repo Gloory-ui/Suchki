@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_mind",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:glass",
+    "minecraft:amethyst_shard",
+    "minecraft:ender_pearl",
+    "minecraft:phantom_membrane",
+    "minecraft:gold_ingot"
+  ],
+  "result": {
+    "id": "suchki:tome_mind",
+    "count": 1,
+    "components": {
+      "suchki:spell": "mirror_image"
+    }
+  }
+}

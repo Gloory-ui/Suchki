@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_summon",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:saddle",
+    "minecraft:golden_carrot",
+    "minecraft:phantom_membrane"
+  ],
+  "result": {
+    "id": "suchki:tome_summon",
+    "count": 1,
+    "components": {
+      "suchki:spell": "spectral_steed"
+    }
+  }
+}

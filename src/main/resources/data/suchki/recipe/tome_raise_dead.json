@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_summon",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:rotten_flesh",
+    "minecraft:bone",
+    "minecraft:soul_sand",
+    "minecraft:ink_sac"
+  ],
+  "result": {
+    "id": "suchki:tome_summon",
+    "count": 1,
+    "components": {
+      "suchki:spell": "raise_dead"
+    }
+  }
+}

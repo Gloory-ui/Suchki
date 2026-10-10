@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_mind",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:golden_helmet",
+    "minecraft:lead",
+    "minecraft:ender_eye",
+    "minecraft:amethyst_shard",
+    "minecraft:diamond"
+  ],
+  "result": {
+    "id": "suchki:tome_mind",
+    "count": 1,
+    "components": {
+      "suchki:spell": "dominate"
+    }
+  }
+}

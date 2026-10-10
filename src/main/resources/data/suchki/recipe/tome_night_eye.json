@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_mind",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:golden_carrot",
+    "minecraft:spider_eye"
+  ],
+  "result": {
+    "id": "suchki:tome_mind",
+    "count": 1,
+    "components": {
+      "suchki:spell": "night_eye"
+    }
+  }
+}

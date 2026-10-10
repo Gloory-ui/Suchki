@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_summon",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:iron_sword",
+    "minecraft:iron_sword",
+    "minecraft:amethyst_shard",
+    "minecraft:ender_pearl"
+  ],
+  "result": {
+    "id": "suchki:tome_summon",
+    "count": 1,
+    "components": {
+      "suchki:spell": "spirit_blades"
+    }
+  }
+}

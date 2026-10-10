@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_summon",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:wither_skeleton_skull",
+    "minecraft:netherite_scrap",
+    "minecraft:shield",
+    "minecraft:soul_soil"
+  ],
+  "result": {
+    "id": "suchki:tome_summon",
+    "count": 1,
+    "components": {
+      "suchki:spell": "death_knight"
+    }
+  }
+}
