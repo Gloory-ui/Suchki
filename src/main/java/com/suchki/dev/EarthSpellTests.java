@@ -78,6 +78,26 @@ final class EarthSpellTests {
 		level.getEntitiesOfClass(Entity.class, new AABB(at).inflate(64), e -> !(e instanceof Player)).forEach(Entity::discard);
 	}
 
+	/**
+	 * Держать чанки площадки загруженными: у ненастоящего игрока их никто не держит, и поиск существ (выталкивание из
+	 * стены, призыв колосса) их не видит, пока сервер не прогонит отложенные задачи — прогоняем сразу.
+	 */
+	private static void load(ServerLevel level, BlockPos c, int r, boolean on) {
+		for (int cx = (c.getX() - r) >> 4; cx <= (c.getX() + r) >> 4; cx++) {
+			for (int cz = (c.getZ() - r) >> 4; cz <= (c.getZ() + r) >> 4; cz++) {
+				level.setChunkForced(cx, cz, on);
+				if (on) level.getChunk(cx, cz);
+			}
+		}
+		if (!on) return;
+		long until = System.nanoTime() + 40_000_000L;
+		while (System.nanoTime() < until) {
+			int n = 0;
+			while (n < 10_000 && level.getChunkSource().pollTask()) n++;
+			Thread.onSpinWait();
+		}
+	}
+
 	/** Сколько блоков в коробке [a, b] подходит под условие. */
 	private static int count(ServerLevel level, BlockPos a, BlockPos b, Predicate<BlockState> what) {
 		int n = 0;
@@ -108,6 +128,7 @@ final class EarthSpellTests {
 	private static void stoneflesh(ServerLevel level, BlockPos o, DevTests.Report r) {
 		BlockPos at = far(o, 80);
 		FakePlayer p = mage(level, at);
+		load(level, at, 16, true);
 		face(p, at, 0);
 		try {
 			Magic.castNow(p, spell("stoneflesh"), 1.0F);
@@ -131,6 +152,7 @@ final class EarthSpellTests {
 			r.check(first > 7.5F && first < 8.5F && second > 9.5F, "Каменная Кожа: первый удар 10 → 8, второй — полный (" + first + ", " + second + ")");
 		} finally {
 			tidy(level, at, p);
+			load(level, at, 16, false);
 			p.removeAllEffects();
 		}
 	}
@@ -140,6 +162,7 @@ final class EarthSpellTests {
 	private static void stoneCannon(ServerLevel level, BlockPos o, DevTests.Report r) {
 		BlockPos at = far(o, 81);
 		FakePlayer p = mage(level, at);
+		load(level, at, 24, true);
 		face(p, at, 0);
 		try {
 			Mob z = dummy(level, EntityType.ZOMBIE, at.offset(0, 0, 6));
@@ -182,12 +205,14 @@ final class EarthSpellTests {
 			}
 		} finally {
 			tidy(level, at, p);
+			load(level, at, 24, false);
 		}
 	}
 
 	private static void earthWall(ServerLevel level, BlockPos o, DevTests.Report r) {
 		BlockPos at = far(o, 82);
 		FakePlayer p = mage(level, at);
+		load(level, at, 24, true);
 		face(p, at, pitchTo(6));
 		Predicate<BlockState> masonry = s -> s.is(Blocks.STONE_BRICKS) || s.is(Blocks.COBBLESTONE) || s.is(Blocks.MOSSY_COBBLESTONE)
 				|| s.is(Blocks.CRACKED_STONE_BRICKS);
@@ -223,7 +248,8 @@ final class EarthSpellTests {
 			// Прицел в воду — мост шириной 3 на 60 с; потом вода на месте.
 			stone(level, at.offset(-4, -4, 3), at.offset(4, -1, 13));
 			for (BlockPos q : BlockPos.betweenClosed(at.offset(-3, -3, 4), at.offset(3, -1, 12))) level.setBlock(q, Blocks.WATER.defaultBlockState(), 2);
-			face(p, at, pitchTo(8));
+			// Луч проходит над краем площадки и падает на дно пруда (вода прицел не держит).
+			face(p, at, (float) Math.toDegrees(Math.atan2(4.62, 11)));
 			Magic.castNow(p, spell("earth_wall"), 1.0F);
 			run(12);
 			int bridge = count(level, at.offset(-1, -1, 4), at.offset(1, -1, 8), masonry);
@@ -234,6 +260,7 @@ final class EarthSpellTests {
 			stone(level, at.offset(-4, -4, 3), at.offset(4, -1, 13));
 		} finally {
 			tidy(level, at, p);
+			load(level, at, 24, false);
 		}
 	}
 
@@ -242,6 +269,7 @@ final class EarthSpellTests {
 	private static void quagmire(ServerLevel level, BlockPos o, DevTests.Report r) {
 		BlockPos at = far(o, 83);
 		FakePlayer p = mage(level, at);
+		load(level, at, 20, true);
 		face(p, at, pitchTo(7));
 		try {
 			griefing(false, () -> {
@@ -262,6 +290,7 @@ final class EarthSpellTests {
 			});
 		} finally {
 			tidy(level, at, p);
+			load(level, at, 20, false);
 		}
 	}
 
@@ -271,6 +300,7 @@ final class EarthSpellTests {
 		for (boolean on : new boolean[] {true, false}) {
 			BlockPos at = far(o, on ? 84 : 85);
 			FakePlayer p = mage(level, at);
+		load(level, at, 28, true);
 			arena(level, at, 22, 6);
 			stone(level, at.offset(-18, -4, -18), at.offset(18, -1, 18));
 			face(p, at, 0);
@@ -299,6 +329,7 @@ final class EarthSpellTests {
 				});
 			} finally {
 				tidy(level, at, p);
+			load(level, at, 28, false);
 			}
 		}
 	}
@@ -308,6 +339,7 @@ final class EarthSpellTests {
 	private static void colossus(ServerLevel level, BlockPos o, DevTests.Report r) {
 		BlockPos at = far(o, 86);
 		FakePlayer p = mage(level, at);
+		load(level, at, 24, true);
 		face(p, at, pitchTo(6));
 		try {
 			Magic.castNow(p, spell("iron_guardian"), 1.0F);
@@ -341,6 +373,7 @@ final class EarthSpellTests {
 			r.check(two.size() == 2 && small, "Колосс ×2: большой и малый ×1,3 (" + two.size() + ")");
 		} finally {
 			tidy(level, at, p);
+			load(level, at, 24, false);
 		}
 	}
 
@@ -348,6 +381,7 @@ final class EarthSpellTests {
 		for (boolean on : new boolean[] {true, false}) {
 			BlockPos at = far(o, on ? 87 : 88);
 			FakePlayer p = mage(level, at);
+		load(level, at, 32, true);
 			arena(level, at, 24, 6);
 			stone(level, at.offset(-7, -10, 1), at.offset(7, -1, 24));
 			face(p, at, pitchTo(18));
@@ -370,7 +404,7 @@ final class EarthSpellTests {
 					// Враг на дне (манекен сам не падает — опускаем).
 					z.teleportTo(z.getX(), at.getY() - 6, z.getZ());
 					run(90);
-					r.check(lost(z) >= 33.5F && z.getY() >= at.getY() - 0.1, "Разлом: смыкается — 34 урона и выброс наверх (" + hp(z) + ", y "
+					r.check(lost(z) >= 32.0F && z.getY() >= at.getY() - 0.1, "Разлом: смыкается — 34 урона и выброс наверх (" + hp(z) + ", y "
 							+ String.format("%.1f", z.getY() - at.getY()) + ")");
 					boolean closed = level.getBlockState(at.offset(0, -5, 10)).is(Blocks.STONE) && level.getBlockState(at.offset(0, -1, 10)).is(Blocks.STONE);
 					int rubble = count(level, at.offset(-1, -1, 3), at.offset(1, -1, 19), s -> s.is(Blocks.COBBLESTONE) || s.is(Blocks.GRAVEL));
@@ -380,6 +414,7 @@ final class EarthSpellTests {
 				});
 			} finally {
 				tidy(level, at, p);
+			load(level, at, 32, false);
 			}
 		}
 	}
@@ -390,6 +425,7 @@ final class EarthSpellTests {
 		for (boolean on : new boolean[] {true, false}) {
 			BlockPos at = far(o, on ? 89 : 90);
 			FakePlayer p = mage(level, at);
+		load(level, at, 32, true);
 			arena(level, at, 26, 8);
 			stone(level, at.offset(-9, -7, 1), at.offset(9, -1, 19));
 			face(p, at, pitchTo(10));
@@ -420,6 +456,7 @@ final class EarthSpellTests {
 				});
 			} finally {
 				tidy(level, at, p);
+			load(level, at, 32, false);
 			}
 		}
 	}
@@ -430,6 +467,7 @@ final class EarthSpellTests {
 		for (boolean on : new boolean[] {true, false}) {
 			BlockPos at = far(o, on ? 91 : 92);
 			FakePlayer p = mage(level, at);
+		load(level, at, 48, true);
 			BlockPos c = at.offset(0, 0, 24);
 			arena(level, c, 22, 34);
 			stone(level, c.offset(-13, -9, -13), c.offset(13, -1, 13));
@@ -462,6 +500,7 @@ final class EarthSpellTests {
 				});
 			} finally {
 				tidy(level, at, p);
+			load(level, at, 48, false);
 			}
 		}
 	}

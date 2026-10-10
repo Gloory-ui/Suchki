@@ -475,7 +475,8 @@ public final class EarthSpells {
 		double len = Mth.clamp(d.length(), 4.0, 48.0);
 		Vec3 dir = d.lengthSqr() < 0.01 ? flat : d.normalize();
 		Vec3 side = new Vec3(-dir.z, 0, dir.x);
-		int y = Mth.floor(start.y - 0.01) - 1;
+		// Вровень с блоком под ногами мага.
+		int y = Mth.floor(start.y - 0.01);
 		int steps = Mth.ceil(len);
 		Batch b = new Batch(level);
 		RandomSource rnd = level.random;
@@ -742,7 +743,6 @@ public final class EarthSpells {
 		g.snapTo(spot.x, spot.y, spot.z, c.caster.getYRot(), 0);
 		g.setYHeadRot(c.caster.getYRot());
 		Minions.summon(c, g, Math.round(1800 * c.power));
-		com.suchki.Suchki.LOGGER.info("DEBUG colossus at {} removed={} alive={} inLevel={} hp={}", spot, g.isRemoved(), g.isAlive(), c.level.getEntity(g.getUUID()) != null, g.getHealth());
 		OWNERS.put(g, c.caster);
 		float s = small ? 1.3F : 1.8F;
 		MagicFx.pillar(level, spot, 1.2F * s, 5.0F * s, OCHRE, SAND, 20);
