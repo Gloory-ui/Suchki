@@ -753,8 +753,9 @@ public final class DarkSpells {
 	 */
 	private static boolean moonfang(Cast c) {
 		SpellKit.release(c);
-		Vec3 dir = flat(c.copy > 0 ? c.direction() : c.look());
 		boolean vertical = c.copies == 2 && c.copy == 1;
+		// Второй серп креста летит тем же путём, что и первый, — иначе они не пересекутся.
+		Vec3 dir = flat(c.copy > 0 && !vertical ? c.direction() : c.look());
 		if (c.copies >= 3 && c.copy > 0) dir = rotY(flat(c.look()), (c.copy % 2 == 1 ? 1 : -1) * 15.0 * ((c.copy + 1) / 2));
 		Vec3 d = dir;
 		Vec3 start = new Vec3(c.hand().x, c.caster.getY() + 1.6, c.hand().z).add(d.scale(1.0));

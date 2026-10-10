@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_water",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:blue_ice",
+    "minecraft:blue_ice",
+    "minecraft:prismarine_crystals",
+    "minecraft:diamond"
+  ],
+  "result": {
+    "id": "suchki:tome_water",
+    "count": 1,
+    "components": {
+      "suchki:spell": "glacier_ridge"
+    }
+  }
+}

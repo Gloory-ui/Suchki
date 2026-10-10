@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_life",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:bone_meal",
+    "minecraft:poppy",
+    "minecraft:dandelion"
+  ],
+  "result": {
+    "id": "suchki:tome_life",
+    "count": 1,
+    "components": {
+      "suchki:spell": "flower_field"
+    }
+  }
+}

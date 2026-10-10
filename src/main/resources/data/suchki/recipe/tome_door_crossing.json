@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_space",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:oak_door",
+    "minecraft:ender_eye",
+    "minecraft:ender_eye",
+    "minecraft:obsidian",
+    "minecraft:amethyst_shard"
+  ],
+  "result": {
+    "id": "suchki:tome_space",
+    "count": 1,
+    "components": {
+      "suchki:spell": "door_crossing"
+    }
+  }
+}

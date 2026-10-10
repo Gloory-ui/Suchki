@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_water",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:ice",
+    "minecraft:snowball",
+    "minecraft:snowball"
+  ],
+  "result": {
+    "id": "suchki:tome_water",
+    "count": 1,
+    "components": {
+      "suchki:spell": "ice_shard"
+    }
+  }
+}

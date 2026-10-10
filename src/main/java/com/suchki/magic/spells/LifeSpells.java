@@ -241,11 +241,6 @@ public final class LifeSpells {
 			watch = new Patient(patient.getUUID(), t);
 			PALM.put(key, watch);
 		}
-		if (t % 10 != 0) return;
-		if (patient.getHealth() < patient.getMaxHealth()) {
-			c.heal(patient, c.amount(patient == c.caster ? 1.0F : 1.2F));
-			if (t % 20 == 0) MagicFx.burst(c.level, patient.getEyePosition().add(0, 0.4, 0), ParticleTypes.HEART, 1, 0.25, 0);
-		}
 		// Три секунды на одном пациенте — один дебафф вытянут.
 		if (t - watch.since >= 60) {
 			watch.since = t;
@@ -256,6 +251,9 @@ public final class LifeSpells {
 				MagicFx.sound(c.level, at, SoundEvents.AMETHYST_BLOCK_CHIME, 1.0F, 1.5F);
 			}
 		}
+		if (t % 10 != 0 || patient.getHealth() >= patient.getMaxHealth()) return;
+		c.heal(patient, c.amount(patient == c.caster ? 1.0F : 1.2F));
+		if (t % 20 == 0) MagicFx.burst(c.level, patient.getEyePosition().add(0, 0.4, 0), ParticleTypes.HEART, 1, 0.25, 0);
 	}
 
 	/** Зелёные искры спиралью текут из ладони в пациента; пациент чуть светится. */

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_life",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:glistering_melon_slice",
+    "minecraft:sweet_berries"
+  ],
+  "result": {
+    "id": "suchki:tome_life",
+    "count": 1,
+    "components": {
+      "suchki:spell": "healing"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_space",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:ender_pearl",
+    "minecraft:chorus_fruit",
+    "minecraft:amethyst_shard"
+  ],
+  "result": {
+    "id": "suchki:tome_space",
+    "count": 1,
+    "components": {
+      "suchki:spell": "blink"
+    }
+  }
+}

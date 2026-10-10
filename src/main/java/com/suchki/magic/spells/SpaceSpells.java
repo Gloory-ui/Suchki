@@ -374,8 +374,8 @@ public final class SpaceSpells {
 	// Метка Возвращения (recall)
 	// =====================================================================================================
 
-	/** Переносная метка (ставится с Shift): одна на мага, хранится в нём самом. */
-	private static final AttachmentType<GlobalPos> MARK = AttachmentRegistry.<GlobalPos>builder()
+	/** Переносная метка (ставится с Shift): одна на мага, хранится в нём самом. Открыта для самопроверки. */
+	public static final AttachmentType<GlobalPos> MARK = AttachmentRegistry.<GlobalPos>builder()
 			.persistent(GlobalPos.CODEC)
 			.copyOnDeath()
 			.buildAndRegister(Identifier.fromNamespaceAndPath(Suchki.MOD_ID, "recall_mark"));

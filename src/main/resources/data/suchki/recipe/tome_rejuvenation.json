@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_life",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:golden_apple",
+    "minecraft:moss_block",
+    "minecraft:glistering_melon_slice",
+    "minecraft:emerald"
+  ],
+  "result": {
+    "id": "suchki:tome_life",
+    "count": 1,
+    "components": {
+      "suchki:spell": "rejuvenation"
+    }
+  }
+}

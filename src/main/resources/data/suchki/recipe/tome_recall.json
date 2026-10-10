@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_space",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:compass",
+    "minecraft:ender_eye",
+    "minecraft:white_bed",
+    "minecraft:chorus_fruit"
+  ],
+  "result": {
+    "id": "suchki:tome_space",
+    "count": 1,
+    "components": {
+      "suchki:spell": "recall"
+    }
+  }
+}

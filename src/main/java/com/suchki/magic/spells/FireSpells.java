@@ -306,7 +306,7 @@ public final class FireSpells {
 		List<LivingEntity> marks = marks(c);
 		// Копии мультикаста — новые волны по тем же меткам, каждая слабее и на 6 тиков позже.
 		float k = c.copy == 0 ? 1.0F : 0.6F;
-		int delay = MARK_DELAY + 2 * c.copy;
+		int delay = MARK_DELAY + 6 * c.copy;
 		Vec3 hand = c.hand();
 		if (marks.isEmpty()) {
 			Vec3 at = c.aimPoint();
@@ -541,8 +541,9 @@ public final class FireSpells {
 			int ny = groundAt(c.level, next, feet[0]);
 			if (ny == BLOCKED) {
 				// Стена: при разрешённом разрушении колесо прожигает в ней проход, иначе взрывается о неё.
-				if (Terrain.griefing(c.level) && stuck[0]++ < 4) {
-					Terrain.tunnel(c, ctr, ctr.add(dir.scale(3.0)), 1.5, Terrain.Rim.FIRE);
+				// Проход прожигается от земли до середины колеса; несокрушимая стена — сразу взрыв.
+				Vec3 low = ctr.subtract(0, WHEEL_R - 2.0, 0);
+				if (Terrain.griefing(c.level) && stuck[0]++ < 4 && Terrain.tunnel(c, low, low.add(dir.scale(3.0)), 2.0, Terrain.Rim.FIRE) > 0) {
 					return;
 				}
 				wheelEnd(c, ctr);

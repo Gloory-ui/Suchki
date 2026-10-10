@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_fire",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:blaze_powder",
+    "minecraft:coal",
+    "minecraft:coal"
+  ],
+  "result": {
+    "id": "suchki:tome_fire",
+    "count": 1,
+    "components": {
+      "suchki:spell": "flames"
+    }
+  }
+}

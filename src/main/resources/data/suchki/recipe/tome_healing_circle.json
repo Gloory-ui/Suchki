@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "suchki_tome_life",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:ghast_tear",
+    "minecraft:golden_apple",
+    "minecraft:glow_berries",
+    "minecraft:diamond",
+    "minecraft:flowering_azalea"
+  ],
+  "result": {
+    "id": "suchki:tome_life",
+    "count": 1,
+    "components": {
+      "suchki:spell": "healing_circle"
+    }
+  }
+}
