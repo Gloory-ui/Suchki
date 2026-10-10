@@ -16,9 +16,11 @@ import com.suchki.skill.Skills;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -30,6 +32,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -62,6 +65,7 @@ final class SpellTestKit {
 	 * Мультикаст — 1, перезарядки сняты.
 	 */
 	static FakePlayer mage(ServerLevel level, BlockPos o) {
+		hold(level, o, 40);
 		arena(level, o);
 		FakePlayer p = DevTests.player(level, o, new ItemStack(MagicItems.PRIMORDIAL_STAFF), 0);
 		p.setAttached(Skills.DATA, new PlayerSkills(Optional.of(Magic.ROLE), Map.of(Magic.ROLE, new PlayerSkills.Progress(50, 0, List.of())), 0L));
@@ -72,6 +76,38 @@ final class SpellTestKit {
 		Magic.resetCooldowns(p);
 		p.setAttached(Magic.MANA, Magic.maxMana(p));
 		return p;
+	}
+
+	/** Чанки, удерживаемые проверками; отпускаются после каждой проверки ({@link #releaseChunks}). */
+	private static final Set<Long> HELD = new HashSet<>();
+
+	/**
+	 * Загрузить и удержать чанки в радиусе {@code r} вокруг {@code c}. У ненастоящего игрока чанки вокруг никто не держит,
+	 * и поиск существ их не видит, пока сервер не прогонит отложенные задачи, — прогоняем их сразу.
+	 */
+	static void hold(ServerLevel level, BlockPos c, int r) {
+		boolean added = false;
+		for (int cx = (c.getX() - r) >> 4; cx <= (c.getX() + r) >> 4; cx++) {
+			for (int cz = (c.getZ() - r) >> 4; cz <= (c.getZ() + r) >> 4; cz++) {
+				if (HELD.add(ChunkPos.asLong(cx, cz))) {
+					level.setChunkForced(cx, cz, true);
+					level.getChunk(cx, cz);
+					added = true;
+				}
+			}
+		}
+		if (!added) return;
+		long until = System.nanoTime() + 40_000_000L;
+		while (System.nanoTime() < until) {
+			int n = 0;
+			while (n < 10_000 && level.getChunkSource().pollTask()) n++;
+			Thread.onSpinWait();
+		}
+	}
+
+	static void releaseChunks(ServerLevel level) {
+		for (long c : HELD) level.setChunkForced(ChunkPos.getX(c), ChunkPos.getZ(c), false);
+		HELD.clear();
 	}
 
 	/** Поставить мага в точку и повернуть взгляд (голова тоже — прицел идёт по ней). */
@@ -160,7 +196,12 @@ final class SpellTestKit {
 		}
 	}
 
-	/** Отдельное место для разрушительной проверки номер {@code i}, далеко от общей площадки. */
+	/**
+	 * Отдельное место для разрушительной проверки номер {@code i}, далеко от общей площадки. Все проверки идут в одном
+	 * мире, поэтому у каждой стихии свои номера: общие проверки 0–9, жизнь 10–19, тьма 20–29, пространство 30–39,
+	 * огонь 40–59, вода 60–79, земля 80–99, ветер 100–129, разум 140–159, призыв 160–179, слияние 180–219,
+	 * молния 220–239, свет 240–259, «каждое заклинание» 300 и дальше.
+	 */
 	static BlockPos far(BlockPos o, int i) {
 		return o.offset(200 + 60 * (i % 8), 0, 200 + 60 * (i / 8));
 	}

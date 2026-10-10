@@ -101,7 +101,7 @@ final class LightSpellTests {
 	}
 
 	private static BlockPos spot(ServerLevel level, BlockPos o, int i) {
-		BlockPos c = far(o, 130 + i);
+		BlockPos c = far(o, 240 + i);
 		load(level, c, true);
 		FORCED.add(c);
 		return c;

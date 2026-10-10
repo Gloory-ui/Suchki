@@ -270,6 +270,10 @@ public final class DevTests {
 	}
 
 	private static void cleanup(ServerLevel level, BlockPos origin) {
+		// Магия: незавершённые зоны и временные блоки одной проверки не должны задевать следующую.
+		com.suchki.magic.Zones.clear();
+		com.suchki.magic.Terrain.restoreAll();
+		SpellTestKit.releaseChunks(level);
 		AABB area = new AABB(origin).inflate(48);
 		level.getEntitiesOfClass(Entity.class, area, e -> !(e instanceof net.minecraft.world.entity.player.Player)).forEach(Entity::discard);
 		Skills.testChanceOverride = -1;

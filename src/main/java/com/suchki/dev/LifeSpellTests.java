@@ -253,7 +253,7 @@ final class LifeSpellTests {
 
 	private static void deepForest(ServerLevel level, BlockPos o, DevTests.Report r) {
 		clean();
-		BlockPos f = far(o, 0);
+		BlockPos f = far(o, 10);
 		load(level, f, 24, true);
 		FakePlayer p = mage(level, f);
 		Spell s = spell("deep_forest_bloom");
@@ -287,7 +287,7 @@ final class LifeSpellTests {
 
 	private static void yggdrasil(ServerLevel level, BlockPos o, DevTests.Report r) {
 		clean();
-		BlockPos f = far(o, 1);
+		BlockPos f = far(o, 11);
 		load(level, f, 40, true);
 		FakePlayer p = mage(level, f);
 		Spell s = spell("yggdrasil_bloom");

@@ -57,7 +57,7 @@ final class LightningSpellTests {
 
 	/** Свои дальние площадки (100+), чтобы не пересекаться с другими стихиями. */
 	private static BlockPos far(BlockPos o, int i) {
-		return SpellTestKit.far(o, 100 + i);
+		return SpellTestKit.far(o, 220 + i);
 	}
 
 	private static Zombie zombie(ServerLevel level, BlockPos at, int dx, int dz) {
@@ -256,8 +256,8 @@ final class LightningSpellTests {
 			Zombie near = zombie(level, at, 3, 10);
 			Zombie fork = zombie(level, at, 7, 10);
 			Zombie behind = zombie(level, at, 0, -8);
-			level.setBlock(at.offset(1, -1, 11), Blocks.SAND.defaultBlockState(), 2);
-			level.setBlock(at.offset(-1, -1, 9), Blocks.SAND.defaultBlockState(), 2);
+			// Песчаная площадка 3×3 под ударом: середину может выломать воронка, по краям песок сплавится в стекло.
+			for (BlockPos b : BlockPos.betweenClosed(at.offset(-1, -1, 9), at.offset(1, -1, 11))) level.setBlock(b, Blocks.SAND.defaultBlockState(), 2);
 			int broken = Terrain.brokenTotal();
 			SpellTestKit.griefing(grief, () -> {
 				r.check(Magic.castNow(p, s, 1.0F), "Круг над прицелом" + tag(grief));
@@ -269,12 +269,13 @@ final class LightningSpellTests {
 			r.check(lost(near) >= 8.0F && lost(near) < lost(a), "До 4 блоков — 9 урона (" + hp(near) + ")");
 			r.check(lost(fork) >= 6.0F && lost(fork) <= 10.0F, "Разветвление бьёт врага в 8 блоках на 7 (" + hp(fork) + ")");
 			r.check(lost(behind) == 0, "Далёкий враг не задет");
-			boolean glass = level.getBlockState(at.offset(1, -1, 11)).is(Blocks.GLASS) || level.getBlockState(at.offset(-1, -1, 9)).is(Blocks.GLASS);
+			boolean glass = false;
+			for (BlockPos b : BlockPos.betweenClosed(at.offset(-1, -1, 9), at.offset(1, -1, 11))) glass |= level.getBlockState(b).is(Blocks.GLASS);
 			if (grief) {
 				r.check(Terrain.brokenTotal() > broken, "Воронка от удара" + tag(true) + " (" + (Terrain.brokenTotal() - broken) + " блоков)");
 				r.check(glass, "Песок под молнией сплавился в стекло");
 			} else {
-				r.check(Terrain.brokenTotal() == broken && level.getBlockState(at.offset(0, -1, 10)).is(Blocks.STONE), "Без разрушения земля цела");
+				r.check(Terrain.brokenTotal() == broken && level.getBlockState(at.offset(0, -1, 10)).is(Blocks.SAND), "Без разрушения земля цела");
 				r.check(!glass, "Без разрушения песок остаётся песком");
 			}
 			done(level, at, 20);

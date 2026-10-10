@@ -327,7 +327,7 @@ final class MagicTests {
 		r.check(!aim.miss() && Math.abs(aim.point().z - wall.getZ()) < 1.5, "Прицел достаёт стену в 100 блоках (z=" + aim.point().z + ")");
 		// В игре чанки вокруг игрока загружены; у ненастоящего игрока — грузим чанк мишени сами.
 		BlockPos farPos = o.offset(0, 0, 90);
-		level.setChunkForced(farPos.getX() >> 4, farPos.getZ() >> 4, true);
+		SpellTestKit.hold(level, farPos, 0);
 		Zombie far = dummy(level, EntityType.ZOMBIE, farPos);
 		aim = Targeting.aim(level, p, Magic.MAX_RANGE);
 		r.check(aim.entity() == far, "Прицел ловит существо в 90 блоках");
@@ -467,7 +467,7 @@ final class MagicTests {
 		List<String> failed = new ArrayList<>();
 		int i = 0;
 		for (Spell s : Spells.all()) {
-			BlockPos at = SpellTestKit.far(o, 8 + i++);
+			BlockPos at = SpellTestKit.far(o, 300 + i++);
 			FakePlayer p = mage(level, at);
 			face(p, at, 10);
 			Zombie z = dummy(level, EntityType.ZOMBIE, at.offset(0, 0, 8));

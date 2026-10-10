@@ -45,6 +45,11 @@ public final class Zones {
 		public int age() {
 			return age;
 		}
+
+		/** Зона ещё действует: не снята и не истекла. */
+		public boolean alive() {
+			return !stopped && age < life;
+		}
 	}
 
 	private record Delayed(Cast cast, long due, Runnable action) {}
@@ -127,6 +132,7 @@ public final class Zones {
 
 	/** Для самопроверки: всё снять. */
 	public static void clear() {
+		for (Zone z : ZONES) z.stopped = true;
 		ZONES.clear();
 		DELAYED.clear();
 		skew = 0;

@@ -483,7 +483,7 @@ public final class SpaceSpells {
 		if (c.copy > 0) return true;
 		UUID id = c.caster.getUUID();
 		Gate open = GATES.remove(id);
-		if (open != null && open.zone != null && open.zone.age() < open.zone.life) {
+		if (open != null && open.zone != null && open.zone.alive()) {
 			// Повторный каст закрывает двери.
 			closeGate(c, open);
 			return true;

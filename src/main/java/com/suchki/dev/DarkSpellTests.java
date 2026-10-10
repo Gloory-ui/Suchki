@@ -330,7 +330,7 @@ final class DarkSpellTests {
 	private static void blackCoffin(ServerLevel level, BlockPos o, DevTests.Report r) {
 		Spell s = spell("black_coffin");
 		for (boolean grief : new boolean[] {true, false}) {
-			BlockPos at = SpellTestKit.far(o, grief ? 0 : 1);
+			BlockPos at = SpellTestKit.far(o, grief ? 20 : 21);
 			FakePlayer p = mage(level, at);
 			face(p, at, 0);
 			Zombie z = zombie(level, at, 0, 10);
@@ -356,7 +356,7 @@ final class DarkSpellTests {
 			done(level, at);
 		}
 
-		BlockPos at = SpellTestKit.far(o, 2);
+		BlockPos at = SpellTestKit.far(o, 22);
 		FakePlayer p = mage(level, at);
 		face(p, at, 0);
 		Zombie a = zombie(level, at, 0, 12);
@@ -374,7 +374,7 @@ final class DarkSpellTests {
 	private static void moonfang(ServerLevel level, BlockPos o, DevTests.Report r) {
 		Spell s = spell("black_moonfang");
 		for (boolean grief : new boolean[] {true, false}) {
-			BlockPos at = SpellTestKit.far(o, grief ? 3 : 4);
+			BlockPos at = SpellTestKit.far(o, grief ? 23 : 24);
 			FakePlayer p = mage(level, at);
 			arena(level, at.offset(0, 0, 26), 14, 8);
 			face(p, at, 0);
@@ -396,7 +396,7 @@ final class DarkSpellTests {
 			done(level, at);
 		}
 
-		BlockPos at = SpellTestKit.far(o, 5);
+		BlockPos at = SpellTestKit.far(o, 25);
 		FakePlayer p = mage(level, at);
 		face(p, at, 0);
 		Zombie z = zombie(level, at, 0, 12);
@@ -412,7 +412,7 @@ final class DarkSpellTests {
 
 	private static void shrine(ServerLevel level, BlockPos o, DevTests.Report r) {
 		Spell s = spell("malevolent_shrine");
-		BlockPos at = SpellTestKit.far(o, 6);
+		BlockPos at = SpellTestKit.far(o, 26);
 		FakePlayer p = mage(level, at);
 		face(p, at, 0);
 		List<Zombie> in = List.of(zombie(level, at, 5, 5), zombie(level, at, -10, 8), zombie(level, at, 0, 20));
@@ -435,7 +435,7 @@ final class DarkSpellTests {
 		r.check(!level.getBlockState(at.offset(2, 1, -4)).is(Blocks.BONE_BLOCK), "Святилище исчезло");
 		done(level, at);
 
-		BlockPos at2 = SpellTestKit.far(o, 7);
+		BlockPos at2 = SpellTestKit.far(o, 27);
 		FakePlayer p2 = mage(level, at2);
 		face(p2, at2, 0);
 		int broken2 = Terrain.brokenTotal();

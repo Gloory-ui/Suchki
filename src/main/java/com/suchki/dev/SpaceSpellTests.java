@@ -148,6 +148,8 @@ final class SpaceSpellTests {
 	}
 
 	private static void doors(ServerLevel level, BlockPos o, DevTests.Report r) {
+		// Своя площадка: на общей прицел может упереться в остатки прежних проверок, и вторая дверь встаёт не там.
+		o = far(o, 38);
 		FakePlayer p = mage(level, o);
 		face(p, o, 0, 10);
 		Spell s = spell("door_crossing");
@@ -209,7 +211,7 @@ final class SpaceSpellTests {
 
 		// Разрушение: ядро у каменной стены.
 		for (boolean on : new boolean[] {true, false}) {
-			BlockPos f = far(o, on ? 0 : 1);
+			BlockPos f = far(o, on ? 30 : 31);
 			FakePlayer q = mage(level, f);
 			face(q, f, 0, 0);
 			BlockPos wall = f.offset(0, 1, 8);
@@ -244,7 +246,7 @@ final class SpaceSpellTests {
 		griefing(false, () -> run(30));
 
 		for (boolean on : new boolean[] {true, false}) {
-			BlockPos f = far(o, on ? 2 : 3);
+			BlockPos f = far(o, on ? 32 : 33);
 			FakePlayer q = mage(level, f);
 			face(q, f, 0, 0);
 			BlockPos wall = f.offset(0, 1, 8);
@@ -339,7 +341,7 @@ final class SpaceSpellTests {
 		r.check(lost(off) < 0.01, "Рассечение Сущего: цель в 4 блоках сбоку не задета (" + hp(off) + ")");
 
 		for (boolean on : new boolean[] {true, false}) {
-			BlockPos f = far(o, on ? 4 : 5);
+			BlockPos f = far(o, on ? 34 : 35);
 			FakePlayer q = mage(level, f);
 			face(q, f, 0, 0);
 			BlockPos wall = f.offset(0, 1, 12);
@@ -360,7 +362,7 @@ final class SpaceSpellTests {
 	private static void planetary(ServerLevel level, BlockPos o, DevTests.Report r) {
 		Spell s = spell("planetary_devastation");
 		for (boolean on : new boolean[] {true, false}) {
-			BlockPos f = far(o, on ? 6 : 7);
+			BlockPos f = far(o, on ? 36 : 37);
 			FakePlayer p = mage(level, f);
 			face(p, f, 0, 20);
 			Vec3 ground = Vec3.atBottomCenterOf(f).add(0, 0, 1.62 / Math.tan(Math.toRadians(20)));

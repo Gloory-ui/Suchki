@@ -522,7 +522,8 @@ public final class LightningSpells {
 			hit.add(e.getUUID());
 		}
 		scar(c, ground, 1.2);
-		glassify(c, ground, 2.2);
+		// Стекло — после воронки: иначе очередь разрушения выламывает уже сплавленный песок.
+		Zones.later(c, 3, () -> glassify(c, ground, 2.2));
 		// Разветвления: ещё двум врагам рядом.
 		Zones.later(c, 3, () -> {
 			for (int i = 0; i < 2; i++) {
@@ -836,7 +837,8 @@ public final class LightningSpells {
 		}
 		Terrain.crater(c, ground, 4.0, 0.5, Terrain.Rim.FIRE);
 		Terrain.scorch(c, ground, 7.0, 0.12F);
-		glassify(c, ground, 5.0);
+		// Стекло — после воронки: иначе очередь разрушения выламывает уже сплавленный песок.
+		Zones.later(c, 3, () -> glassify(c, ground, 5.0));
 		// Остаточные разряды: 1 с ток бежит к трём ближайшим врагам.
 		Zones.add(c, ground, 12, QILIN_RESIDUAL, (z, age) -> {
 			if (age % 5 != 0) return;
@@ -986,7 +988,8 @@ public final class LightningSpells {
 		}
 		Terrain.crater(c, ground, 8.0, 0.65, Terrain.Rim.GLASS);
 		Terrain.scorch(c, ground, 12.0, 0.1F);
-		glassify(c, ground, 9.0);
+		// Стекло — после воронки: иначе очередь разрушения выламывает уже сплавленный песок.
+		Zones.later(c, 3, () -> glassify(c, ground, 9.0));
 		// Кольцо из двенадцати молний на 16 блоков, одна за другой.
 		for (int k = 0; k < 12; k++) {
 			int n = k;
