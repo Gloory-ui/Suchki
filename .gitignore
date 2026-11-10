@@ -1,4 +1,5 @@
 .gradle/
+.gradle-user-home*/
 build/
 out/
 run/
@@ -7,3 +8,5 @@ run/
 .vscode/
 bin/
 mods-для-теста/
+__pycache__/
+*.py[cod]

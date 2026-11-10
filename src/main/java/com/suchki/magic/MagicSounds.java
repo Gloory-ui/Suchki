@@ -8,8 +8,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 
 /**
- * Звуки магии. Сами звуки — подобранные и пересведённые ванильные (assets/suchki/sounds.json),
- * так их можно заменить ресурспаком, не трогая код.
+ * Звуки магии. Исходники детерминированно синтезируются {@code tools/gen_sounds.py}, а привязки в
+ * {@code assets/suchki/sounds.json} позволяют заменить их ресурспаком, не трогая код.
  */
 public final class MagicSounds {
 	/** Гул зарядки — свой у каждой школы (крутится, пока маг копит силу). */
@@ -18,6 +18,12 @@ public final class MagicSounds {
 	public static final SoundEvent READY = register("magic.ready");
 	public static final SoundEvent STAGE = register("magic.stage");
 	public static final SoundEvent PEAK = register("magic.peak");
+	/** Низкий и высокий дополнительные слои для старших кругов. */
+	public static final SoundEvent RESONANCE_LOW = register("magic.resonance.low");
+	public static final SoundEvent RESONANCE_HIGH = register("magic.resonance.high");
+	/** Суб-удар и хор кульминации, которые наслаиваются на собственный звук заклинания. */
+	public static final SoundEvent RELEASE_POWER = register("magic.release.power");
+	public static final SoundEvent RELEASE_MYTHIC = register("magic.release.mythic");
 	public static final SoundEvent FIZZLE = register("magic.fizzle");
 	public static final SoundEvent LEARN = register("magic.learn");
 

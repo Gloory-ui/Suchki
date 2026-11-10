@@ -15,6 +15,8 @@ import com.suchki.magic.MagicSounds;
 import com.suchki.magic.Spell;
 import com.suchki.magic.SpellProjectile;
 import com.suchki.magic.Zones;
+import com.suchki.magic.terrain.MagicTerrain;
+import com.suchki.magic.terrain.MagicTerrain.Trace;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.particles.ParticleTypes;
@@ -65,6 +67,13 @@ public final class DestructionSpells {
 					for (LivingEntity e : c.around(hand, 5.5, e -> c.canHit(e) && !c.isAlly(e) && Cast.inCone(e, hand, look, 5.5, 30))) {
 						c.hurt(e, c.amount(3.0F), MagicDamage.FIRE);
 						e.igniteForTicks(40);
+					}
+					if (t % 20 == 0) {
+						Vec3 feet = c.caster.position();
+						Vec3 flat = new Vec3(look.x, 0, look.z);
+						if (flat.lengthSqr() > 1.0E-4) {
+							MagicTerrain.trail(c, feet, feet.add(flat.normalize().scale(5.0)), 0.75 + 0.3 * c.power, Trace.SCORCH);
+						}
 					}
 				})
 				.register();
@@ -136,6 +145,11 @@ public final class DestructionSpells {
 					MagicFx.sound(c.level, feet, MagicSounds.CAST_FROST, 1.0F, 0.8F);
 					MagicFx.sound(c.level, feet, MagicSounds.IMPACT_FROST, 0.8F, 0.7F);
 					Magic.shake(c.level, feet, 0.6F, 8, 12);
+					for (int i = 0; i < 8; i++) {
+						double angle = Math.PI * 2.0 * i / 8.0;
+						Vec3 edge = feet.add(Math.cos(angle) * r, 0, Math.sin(angle) * r);
+						MagicTerrain.trail(c, feet, edge, Math.max(0.8, r * 0.16), Trace.FROST);
+					}
 					return true;
 				})
 				.register();
@@ -180,9 +194,10 @@ public final class DestructionSpells {
 				(c.level.random.nextDouble() - 0.5) * 2 * s);
 	}
 
-	/** Огненный взрыв без разрушения блоков: урон спадает к краю, поджог, отбрасывание, тряска. */
+	/** Огненный взрыв: урон спадает к краю, а серверно-настраиваемое ядро оставляет воронку и выжженную землю. */
 	static void explode(Cast c, HitResult r, double radius, float damage, float shake) {
 		Vec3 at = r instanceof EntityHitResult e ? Cast.center(e.getEntity()) : r.getLocation();
+		Vec3 terrainAt = r instanceof EntityHitResult e ? e.getEntity().position() : r.getLocation();
 		for (LivingEntity e : c.around(at, radius, e -> c.canHit(e) && !c.isAlly(e))) {
 			double dist = Cast.center(e).distanceTo(at);
 			float k = (float) (1.0 - 0.5 * Math.min(1.0, dist / radius));
@@ -197,6 +212,16 @@ public final class DestructionSpells {
 		MagicFx.one(c.level, at.add(0, 0.2, 0), MagicParticles.ring(0xFFB04A, (float) radius * 1.2F, 12), 0, 1, 0);
 		MagicFx.sound(c.level, at, MagicSounds.EXPLOSION, 1.4F, 0.9F + c.level.random.nextFloat() * 0.2F);
 		Magic.shake(c.level, at, shake, 14, radius * 8);
+		boolean meteor = "meteor_shower".equals(c.spell.id);
+		double craterRadius = meteor ? Math.min(4.2, radius * 0.9) : Math.min(2.8, radius * 0.62);
+		MagicTerrain.crater(c, terrainAt, craterRadius, meteor ? craterRadius * 0.75 : craterRadius * 0.55);
+		int spokes = meteor ? 8 : 5;
+		for (int i = 0; i < spokes; i++) {
+			double angle = Math.PI * 2.0 * i / spokes + c.level.random.nextDouble() * 0.18;
+			double length = radius * (0.65 + c.level.random.nextDouble() * 0.45);
+			Vec3 edge = terrainAt.add(Math.cos(angle) * length, 0, Math.sin(angle) * length);
+			MagicTerrain.trail(c, terrainAt, edge, meteor ? 1.4 : 0.9, Trace.SCORCH);
+		}
 	}
 
 	static void fireImpact(Cast c, Vec3 at, float size) {

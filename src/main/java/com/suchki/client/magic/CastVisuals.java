@@ -42,43 +42,36 @@ public final class CastVisuals {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player == null) return;
 		RandomSource rnd = level.random;
+		int particleBudget = MagicSpectacle.particleBudget();
 		for (AbstractClientPlayer p : level.players()) {
+			if (particleBudget <= 0) break;
 			if (p.distanceToSqr(mc.player) > 48 * 48) continue;
 			Pose pose = CastAnim.compute(p, 0);
 			if (pose == null || !pose.casting()) continue;
 			Spell spell = pose.spell;
 			int color = spell.school.color;
-			int light = spell.school.light;
-			Vec3 hand = CastAnim.handPos(p, pose, 0, firstPerson(p));
-			// Спираль искр, стягивающихся к руке: чем больше накоплено, тем гуще.
 			boolean fp = firstPerson(p);
-			int n = pose.style == CastStyle.CHANNEL ? 1 : 1 + (int) (2 * pose.form + 3 * pose.over + 2 * pose.hold);
-			if (fp) n = (n + 1) / 2;
-			float radius = fp ? 0.35F : 0.75F;
-			for (int i = 0; i < n; i++) {
-				double a = rnd.nextDouble() * Math.PI * 2;
-				double b = (rnd.nextDouble() - 0.5) * Math.PI;
-				Vec3 off = new Vec3(Math.cos(a) * Math.cos(b), Math.sin(b), Math.sin(a) * Math.cos(b)).scale(radius);
-				Vec3 at = hand.add(off);
-				Vec3 v = off.scale(-0.11).add(off.cross(new Vec3(0, 1, 0)).scale(0.04));
-				float size = (0.05F + 0.03F * pose.over) * (fp ? 0.4F : 1.0F);
-				level.addParticle(MagicParticles.mote(rnd.nextBoolean() ? color : light, size, 9), at.x, at.y, at.z, v.x, v.y, v.z);
-			}
-			if (pose.style == CastStyle.RITUAL && p.tickCount % 3 == 0) {
+			int detail = MagicSpectacle.detail(p, mc.player, fp);
+			Vec3 hand = CastAnim.handPos(p, pose, 0, fp);
+			particleBudget -= MagicSpectacle.chargeParticles(level, p, pose, hand, fp, detail, particleBudget);
+			if (particleBudget > 0 && pose.style == CastStyle.RITUAL && p.tickCount % 3 == 0) {
 				double a = rnd.nextDouble() * Math.PI * 2;
 				double r = 1.0 + 1.4 * pose.form;
 				Vec3 at = p.position().add(Math.cos(a) * r, 0.1, Math.sin(a) * r);
 				level.addParticle(MagicParticles.glyph(color, 0.12F, 30), at.x, at.y, at.z, 0, 0.03, 0);
+				particleBudget--;
 			}
-			if (pose.style == CastStyle.SUMMON && p.tickCount % 2 == 0) {
+			if (particleBudget > 0 && pose.style == CastStyle.SUMMON && p.tickCount % 2 == 0) {
 				Vec3 c = summonSpot(p, 0);
 				double a = rnd.nextDouble() * Math.PI * 2;
 				Vec3 at = c.add(Math.cos(a) * 1.1, 0.05, Math.sin(a) * 1.1);
 				level.addParticle(MagicParticles.spark(color, 0.12F, 16), at.x, at.y, at.z, 0, 0.04 + 0.05 * pose.form, 0);
+				particleBudget--;
 			}
-			if (pose.hold > 0.3F && rnd.nextFloat() < pose.hold) {
+			if (particleBudget > 0 && pose.hold > 0.3F && rnd.nextFloat() < pose.hold) {
 				level.addParticle(net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK, hand.x, hand.y, hand.z,
 						(rnd.nextDouble() - 0.5) * 0.3, (rnd.nextDouble() - 0.5) * 0.3, (rnd.nextDouble() - 0.5) * 0.3);
+				particleBudget--;
 			}
 		}
 	}
@@ -91,7 +84,6 @@ public final class CastVisuals {
 
 	/** Вспышка в руке при выпуске (видят все). */
 	static void releaseBurst(AbstractClientPlayer p, Spell spell, float power) {
-		ClientLevel level = (ClientLevel) p.level();
 		Pose pose = new Pose();
 		pose.spell = spell;
 		pose.style = spell.style;
@@ -100,18 +92,10 @@ public final class CastVisuals {
 		pose.staff = true;
 		Vec3 hand = CastAnim.handPos(p, pose, 0, firstPerson(p));
 		Vec3 look = p.getViewVector(1.0F);
-		level.addParticle(MagicParticles.spark(spell.school.light, 0.5F + 0.25F * power, 5), hand.x, hand.y, hand.z, 0, 0, 0);
-		if (spell.style == CastStyle.BOLT || spell.style == CastStyle.SUMMON) {
-			level.addParticle(MagicParticles.ring(spell.school.color, 0.9F + 0.4F * power, 9), hand.x, hand.y, hand.z, look.x, look.y, look.z);
-		} else if (spell.style == CastStyle.SELF || spell.style == CastStyle.RITUAL) {
-			Vec3 feet = p.position().add(0, 0.08, 0);
-			level.addParticle(MagicParticles.ring(spell.school.color, 2.0F + 1.2F * power, 12), feet.x, feet.y, feet.z, 0, 1, 0);
-		}
-		for (int i = 0; i < 10; i++) {
-			Vec3 v = look.scale(0.15).add((level.random.nextDouble() - 0.5) * 0.2, (level.random.nextDouble() - 0.5) * 0.2,
-					(level.random.nextDouble() - 0.5) * 0.2);
-			level.addParticle(MagicParticles.spark(spell.school.color, 0.12F, 10), hand.x, hand.y, hand.z, v.x, v.y, v.z);
-		}
+		boolean fp = firstPerson(p);
+		Minecraft mc = Minecraft.getInstance();
+		MagicSpectacle.releaseParticles(p, spell, power, hand, look, fp,
+				MagicSpectacle.detail(p, mc.player, fp));
 	}
 
 	// --- Геометрия (каждый кадр) ---
@@ -128,11 +112,12 @@ public final class CastVisuals {
 			Pose pose = CastAnim.compute(p, pt);
 			if (pose == null) continue;
 			boolean fp = firstPerson(p);
-			drawPlayer(ps, buffers, cam, p, pose, pt, fp);
+			drawPlayer(ps, buffers, cam, p, pose, pt, fp, MagicSpectacle.detail(p, mc.player, fp));
 		}
 	}
 
-	private static void drawPlayer(PoseStack ps, MultiBufferSource buffers, Vec3 cam, AbstractClientPlayer p, Pose pose, float pt, boolean fp) {
+	private static void drawPlayer(PoseStack ps, MultiBufferSource buffers, Vec3 cam, AbstractClientPlayer p, Pose pose, float pt,
+			boolean fp, int detail) {
 		Spell spell = pose.spell;
 		int color = spell.school.color;
 		int light = spell.school.light;
@@ -161,23 +146,49 @@ public final class CastVisuals {
 				float r = (0.14F + 0.18F * CastAnim.easeOut(pose.form) + 0.14F * pose.over) * (fp ? 0.45F : 1.0F);
 				Vec3 at = hand.add(look.scale(fp ? 0.12 : 0.3));
 				float a = (0.35F + 0.3F * pose.over) * (fp ? 0.55F : 1.0F);
-				circle(ps, buffers, cam, at, look, r, time * (2.0F + 6.0F * pose.over), color, a * fade * pulse);
+				MagicSpectacle.sigil(ps, buffers, cam, at, look, spell, r, time * (2.0F + 6.0F * pose.over),
+						a * fade * pulse, pose.form, pose.over, detail);
+				if (detail >= 3 && spell.tier >= 4) {
+					MagicSpectacle.sigil(ps, buffers, cam, hand.add(look.scale(0.72)), look, spell, r * 1.35F,
+							-time * (1.2F + pose.over), a * fade * 0.42F, pose.form, pose.over, detail - 1);
+				}
 			}
 			case SUMMON -> {
 				Vec3 spot = summonSpot(p, pt);
-				circle(ps, buffers, cam, spot, new Vec3(0, 1, 0), 0.4F + 0.9F * CastAnim.easeOut(pose.form) + 0.3F * pose.over,
-						time * (1.5F + 3.0F * pose.over), color, (0.4F + 0.35F * pose.over) * fade * pulse);
+				float r = 0.4F + 0.9F * CastAnim.easeOut(pose.form) + 0.3F * pose.over;
+				MagicSpectacle.sigil(ps, buffers, cam, spot, new Vec3(0, 1, 0), spell, r,
+						time * (1.5F + 3.0F * pose.over), (0.4F + 0.35F * pose.over) * fade * pulse,
+						pose.form, pose.over, detail);
+				if (detail >= 3 && spell.tier >= 4) {
+					MagicSpectacle.sigil(ps, buffers, cam, spot.add(0, 0.65 + 0.25 * pose.form, 0), new Vec3(0, 1, 0), spell,
+							r * 0.72F, -time * 2.2F, 0.3F * fade * pose.form, pose.form, pose.over, detail - 1);
+				}
 			}
 			case SELF -> {
 				Vec3 feet = p.getPosition(pt).add(0, 0.06, 0);
-				circle(ps, buffers, cam, feet, new Vec3(0, 1, 0), 0.5F + 0.6F * CastAnim.easeOut(pose.form) + 0.25F * pose.over,
-						time * (1.5F + 4.0F * pose.over), color, (0.45F + 0.5F * pose.over) * fade * pulse);
+				float r = 0.5F + 0.6F * CastAnim.easeOut(pose.form) + 0.25F * pose.over;
+				MagicSpectacle.sigil(ps, buffers, cam, feet, new Vec3(0, 1, 0), spell, r,
+						time * (1.5F + 4.0F * pose.over), (0.45F + 0.5F * pose.over) * fade * pulse,
+						pose.form, pose.over, detail);
+				if (detail >= 3 && spell.tier >= 4) {
+					Vec3 halo = p.getPosition(pt).add(0, 1.15, 0).add(look.scale(-0.2));
+					MagicSpectacle.sigil(ps, buffers, cam, halo, look, spell, r * 0.72F, -time * 2.0F,
+							0.28F * fade * pose.form, pose.form, pose.over, detail - 1);
+				}
 			}
 			case RITUAL -> {
 				Vec3 feet = p.getPosition(pt).add(0, 0.06, 0);
 				float r = 0.8F + 1.6F * CastAnim.easeOut(pose.form) + 0.6F * pose.over;
-				circle(ps, buffers, cam, feet, new Vec3(0, 1, 0), r, time * (1.0F + 3.0F * pose.over), color, (0.45F + 0.3F * pose.over) * fade * pulse);
-				circle(ps, buffers, cam, feet.add(0, 0.02, 0), new Vec3(0, 1, 0), r * 0.55F, -time * 3.0F, light, 0.35F * fade * pose.form);
+				MagicSpectacle.sigil(ps, buffers, cam, feet, new Vec3(0, 1, 0), spell, r,
+						time * (1.0F + 3.0F * pose.over), (0.45F + 0.3F * pose.over) * fade * pulse,
+						pose.form, pose.over, detail);
+				MagicSpectacle.sigil(ps, buffers, cam, feet.add(0, 0.025, 0), new Vec3(0, 1, 0), spell, r * 0.5F,
+						-time * 3.0F, 0.24F * fade * pose.form, pose.form, pose.over, Math.max(0, detail - 1));
+				if (detail >= 3 && spell.tier >= 4) {
+					Vec3 halo = p.getPosition(pt).add(0, 1.25, 0).add(look.scale(-0.25));
+					MagicSpectacle.sigil(ps, buffers, cam, halo, look, spell, r * 0.42F, -time * 1.5F,
+							0.3F * fade * pose.form, pose.form, pose.over, detail - 1);
+				}
 			}
 			case CHANNEL -> {
 				if (spell.beam) {
@@ -188,14 +199,18 @@ public final class CastVisuals {
 				} else if ("ward".equals(spell.id)) {
 					Vec3 at = p.getEyePosition(pt).add(look.scale(fp ? 1.1 : 1.0)).add(0, -0.1, 0);
 					float r = (0.75F + 0.15F * charge) * (fp ? 0.85F : 1.0F);
-					circle(ps, buffers, cam, at, look, r, time * 1.2F, light, (fp ? 0.16F : 0.3F) * fade);
+					MagicSpectacle.sigil(ps, buffers, cam, at, look, spell, r, time * 1.2F,
+							(fp ? 0.16F : 0.3F) * fade, charge, 0, detail);
 					disc(ps, buffers, cam, at, look, r * 1.02F, MagicRender.RING, color, (fp ? 0.35F : 0.6F) * fade);
 				} else if ("healing".equals(spell.id)) {
 					Vec3 feet = p.getPosition(pt).add(0, 0.06, 0);
-					circle(ps, buffers, cam, feet, new Vec3(0, 1, 0), 0.9F, time * 1.5F, color, 0.5F * fade);
+					MagicSpectacle.sigil(ps, buffers, cam, feet, new Vec3(0, 1, 0), spell, 0.9F, time * 1.5F,
+							0.5F * fade, charge, 0, detail);
 				} else {
 					Vec3 at = hand.add(look.scale(fp ? 0.12 : 0.3));
-					circle(ps, buffers, cam, at, look, (0.22F + 0.12F * charge) * (fp ? 0.45F : 1.0F), time * 4.0F, color, (fp ? 0.3F : 0.5F) * fade);
+					MagicSpectacle.sigil(ps, buffers, cam, at, look, spell,
+							(0.22F + 0.12F * charge) * (fp ? 0.45F : 1.0F), time * 4.0F,
+							(fp ? 0.3F : 0.5F) * fade, charge, 0, detail);
 				}
 			}
 		}
@@ -230,24 +245,6 @@ public final class CastVisuals {
 		ps.translate(at.x - cam.x, at.y - cam.y, at.z - cam.z);
 		ps.mulPose(mc.gameRenderer.getMainCamera().rotation());
 		MagicRender.quad(buffers.getBuffer(MagicRender.glow(tex)), ps.last(), size, MagicRender.argb(rgb, alpha));
-		ps.popPose();
-	}
-
-	/** Магический круг: два слоя навстречу друг другу, плоскость перпендикулярна {@code normal}. */
-	private static void circle(PoseStack ps, MultiBufferSource buffers, Vec3 cam, Vec3 at, Vec3 normal, float r, float spinDeg, int rgb,
-			float alpha) {
-		if (alpha <= 0.01F) return;
-		Vec3 n = normal.normalize();
-		ps.pushPose();
-		ps.translate(at.x - cam.x, at.y - cam.y, at.z - cam.z);
-		ps.mulPose(new Quaternionf().rotationTo(0, 0, 1, (float) n.x, (float) n.y, (float) n.z));
-		ps.pushPose();
-		ps.mulPose(Axis.ZP.rotationDegrees(spinDeg));
-		MagicRender.quad(buffers.getBuffer(MagicRender.glow(MagicRender.RUNE)), ps.last(), r, MagicRender.argb(rgb, alpha));
-		ps.popPose();
-		ps.mulPose(Axis.ZP.rotationDegrees(-spinDeg * 1.6F));
-		MagicRender.quad(buffers.getBuffer(MagicRender.glow(MagicRender.RUNE_INNER)), ps.last(), r,
-				MagicRender.argb(MagicRender.lighten(rgb, 0.25F), alpha * 0.6F));
 		ps.popPose();
 	}
 

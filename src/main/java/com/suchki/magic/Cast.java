@@ -40,13 +40,38 @@ public final class Cast {
 	public final float power;
 	/** Множитель от навыка «Сила чар» (1 + доля). Действует на урон и лечение. */
 	public final float bonus;
+	/** Общий счётчик ландшафтных мутаций, разделяемый отложенными волнами и снарядами одного каста. */
+	static final class TerrainBudget {
+		int used;
+	}
+
+	private final TerrainBudget terrainBudget;
 
 	public Cast(ServerLevel level, ServerPlayer caster, Spell spell, float power, float bonus) {
+		this(level, caster, spell, power, bonus, new TerrainBudget());
+	}
+
+	Cast(ServerLevel level, ServerPlayer caster, Spell spell, float power, float bonus, TerrainBudget terrainBudget) {
 		this.level = level;
 		this.caster = caster;
 		this.spell = spell;
 		this.power = power;
 		this.bonus = bonus;
+		this.terrainBudget = terrainBudget == null ? new TerrainBudget() : terrainBudget;
+	}
+
+	TerrainBudget terrainBudget() {
+		return terrainBudget;
+	}
+
+	/** Сколько блоков ещё может поставить в очередь этот каст при заданном серверном лимите. */
+	public int terrainBlocksRemaining(int limit) {
+		return Math.max(0, limit - terrainBudget.used);
+	}
+
+	/** Учесть только фактически поставленные в очередь позиции, а не отфильтрованные защищённые блоки. */
+	public void accountTerrainBlocks(int count) {
+		terrainBudget.used += Math.max(0, count);
 	}
 
 	// --- Как сила влияет на заклинание ---

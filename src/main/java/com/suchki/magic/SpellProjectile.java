@@ -23,6 +23,8 @@ public class SpellProjectile extends ThrowableProjectile {
 	private static final int MAX_LIFE = 100;
 
 	private float bonus = 1.0F;
+	/** Общий бюджет разрушения исходного каста; все метеоры одного ритуала делят один объект. */
+	private Cast.TerrainBudget terrainBudget;
 	private int life;
 	private double gravity;
 
@@ -37,6 +39,7 @@ public class SpellProjectile extends ThrowableProjectile {
 		p.entityData.set(SPELL, c.spell.id);
 		p.entityData.set(POWER, c.power);
 		p.bonus = c.bonus;
+		p.terrainBudget = c.terrainBudget();
 		Vec3 from = c.hand();
 		p.setPos(from.x, from.y - 0.2, from.z);
 		Vec3 dir = c.look();
@@ -52,6 +55,7 @@ public class SpellProjectile extends ThrowableProjectile {
 		p.entityData.set(SPELL, c.spell.id);
 		p.entityData.set(POWER, c.power);
 		p.bonus = c.bonus;
+		p.terrainBudget = c.terrainBudget();
 		p.setPos(pos.x, pos.y, pos.z);
 		p.setDeltaMovement(velocity);
 		c.level.addFreshEntity(p);
@@ -124,7 +128,7 @@ public class SpellProjectile extends ThrowableProjectile {
 		if (!(level() instanceof ServerLevel level)) return;
 		Spell spell = spell();
 		if (spell != null && spell.hit != null && getOwner() instanceof ServerPlayer caster) {
-			spell.hit.hit(new Cast(level, caster, spell, power(), bonus), this, result);
+			spell.hit.hit(new Cast(level, caster, spell, power(), bonus, terrainBudget), this, result);
 		}
 		discard();
 	}

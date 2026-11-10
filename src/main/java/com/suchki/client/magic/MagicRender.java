@@ -54,6 +54,11 @@ public final class MagicRender {
 	public static final Identifier RUNE_INNER = tex("rune_circle_inner");
 	public static final Identifier RING = tex("ring");
 	public static final Identifier BEAM = tex("beam");
+	/** Отдельные руны для орбиты вокруг печати; порядок стабилен, чтобы рисунок заклинания не мерцал. */
+	static final Identifier[] GLYPHS = {
+			tex("glyph_0"), tex("glyph_1"), tex("glyph_2"), tex("glyph_3"),
+			tex("glyph_4"), tex("glyph_5"), tex("glyph_6"), tex("glyph_7")
+	};
 
 	private MagicRender() {}
 

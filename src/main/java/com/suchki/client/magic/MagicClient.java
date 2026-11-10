@@ -48,6 +48,7 @@ public final class MagicClient {
 		LocalPlayer p = mc.player;
 		if (p == null || mc.level == null) {
 			lastLocal = null;
+			CastSounds.stopAll();
 			return;
 		}
 		while (wheelKey.consumeClick()) {
@@ -101,7 +102,10 @@ public final class MagicClient {
 			case Magic.CastFx.RELEASE -> {
 				boolean camera = !self || !CastAnim.releasedRecently(p, spell);
 				CastAnim.onRelease(p, spell, Math.max(1.0F, fx.power()), false);
-				if (spell.style != CastStyle.CHANNEL) CastVisuals.releaseBurst(p, spell, fx.power());
+				if (spell.style != CastStyle.CHANNEL) {
+					CastVisuals.releaseBurst(p, spell, fx.power());
+					CastSounds.release(p, spell, fx.power());
+				}
 				if (self && camera && spell.style != CastStyle.CHANNEL) {
 					CastCamera.localRelease(fx.power(), p.getMainArm() == HumanoidArm.RIGHT ? 1 : -1, spell.style);
 				}

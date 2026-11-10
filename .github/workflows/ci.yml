@@ -1,0 +1,145 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "codex/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  resources:
+    name: Resources and audio
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: gradle/actions/wrapper-validation@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+
+      - name: Install generator dependencies
+        run: python -m pip install --disable-pip-version-check "numpy>=2.0,<3" "soundfile>=0.13,<1"
+
+      - name: Validate Python sources
+        run: python -m compileall -q tools
+
+      - name: Validate resources and catalogs
+        run: |
+          python tools/validate_resources.py
+          python tools/validate_magic_catalog.py
+
+      - name: Validate encoded audio
+        run: python tools/gen_sounds.py --check
+
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: resource-validation
+          path: build/reports/resource-validation.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  build:
+    name: Build (${{ matrix.os }})
+    needs: resources
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Build on Linux
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          chmod +x gradlew
+          mkdir -p build/reports
+          set -o pipefail
+          ./gradlew clean build --no-daemon --no-configuration-cache --stacktrace 2>&1 | tee build/reports/ci-build.log
+
+      - name: Build on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force build/reports | Out-Null
+          & .\gradlew.bat clean build --no-daemon --no-configuration-cache --stacktrace 2>&1 |
+            Tee-Object -FilePath build/reports/ci-build.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: build-${{ runner.os }}
+          path: |
+            build/libs/*.jar
+            build/reports/**
+            build/test-results/**
+            build/run/**/logs/**
+            run/logs/**
+            run/crash-reports/**
+          if-no-files-found: ignore
+          retention-days: 14
+
+  client-game-test:
+    name: Client game test
+    needs: [resources, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      LIBGL_ALWAYS_SOFTWARE: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Run client game test under Xvfb
+        shell: bash
+        run: |
+          chmod +x gradlew
+          mkdir -p build/reports
+          set -o pipefail
+          xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" \
+            ./gradlew runClientGameTest --no-daemon --no-configuration-cache --stacktrace \
+            2>&1 | tee build/reports/ci-client-game-test.log
+
+      - name: Upload screenshots and diagnostics
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: client-game-test
+          path: |
+            build/reports/**
+            build/run/clientGameTest/screenshots/**
+            build/run/clientGameTest/logs/**
+            build/run/clientGameTest/crash-reports/**
+            run/logs/**
+            run/crash-reports/**
+          if-no-files-found: ignore
+          retention-days: 14

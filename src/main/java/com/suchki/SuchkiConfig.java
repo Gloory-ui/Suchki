@@ -68,6 +68,22 @@ public class SuchkiConfig {
 	// --- Магия ---
 	/** Сила тряски камеры от заклинаний (0 — выключить, 1 — как задумано). Действует на клиенте. */
 	public double cameraShakeScale = 1.0;
+	/** Детализация магии на клиенте: 0 — минимум, 1 — низкая, 2 — высокая, 3 — кинематографичная. */
+	public int magicVisualQuality = 3;
+	/** Громкость локальных слоёв зарядки и кульминации (0 — выключить, 1 — как задумано). */
+	public double magicSoundScale = 1.0;
+	/** Разрешить заклинаниям менять ландшафт: воронки, трещины и стихийные следы. */
+	public boolean magicTerrainDestruction = true;
+	/** Отключать изменение ландшафта, когда gamerule mobGriefing выключен. */
+	public boolean magicTerrainRespectMobGriefing = true;
+	/** Ломать только типичные природные блоки. false разрешает заклинаниям повреждать обычные постройки. */
+	public boolean magicTerrainNaturalOnly = true;
+	/** Жёсткий предел блоков одного заклинания; фактические формы обычно заметно меньше. */
+	public int magicTerrainMaxBlocksPerCast = 6000;
+	/** Общий серверный бюджет изменений ландшафта за тик для всех магов. */
+	public int magicTerrainBlocksPerTick = 512;
+	/** Доля разрушенных магией блоков, которые выпадают предметами (0 — ничего, 1 — всё). */
+	public double magicTerrainDropChance = 0.0;
 
 	// --- Наковальня ---
 	/** Потолок цены на наковальне в уровнях опыта (вместо «Слишком дорого!»). */
@@ -100,6 +116,28 @@ public class SuchkiConfig {
 		m.put("minecraft:impaling", 6);
 		m.put("minecraft:riptide", 6);
 		return m;
+	}
+
+	/** Безопасное значение детализации даже при ручной ошибке в JSON. */
+	public int magicVisualQuality() {
+		return Math.max(0, Math.min(3, magicVisualQuality));
+	}
+
+	/** Локальные слои не могут стать отрицательными или оглушительно громкими. */
+	public float magicSoundScale() {
+		return (float) Math.max(0.0, Math.min(2.0, magicSoundScale));
+	}
+
+	public int magicTerrainMaxBlocksPerCast() {
+		return Math.max(64, Math.min(12_000, magicTerrainMaxBlocksPerCast));
+	}
+
+	public int magicTerrainBlocksPerTick() {
+		return Math.max(32, Math.min(2048, magicTerrainBlocksPerTick));
+	}
+
+	public float magicTerrainDropChance() {
+		return (float) Math.max(0.0, Math.min(1.0, magicTerrainDropChance));
 	}
 
 	public static void load() {

@@ -16,6 +16,8 @@ import com.suchki.magic.MagicSounds;
 import com.suchki.magic.Spell;
 import com.suchki.magic.SpellProjectile;
 import com.suchki.magic.Zones;
+import com.suchki.magic.terrain.MagicTerrain;
+import com.suchki.magic.terrain.MagicTerrain.Trace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -189,5 +191,14 @@ public final class AlterationSpells {
 		MagicFx.one(c.level, center.add(0, 0.15, 0), MagicParticles.ring(STONE, (float) r, 14), 0, 1, 0);
 		MagicFx.sound(c.level, center, MagicSounds.CAST_EARTH, 1.6F, 0.5F + wave * 0.1F);
 		Magic.shake(c.level, center, 2.2F - wave * 0.4F, 16, r * 4);
+		Vec3 facing = new Vec3(c.look().x, 0, c.look().z);
+		if (facing.lengthSqr() < 1.0E-4) facing = new Vec3(0, 0, 1);
+		facing = facing.normalize();
+		double angle = wave * Math.PI * 2.0 / 3.0;
+		Vec3 direction = new Vec3(facing.x * Math.cos(angle) - facing.z * Math.sin(angle), 0,
+				facing.x * Math.sin(angle) + facing.z * Math.cos(angle));
+		Vec3 end = center.add(direction.scale(r * (1.0 + wave * 0.08)));
+		MagicTerrain.fissure(c, center, direction, r * (1.0 + wave * 0.08), 0.75 + wave * 0.25, 3 + wave);
+		MagicTerrain.trail(c, center, end, 1.0 + wave * 0.3, Trace.RUBBLE);
 	}
 }
