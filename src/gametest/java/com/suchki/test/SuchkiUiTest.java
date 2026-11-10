@@ -50,6 +50,10 @@ public class SuchkiUiTest implements FabricClientGameTest {
 
 	@Override
 	public void runTest(ClientGameTestContext context) {
+		// Fabric's world-load timeout is counted in client frames. Headless CI can render the
+		// loading screen hundreds of times per second and exhaust the nominal one-minute
+		// timeout before the integrated server has generated even a flat spawn area.
+		context.runOnClient(mc -> mc.options.framerateLimit().set(20));
 		try (TestSingleplayerContext sp = context.worldBuilder().create()) {
 			sp.getClientWorld().waitForChunksRender();
 			context.runOnClient(mc -> {
