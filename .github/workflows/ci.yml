@@ -74,18 +74,25 @@ jobs:
         shell: bash
         run: |
           chmod +x gradlew
-          mkdir -p build/reports
+          ci_log="$RUNNER_TEMP/ci-build.log"
           set -o pipefail
-          ./gradlew clean build --no-daemon --no-configuration-cache --stacktrace 2>&1 | tee build/reports/ci-build.log
+          status=0
+          ./gradlew clean build --no-daemon --no-configuration-cache --stacktrace 2>&1 | tee "$ci_log" || status=$?
+          mkdir -p build/reports
+          cp "$ci_log" build/reports/ci-build.log
+          exit "$status"
 
       - name: Build on Windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force build/reports | Out-Null
+          $ciLog = Join-Path $env:RUNNER_TEMP 'ci-build.log'
           & .\gradlew.bat clean build --no-daemon --no-configuration-cache --stacktrace 2>&1 |
-            Tee-Object -FilePath build/reports/ci-build.log
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            Tee-Object -FilePath $ciLog
+          $exitCode = $LASTEXITCODE
+          New-Item -ItemType Directory -Force build/reports | Out-Null
+          Copy-Item -LiteralPath $ciLog -Destination build/reports/ci-build.log -Force
+          if ($exitCode -ne 0) { exit $exitCode }
 
       - name: Upload build diagnostics
         if: always()
