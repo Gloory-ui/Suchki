@@ -173,7 +173,7 @@
   "spell.suchki.frost_nova": "Frost Nova",
   "spell.suchki.frost_nova.desc": "A wave of cold around you (radius 6): 6 damage, Slowness III for 4 s.",
   "spell.suchki.fireball": "Fireball",
-  "spell.suchki.fireball.desc": "Explodes on impact (radius 3.5): up to 14 damage, fire, knockback. Does not break blocks.",
+  "spell.suchki.fireball.desc": "Explodes on impact (radius 3.5): up to 14 damage, fire, knockback; when enabled by the server, leaves a small crater and a scorched trail.",
   "spell.suchki.meteor_shower": "Meteor Shower",
   "spell.suchki.meteor_shower.desc": "Ritual: 8 meteors (more when overcharged) fall on the target area over 4 s, 9 damage each in radius 2.5.",
   "spell.suchki.healing": "Healing",
