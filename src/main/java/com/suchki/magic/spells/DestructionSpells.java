@@ -19,10 +19,12 @@ import com.suchki.magic.terrain.MagicTerrain;
 import com.suchki.magic.terrain.MagicTerrain.Trace;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -197,7 +199,7 @@ public final class DestructionSpells {
 	/** Огненный взрыв: урон спадает к краю, а серверно-настраиваемое ядро оставляет воронку и выжженную землю. */
 	static void explode(Cast c, HitResult r, double radius, float damage, float shake) {
 		Vec3 at = r instanceof EntityHitResult e ? Cast.center(e.getEntity()) : r.getLocation();
-		Vec3 terrainAt = r instanceof EntityHitResult e ? e.getEntity().position() : r.getLocation();
+		Vec3 terrainAt = terrainImpact(r);
 		for (LivingEntity e : c.around(at, radius, e -> c.canHit(e) && !c.isAlly(e))) {
 			double dist = Cast.center(e).distanceTo(at);
 			float k = (float) (1.0 - 0.5 * Math.min(1.0, dist / radius));
@@ -222,6 +224,16 @@ public final class DestructionSpells {
 			Vec3 edge = terrainAt.add(Math.cos(angle) * length, 0, Math.sin(angle) * length);
 			MagicTerrain.trail(c, terrainAt, edge, meteor ? 1.4 : 0.9, Trace.SCORCH);
 		}
+	}
+
+	/** Центрируем разрушение в поражённом блоке: для стоящей сущности это блок прямо под её хитбоксом. */
+	private static Vec3 terrainImpact(HitResult hit) {
+		if (hit instanceof EntityHitResult entityHit) {
+			var entity = entityHit.getEntity();
+			return Vec3.atCenterOf(BlockPos.containing(entity.getX(), entity.getBoundingBox().minY - 0.01, entity.getZ()));
+		}
+		if (hit instanceof BlockHitResult blockHit) return Vec3.atCenterOf(blockHit.getBlockPos());
+		return hit.getLocation();
 	}
 
 	static void fireImpact(Cast c, Vec3 at, float size) {

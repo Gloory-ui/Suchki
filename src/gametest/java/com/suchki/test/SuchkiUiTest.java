@@ -53,7 +53,11 @@ public class SuchkiUiTest implements FabricClientGameTest {
 		// Fabric's world-load timeout counts controlled test ticks, not wall-clock time.
 		// Uncapped headless rendering can exhaust those ticks before the integrated server's
 		// asynchronous chunk generation has completed even a flat spawn area.
-		context.runOnClient(mc -> mc.options.framerateLimit().set(20));
+		context.runOnClient(mc -> {
+			mc.options.framerateLimit().set(20);
+			mc.options.renderDistance().set(2);
+			mc.options.simulationDistance().set(2);
+		});
 		try (TestSingleplayerContext sp = context.worldBuilder().create()) {
 			sp.getClientWorld().waitForChunksRender();
 			context.runOnClient(mc -> {
