@@ -463,6 +463,32 @@ def charge_conjuration(rng, L, N, q):
     return norm(hum) * 0.5 + whirl, norm(swirl) * 0.6
 
 
+def resonance_low(rng, L, N, q):
+    """Тихий второй слой старших кругов: субгармоника, медленный хор и воздух большого зала."""
+    t = tt(L)
+    sub = 0.75 * sine(q(36.67), L) + 0.35 * sine(q(55.0), L)
+    choir = formant(chord(L, [hz("D3"), hz("A3"), hz("D4")], "saw", 5, 3, 3.0, 0.003, 28, rng, q),
+                    "o", circular=True)
+    breathe = 0.72 + 0.28 * np.sin(2 * np.pi * q(1 / 3) * t)
+    tonal = 0.62 * norm(sub) + 0.48 * norm(choir) * breathe
+    air = ffilt(colored(rng, N, -3), lambda f: bp(f, 420, 1.1) + 0.25 * bp(f, 2300, 0.8))
+    return tonal, 0.16 * norm(air)
+
+
+def resonance_high(rng, L, N, q):
+    """Божественный слой высшего круга: фундамент, широкий хор и мерцающие верхние обертоны."""
+    t = tt(L)
+    sub = sine(q(27.33), L) + 0.5 * sine(q(41.0), L)
+    choir = formant(chord(L, [hz("C3"), hz("G3"), hz("C4"), hz("E4"), hz("G4")], "saw", 7, 4, 2.0,
+                           0.004, 36, rng, q), "a", circular=True)
+    crown = (0.35 * sine(q(hz("C6")), L) + 0.22 * sine(q(hz("G6")), L)
+             + 0.14 * sine(q(hz("E7")), L)) * (0.62 + 0.38 * np.sin(2 * np.pi * q(2 / 3) * t))
+    tonal = 0.55 * norm(sub) + 0.68 * norm(choir) + crown
+    air = ffilt(colored(rng, N, -3), lambda f: 0.5 * bp(f, 700, 1.2) + bp(f, 5200, 0.8))
+    stars = sparkles(rng, N, 6, 4500, 10000, (0.04, 0.16))
+    return tonal, 0.12 * norm(air) + 0.18 * stars
+
+
 # ---------------------------------------------------------------- сигналы, изучение
 
 def ready(rng, v, n):
@@ -486,6 +512,29 @@ def peak(rng, v, n):
     spark = sparkles(rng, n, 40, 3000, 10000, (0.02, 0.15), t_from=0.28, t_to=0.75) * 0.5
     x = 0.55 * norm(whoosh) + 0.8 * norm(sub) + 0.75 * norm(stab) + spark
     return sat(reverb(x, "large", 0.4), 1.4)
+
+
+def release_power(rng, v, n):
+    """Низкочастотная опора выпуска: не заменяет школьный звук, а делает старшие круги физически весомыми."""
+    sub = thump(n, 95, 34, 0.46, drop=0.065, drive=2.1)
+    air = sweep_bp(white(rng, n), 260, 5200, 0.0, 0.22, 0.72) * swell(n, 0.18, decay=0.28)
+    seal = bell(n, hz("D4"), 0.65, partials=[(1.0, 1.0, 1.0), (1.5, 0.6, 0.65), (2.25, 0.35, 0.42),
+                                                        (3.7, 0.2, 0.24)])
+    return sat(reverb(0.9 * norm(sub) + 0.48 * norm(air) + 0.34 * norm(seal), "large", 0.32), 1.35)
+
+
+def release_mythic(rng, v, n):
+    """Кульминация высшего круга: обратный вдох, суб-удар, хор и длинный светящийся хвост."""
+    sub = thump(n, 82, 25, 0.72, drop=0.09, drive=2.5)
+    rise = sweep_bp(white(rng, n), 180, 8200, 0.0, 0.34, 0.82) * swell(n, 0.32, decay=0.4)
+    stab = chord(n, [hz("C3"), hz("G3"), hz("C4"), hz("E4"), hz("G4")], "saw", 9, 4, 4.0, 0.004, 50, rng)
+    stab *= env(n, 0.012, 0.7, hold=0.08, t0=0.29)
+    choir = formant(stab, "a")
+    bells = sum(bell(n, hz(note), 0.9, t0=0.3 + i * 0.035) * (1.0 - i * 0.1)
+                for i, note in enumerate(["C5", "G5", "E6", "C6"]))
+    stars = sparkles(rng, n, 36, 3200, 11000, (0.03, 0.18), t_from=0.28, t_to=1.25)
+    x = 0.8 * norm(sub) + 0.5 * norm(rise) + 0.7 * norm(choir) + 0.42 * norm(bells) + 0.28 * norm(stars)
+    return sat(reverb(x, "large", 0.48), 1.45)
 
 
 def fizzle(rng, v, n):
@@ -802,10 +851,13 @@ def ward_hit(rng, v, n):
 LOOPS = {f"charge_{s}": globals()[f"charge_{s}"] for s in
          ("destruction", "restoration", "light", "dark", "alteration", "illusion", "conjuration")}
 LOOPS.update({f"loop_{s}": globals()[f"loop_{s}"] for s in ("flames", "beam", "drain", "heal", "ward", "wind")})
+LOOPS.update({"resonance_low": resonance_low, "resonance_high": resonance_high})
 
 # имя: (функция, вариантов, длительность)
 ONESHOTS = {
-    "ready": (ready, 1, 0.6), "stage": (stage, 1, 0.3), "peak": (peak, 1, 1.0), "fizzle": (fizzle, 1, 0.6),
+    "ready": (ready, 1, 0.6), "stage": (stage, 1, 0.3), "peak": (peak, 1, 1.0),
+    "release_power": (release_power, 1, 1.2), "release_mythic": (release_mythic, 1, 1.8),
+    "fizzle": (fizzle, 1, 0.6),
     "learn": (learn, 1, 1.5),
     "cast_fire": (cast_fire, 2, 0.8), "cast_frost": (cast_frost, 2, 0.7), "cast_shock": (cast_shock, 2, 0.7),
     "cast_holy": (cast_holy, 2, 1.0), "cast_dark": (cast_dark, 2, 1.0), "cast_arcane": (cast_arcane, 2, 0.6),
@@ -904,7 +956,7 @@ def check(paths):
         y = x[:, 0]
         pk = np.max(np.abs(y))
         clip = int(np.sum(np.abs(y) >= 0.999))
-        loop = p.stem.startswith(("charge_", "loop_"))
+        loop = p.stem.startswith(("charge_", "loop_", "resonance_"))
         seam = ""
         if loop:
             seam = f"{seam_score(y):.2f}"

@@ -148,6 +148,14 @@
 | `roleSwitchCooldownMinutes` | 10 | перерыв между сменами роли |
 | `skillResetLevels` | 10 | цена сброса навыков (уровней опыта) |
 | `cameraShakeScale` | 1.0 | тряска камеры от заклинаний (0 — выключить) |
+| `magicVisualQuality` | 3 | детализация магии: 0 — минимум, 3 — кинематографичная |
+| `magicSoundScale` | 1.0 | громкость локальных слоёв зарядки и кульминации (0–2) |
+| `magicTerrainDestruction` | true | воронки, трещины и стихийные следы от заклинаний |
+| `magicTerrainRespectMobGriefing` | true | отключать изменение мира при `mobGriefing=false` |
+| `magicTerrainNaturalOnly` | true | ломать только блоки из datapack-тега `suchki:magic_terrain_breakable` и не создавать настоящий огонь; `false` включает урон постройкам и ванильное распространение огня |
+| `magicTerrainMaxBlocksPerCast` | 6000 | жёсткий предел изменений, поставленных модом в очередь (64–12000); ванильное распространение огня возможно только при `magicTerrainNaturalOnly=false` |
+| `magicTerrainBlocksPerTick` | 512 | общий серверный бюджет изменений за тик (32–2048) |
+| `magicTerrainDropChance` | 0.0 | доля разрушенных блоков, выпадающих предметами (0–1) |
 
 ## Сборка
 
@@ -178,6 +186,13 @@ export JAVA_TOOL_OPTIONS="-Djdk.net.unixdomain.tmpdir=C:\Users\Public\jsock"
 
 ## Тесты
 
+- **Быстрая проверка ресурсов:** `python tools/validate_resources.py`. Без запуска Minecraft проверяет весь JSON,
+  совпадение ключей и плейсхолдеров RU/EN, ссылки на модели, текстуры и звуки, параметры Ogg/Vorbis, каталог
+  заклинаний, рецепты, значки и структуру 12 деревьев ролей. JSON-отчёт — `build/reports/resource-validation.json`.
+- **Проверка цели Magic 2.0:** `python tools/validate_magic_catalog.py` показывает прогресс к 12 школам и 204
+  заклинаниям; `--strict-target` превращает эти целевые числа в обязательный релизный барьер.
+- **CI:** GitHub Actions прогоняет проверки ресурсов и аудио, сборку на Linux и Windows с Java 21, затем полный
+  клиентский тест под виртуальным экраном. JAR, отчёты, логи сбоев и скриншоты сохраняются как артефакты.
 - **Клиентский тест:** `./gradlew runClientGameTest`. Создаёт мир, открывает все окна мода в трёх размерах
   экрана, нажимает и прокручивает, проверяет механики с настоящим игроком и прогоняет полную серверную
   самопроверку. Скриншоты — в `build/run/clientGameTest/screenshots`.

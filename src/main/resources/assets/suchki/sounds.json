@@ -89,6 +89,42 @@
       }
     ]
   },
+  "magic.resonance.low": {
+    "subtitle": "subtitles.suchki.magic.resonance",
+    "sounds": [
+      {
+        "name": "suchki:magic/resonance_low",
+        "volume": 0.6
+      }
+    ]
+  },
+  "magic.resonance.high": {
+    "subtitle": "subtitles.suchki.magic.resonance",
+    "sounds": [
+      {
+        "name": "suchki:magic/resonance_high",
+        "volume": 0.56
+      }
+    ]
+  },
+  "magic.release.power": {
+    "subtitle": "subtitles.suchki.magic.release.power",
+    "sounds": [
+      {
+        "name": "suchki:magic/release_power",
+        "volume": 0.82
+      }
+    ]
+  },
+  "magic.release.mythic": {
+    "subtitle": "subtitles.suchki.magic.release.mythic",
+    "sounds": [
+      {
+        "name": "suchki:magic/release_mythic",
+        "volume": 0.72
+      }
+    ]
+  },
   "magic.fizzle": {
     "subtitle": "subtitles.suchki.magic.fizzle",
     "sounds": [

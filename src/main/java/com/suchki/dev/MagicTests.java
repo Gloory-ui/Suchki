@@ -14,6 +14,9 @@ import com.suchki.magic.Spell;
 import com.suchki.magic.SpellProjectile;
 import com.suchki.magic.Spells;
 import com.suchki.magic.Zones;
+import com.suchki.magic.terrain.MagicTerrain;
+import com.suchki.magic.terrain.MagicTerrain.Policy;
+import com.suchki.magic.terrain.MagicTerrain.Trace;
 import com.suchki.skill.PlayerSkills;
 import com.suchki.skill.Skills;
 import java.util.List;
@@ -45,6 +48,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -59,6 +63,7 @@ final class MagicTests {
 	static void addTo(Map<String, DevTests.Test> tests) {
 		tests.put("Магия: роль, книги, мана", MagicTests::basics);
 		tests.put("Магия: накопление силы", MagicTests::charging);
+		tests.put("Магия: безопасное изменение мира", MagicTests::terrain);
 		tests.put("Магия: Разрушение", MagicTests::destruction);
 		tests.put("Магия: Восстановление", MagicTests::restoration);
 		tests.put("Магия: Свет", MagicTests::light);
@@ -254,12 +259,70 @@ final class MagicTests {
 		Zombie e2 = dummy(level, EntityType.ZOMBIE, o.offset(2, 0, 8));
 		Villager v2 = dummy(level, EntityType.VILLAGER, o.offset(-2, 0, 8));
 		Magic.hitNow(p, spell("fireball"), hitOn(e1), 1);
-		r.check(hurt(e1) && hurt(e2) && e2.isOnFire() && !hurt(v2) && level.getBlockState(o.offset(0, -1, 8)).is(Blocks.STONE),
-				"Огненный шар: взрыв задевает врагов рядом, не трогает жителя и блоки");
+		MagicTerrain.flushNow();
+		r.check(hurt(e1) && hurt(e2) && e2.isOnFire() && !hurt(v2) && level.getBlockState(o.offset(0, -1, 8)).isAir(),
+				"Огненный шар: взрыв задевает врагов, не трогает жителя и оставляет воронку");
 
 		int zones = Zones.active();
 		Magic.castNow(p, spell("meteor_shower"), 1);
 		r.check(Zones.active() >= zones + 8, "Метеоритный дождь: запланировано 8 метеоров (" + (Zones.active() - zones) + ")");
+	}
+
+	/** Живые серверные гарантии разрушения: очередь, gamerule, immune/block entities, opt-in построек и следы. */
+	private static void terrain(ServerLevel level, BlockPos o, DevTests.Report r) {
+		MagicTerrain.clear();
+		arena(level, o);
+		FakePlayer p = DevTests.player(level, o, ItemStack.EMPTY, 0);
+		Policy safe = new Policy(true, true, true, 256, 1_200.0F, 0.0F);
+		BlockPos impact = o.offset(0, -1, 0);
+		BlockPos plank = impact;
+		BlockPos container = impact.offset(1, 0, 0);
+		BlockPos immune = impact.offset(-1, 0, 0);
+		BlockPos stale = impact.offset(0, 0, 1);
+		BlockPos natural = impact.offset(0, 0, -1);
+		level.setBlock(plank, Blocks.OAK_PLANKS.defaultBlockState(), 3);
+		level.setBlock(container, Blocks.CHEST.defaultBlockState(), 3);
+		level.setBlock(immune, Blocks.OBSIDIAN.defaultBlockState(), 3);
+
+		int queued = MagicTerrain.crater(level, p, Vec3.atCenterOf(impact), 2.8, 1.8, 11L, safe);
+		// Защита проверяется второй раз при исполнении: контейнер мог появиться уже после постановки задания.
+		level.setBlock(stale, Blocks.CHEST.defaultBlockState(), 3);
+		MagicTerrain.flushNow();
+		r.check(queued > 0 && level.getBlockState(natural).isAir(), "Ландшафт: природный камень разрушен через очередь");
+		r.check(level.getBlockState(plank).is(Blocks.OAK_PLANKS), "Ландшафт: naturalOnly сохраняет обычные стройматериалы");
+		r.check(level.getBlockState(container).is(Blocks.CHEST) && level.getBlockState(stale).is(Blocks.CHEST),
+				"Ландшафт: контейнеры защищены до и после постановки задания");
+		r.check(level.getBlockState(immune).is(Blocks.OBSIDIAN), "Ландшафт: immune-тег защищает обсидиан");
+
+		Policy full = new Policy(true, false, false, 64, 1_200.0F, 0.0F);
+		level.setBlock(plank, Blocks.OAK_PLANKS.defaultBlockState(), 3);
+		MagicTerrain.crater(level, p, Vec3.atCenterOf(plank), 0.6, 0.6, 12L, full);
+		MagicTerrain.flushNow();
+		r.check(level.getBlockState(plank).isAir(), "Ландшафт: сервер может явно разрешить разрушение построек");
+
+		level.setBlock(impact, Blocks.STONE.defaultBlockState(), 3);
+		boolean oldGriefing = level.getGameRules().get(GameRules.MOB_GRIEFING);
+		level.getGameRules().set(GameRules.MOB_GRIEFING, false, level.getServer());
+		int blocked = MagicTerrain.crater(level, p, Vec3.atCenterOf(impact), 1.0, 1.0, 13L, safe);
+		MagicTerrain.flushNow();
+		level.getGameRules().set(GameRules.MOB_GRIEFING, oldGriefing, level.getServer());
+		r.check(blocked == 0 && level.getBlockState(impact).is(Blocks.STONE), "Ландшафт: mobGriefing=false запрещает мутацию");
+
+		Policy disabled = new Policy(false, false, false, 64, 1_200.0F, 0.0F);
+		r.check(MagicTerrain.crater(level, p, Vec3.atCenterOf(impact), 1.0, 1.0, 14L, disabled) == 0,
+				"Ландшафт: отключённая политика не создаёт заданий");
+
+		BlockPos sand = o.offset(6, -1, 0);
+		BlockPos water = o.offset(6, 0, 2);
+		level.setBlock(sand, Blocks.SAND.defaultBlockState(), 3);
+		level.setBlock(water, Blocks.WATER.defaultBlockState(), 3);
+		MagicTerrain.trail(level, p, Vec3.atCenterOf(sand), Vec3.atCenterOf(sand), 0.5, Trace.SCORCH, 21L, safe);
+		MagicTerrain.trail(level, p, Vec3.atCenterOf(water), Vec3.atCenterOf(water), 0.5, Trace.FROST, 22L, safe);
+		MagicTerrain.flushNow();
+		r.check(level.getBlockState(sand).is(Blocks.BLACKSTONE) && level.getBlockState(sand.above()).isAir(),
+				"Безопасный след огня сохраняется на песке и не создаёт распространяющийся огонь");
+		r.check(level.getBlockState(water).is(Blocks.ICE), "След холода замораживает обычную воду");
+		MagicTerrain.clear();
 	}
 
 	// --- Восстановление ---

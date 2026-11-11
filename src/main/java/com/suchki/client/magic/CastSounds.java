@@ -1,5 +1,6 @@
 package com.suchki.client.magic;
 
+import com.suchki.SuchkiConfig;
 import com.suchki.client.magic.CastAnim.Pose;
 import com.suchki.magic.CastStyle;
 import com.suchki.magic.MagicSounds;
@@ -21,6 +22,7 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class CastSounds {
 	private static final Map<Integer, Loop> LOOPS = new HashMap<>();
+	private static final Map<Integer, Loop> RESONANCE = new HashMap<>();
 
 	private CastSounds() {}
 
@@ -52,28 +54,70 @@ public final class CastSounds {
 				loop.end();
 				LOOPS.remove(p.getId());
 			}
+			Loop resonance = RESONANCE.get(p.getId());
+			boolean resonant = pose != null && pose.casting() && pose.spell.tier >= 3 && pose.style != CastStyle.CHANNEL;
+			if (resonant) {
+				SoundEvent sound = pose.spell.tier >= 5 ? MagicSounds.RESONANCE_HIGH : MagicSounds.RESONANCE_LOW;
+				if (resonance == null || resonance.isStopped() || resonance.spell != pose.spell || resonance.event != sound) {
+					if (resonance != null) resonance.end();
+					Loop fresh = new Loop(p, pose.spell, sound, true);
+					RESONANCE.put(p.getId(), fresh);
+					mc.getSoundManager().play(fresh);
+				}
+			} else if (resonance != null) {
+				resonance.end();
+				RESONANCE.remove(p.getId());
+			}
 		}
 		LOOPS.values().removeIf(Loop::isStopped);
+		RESONANCE.values().removeIf(Loop::isStopped);
+	}
+
+	/** Остановить и забыть клиентские петли при выходе из мира или смене сервера. */
+	static void stopAll() {
+		LOOPS.values().forEach(Loop::stopNow);
+		RESONANCE.values().forEach(Loop::stopNow);
+		LOOPS.clear();
+		RESONANCE.clear();
 	}
 
 	/** Короткий сигнал у руки (готово / ступень / пик / срыв). */
 	static void cue(AbstractClientPlayer p, SoundEvent sound, float volume, float pitch) {
 		Vec3 at = p.getEyePosition();
 		boolean self = p == Minecraft.getInstance().player;
-		p.level().playLocalSound(at.x, at.y, at.z, sound, SoundSource.PLAYERS, self ? volume : volume * 0.7F, pitch, false);
+		float scale = SuchkiConfig.INSTANCE.magicSoundScale();
+		p.level().playLocalSound(at.x, at.y, at.z, sound, SoundSource.PLAYERS, (self ? volume : volume * 0.7F) * scale, pitch, false);
+	}
+
+	/** Дополнительная кульминация для старших кругов и сильно накопленных заклинаний. */
+	static void release(AbstractClientPlayer p, Spell spell, float power) {
+		if (spell.tier < 3 && power < 1.5F) return;
+		boolean mythic = spell.tier >= 5 || power >= 2.0F;
+		float volume = mythic ? 0.82F : 0.58F;
+		float pitch = mythic ? 0.92F + 0.04F * Math.min(2.5F, power) : 1.02F + 0.05F * Math.min(2.0F, power);
+		cue(p, mythic ? MagicSounds.RELEASE_MYTHIC : MagicSounds.RELEASE_POWER, volume, pitch);
 	}
 
 	/** Гул, привязанный к магу. Громкость нарастает за полсекунды и плавно гаснет после конца каста. */
 	static final class Loop extends AbstractTickableSoundInstance {
 		final AbstractClientPlayer player;
 		final Spell spell;
+		/** Событие звука; отдельное имя не скрывает поле {@code Sound sound} базового класса. */
+		final SoundEvent event;
+		final boolean resonance;
 		private boolean ending;
 		private float level;
 
 		Loop(AbstractClientPlayer player, Spell spell) {
-			super(loopFor(spell), SoundSource.PLAYERS, player.getRandom());
+			this(player, spell, loopFor(spell), false);
+		}
+
+		Loop(AbstractClientPlayer player, Spell spell, SoundEvent sound, boolean resonance) {
+			super(sound, SoundSource.PLAYERS, player.getRandom());
 			this.player = player;
 			this.spell = spell;
+			this.event = sound;
+			this.resonance = resonance;
 			this.looping = true;
 			this.delay = 0;
 			this.volume = 0.01F;
@@ -85,6 +129,10 @@ public final class CastSounds {
 
 		void end() {
 			ending = true;
+		}
+
+		void stopNow() {
+			stop();
 		}
 
 		@Override
@@ -104,7 +152,11 @@ public final class CastSounds {
 			Pose pose = CastAnim.compute(player, 0);
 			float target = 0.0F;
 			if (!ending && pose != null && pose.casting()) {
-				if (spell.style == CastStyle.CHANNEL) {
+				if (resonance) {
+					float rank = Mth.clamp((spell.tier - 2) / 3.0F, 0.0F, 1.0F);
+					target = (0.06F + 0.08F * rank) * (0.25F + 0.75F * pose.form) + 0.08F * pose.over;
+					pitch = 0.72F + 0.08F * rank + 0.16F * pose.form + 0.12F * pose.over;
+				} else if (spell.style == CastStyle.CHANNEL) {
 					target = 0.55F + 0.35F * pose.channel;
 					pitch = 0.85F + 0.25F * pose.channel;
 				} else {
@@ -113,6 +165,7 @@ public final class CastSounds {
 							+ 0.03F * Mth.sin(player.tickCount * (0.5F + pose.hold));
 				}
 			}
+			target *= SuchkiConfig.INSTANCE.magicSoundScale();
 			level = Mth.approach(level, target, ending ? 0.08F : 0.06F);
 			volume = Math.max(0.0F, level);
 			if (ending && level <= 0.001F) stop();

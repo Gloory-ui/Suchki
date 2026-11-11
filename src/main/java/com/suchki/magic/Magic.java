@@ -5,6 +5,7 @@ import com.suchki.Suchki;
 import com.suchki.skill.Perk;
 import com.suchki.skill.PlayerSkills;
 import com.suchki.skill.Skills;
+import com.suchki.magic.terrain.MagicTerrain;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -160,6 +161,7 @@ public final class Magic {
 		Minions.init();
 		Minds.init();
 		Zones.init();
+		MagicTerrain.init();
 		MagicLoot.init();
 		PayloadTypeRegistry.playC2S().register(SelectSpell.TYPE, SelectSpell.CODEC);
 		PayloadTypeRegistry.playS2C().register(CastFx.TYPE, CastFx.CODEC);
