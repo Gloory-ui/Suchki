@@ -56,7 +56,7 @@ public class SuchkiUiTest implements FabricClientGameTest {
 		context.runOnClient(mc -> {
 			mc.options.framerateLimit().set(20);
 			mc.options.renderDistance().set(2);
-			mc.options.simulationDistance().set(2);
+			mc.options.simulationDistance().set(5);
 		});
 		try (TestSingleplayerContext sp = context.worldBuilder().create()) {
 			sp.getClientWorld().waitForChunksRender();
