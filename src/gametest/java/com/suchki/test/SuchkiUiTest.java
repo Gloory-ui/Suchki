@@ -54,7 +54,7 @@ public class SuchkiUiTest implements FabricClientGameTest {
 		// Uncapped headless rendering can exhaust those ticks before the integrated server's
 		// asynchronous chunk generation has completed even a flat spawn area.
 		context.runOnClient(mc -> {
-			mc.options.framerateLimit().set(20);
+			mc.options.framerateLimit().set(10);
 			mc.options.renderDistance().set(2);
 			mc.options.simulationDistance().set(5);
 		});

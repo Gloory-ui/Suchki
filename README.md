@@ -152,8 +152,8 @@
 | `magicSoundScale` | 1.0 | громкость локальных слоёв зарядки и кульминации (0–2) |
 | `magicTerrainDestruction` | true | воронки, трещины и стихийные следы от заклинаний |
 | `magicTerrainRespectMobGriefing` | true | отключать изменение мира при `mobGriefing=false` |
-| `magicTerrainNaturalOnly` | true | ломать только блоки из datapack-тега `suchki:magic_terrain_breakable`; `false` включает урон постройкам |
-| `magicTerrainMaxBlocksPerCast` | 6000 | жёсткий предел блоков одного заклинания (64–12000) |
+| `magicTerrainNaturalOnly` | true | ломать только блоки из datapack-тега `suchki:magic_terrain_breakable` и не создавать настоящий огонь; `false` включает урон постройкам и ванильное распространение огня |
+| `magicTerrainMaxBlocksPerCast` | 6000 | жёсткий предел изменений, поставленных модом в очередь (64–12000); ванильное распространение огня возможно только при `magicTerrainNaturalOnly=false` |
 | `magicTerrainBlocksPerTick` | 512 | общий серверный бюджет изменений за тик (32–2048) |
 | `magicTerrainDropChance` | 0.0 | доля разрушенных блоков, выпадающих предметами (0–1) |
 

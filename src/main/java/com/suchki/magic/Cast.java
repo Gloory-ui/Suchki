@@ -2,6 +2,7 @@ package com.suchki.magic;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Predicate;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -42,13 +43,20 @@ public final class Cast {
 	public final float bonus;
 	/** Общий счётчик ландшафтных мутаций, разделяемый отложенными волнами и снарядами одного каста. */
 	static final class TerrainBudget {
+		final UUID id;
 		int used;
+		TerrainBudgetLedger ledger;
+
+		TerrainBudget(UUID id, int used) {
+			this.id = id;
+			this.used = Math.max(0, used);
+		}
 	}
 
 	private final TerrainBudget terrainBudget;
 
 	public Cast(ServerLevel level, ServerPlayer caster, Spell spell, float power, float bonus) {
-		this(level, caster, spell, power, bonus, new TerrainBudget());
+		this(level, caster, spell, power, bonus, new TerrainBudget(UUID.randomUUID(), 0));
 	}
 
 	Cast(ServerLevel level, ServerPlayer caster, Spell spell, float power, float bonus, TerrainBudget terrainBudget) {
@@ -57,11 +65,24 @@ public final class Cast {
 		this.spell = spell;
 		this.power = power;
 		this.bonus = bonus;
-		this.terrainBudget = terrainBudget == null ? new TerrainBudget() : terrainBudget;
+		this.terrainBudget = terrainBudget == null ? exhaustedTerrainBudget() : terrainBudget;
 	}
 
 	TerrainBudget terrainBudget() {
 		return terrainBudget;
+	}
+
+	static TerrainBudget persistTerrainBudget(ServerLevel level, TerrainBudget candidate) {
+		return TerrainBudgetLedger.get(level).bind(candidate, level.getGameTime());
+	}
+
+	static TerrainBudget restoreTerrainBudget(ServerLevel level, UUID id, int used) {
+		return TerrainBudgetLedger.get(level).restore(id, used, level.getGameTime());
+	}
+
+	/** Старые/повреждённые NBT безопасно теряют разрушение, а не получают новый полный лимит. */
+	static TerrainBudget exhaustedTerrainBudget() {
+		return new TerrainBudget(UUID.randomUUID(), Integer.MAX_VALUE);
 	}
 
 	/** Сколько блоков ещё может поставить в очередь этот каст при заданном серверном лимите. */
@@ -71,7 +92,8 @@ public final class Cast {
 
 	/** Учесть только фактически поставленные в очередь позиции, а не отфильтрованные защищённые блоки. */
 	public void accountTerrainBlocks(int count) {
-		terrainBudget.used += Math.max(0, count);
+		terrainBudget.used = (int) Math.min(Integer.MAX_VALUE, (long) terrainBudget.used + Math.max(0, count));
+		if (terrainBudget.ledger != null && level != null) terrainBudget.ledger.record(terrainBudget, level.getGameTime());
 	}
 
 	// --- Как сила влияет на заклинание ---

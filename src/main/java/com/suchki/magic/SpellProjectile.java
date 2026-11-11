@@ -1,5 +1,6 @@
 package com.suchki.magic;
 
+import java.util.UUID;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -23,7 +24,7 @@ public class SpellProjectile extends ThrowableProjectile {
 	private static final int MAX_LIFE = 100;
 
 	private float bonus = 1.0F;
-	/** Общий бюджет разрушения исходного каста; все метеоры одного ритуала делят один объект. */
+	/** Общий бюджет разрушения исходного каста; ledger объединяет siblings даже после выгрузки и рестарта. */
 	private Cast.TerrainBudget terrainBudget;
 	private int life;
 	private double gravity;
@@ -39,7 +40,7 @@ public class SpellProjectile extends ThrowableProjectile {
 		p.entityData.set(SPELL, c.spell.id);
 		p.entityData.set(POWER, c.power);
 		p.bonus = c.bonus;
-		p.terrainBudget = c.terrainBudget();
+		p.terrainBudget = Cast.persistTerrainBudget(c.level, c.terrainBudget());
 		Vec3 from = c.hand();
 		p.setPos(from.x, from.y - 0.2, from.z);
 		Vec3 dir = c.look();
@@ -55,7 +56,7 @@ public class SpellProjectile extends ThrowableProjectile {
 		p.entityData.set(SPELL, c.spell.id);
 		p.entityData.set(POWER, c.power);
 		p.bonus = c.bonus;
-		p.terrainBudget = c.terrainBudget();
+		p.terrainBudget = Cast.persistTerrainBudget(c.level, c.terrainBudget());
 		p.setPos(pos.x, pos.y, pos.z);
 		p.setDeltaMovement(velocity);
 		c.level.addFreshEntity(p);
@@ -177,6 +178,13 @@ public class SpellProjectile extends ThrowableProjectile {
 		out.putFloat("bonus", bonus);
 		out.putInt("life", life);
 		out.putDouble("gravity", gravity);
+		if (terrainBudget != null) {
+			if (level() instanceof ServerLevel level && terrainBudget.ledger != null) {
+				terrainBudget.ledger.record(terrainBudget, level.getGameTime());
+			}
+			out.putString("terrain_budget_id", terrainBudget.id.toString());
+			out.putInt("terrain_budget_used", terrainBudget.used);
+		}
 	}
 
 	@Override
@@ -187,5 +195,14 @@ public class SpellProjectile extends ThrowableProjectile {
 		bonus = in.getFloatOr("bonus", 1.0F);
 		life = in.getIntOr("life", 0);
 		gravity = in.getDoubleOr("gravity", 0.0);
+		var id = in.getString("terrain_budget_id");
+		var used = in.getInt("terrain_budget_used");
+		try {
+			if (id.isEmpty() || used.isEmpty() || used.get() < 0) throw new IllegalArgumentException("incomplete terrain budget");
+			if (!(level() instanceof ServerLevel level)) throw new IllegalArgumentException("terrain budget outside server level");
+			terrainBudget = Cast.restoreTerrainBudget(level, UUID.fromString(id.get()), used.get());
+		} catch (IllegalArgumentException invalidOrLegacyData) {
+			terrainBudget = Cast.exhaustedTerrainBudget();
+		}
 	}
 }

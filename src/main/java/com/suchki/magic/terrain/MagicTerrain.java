@@ -286,11 +286,17 @@ public final class MagicTerrain {
 			changed = job.level.setBlock(pos, Blocks.BASALT.defaultBlockState(), 3);
 		}
 		BlockPos above = pos.above();
-		if (chance(job.seed, pos, 73) < 0.09 && job.level.getBlockState(above).isAir()) {
+		// В безопасном режиме настоящий огонь недопустим: его ванильное распространение обошло бы
+		// naturalOnly, block-entity/claim-проверки и бюджет мутаций. Полный режим включается явно.
+		if (shouldPlaceFire(job.policy, job.seed, pos) && job.level.getBlockState(above).isAir()) {
 			job.level.setBlock(above, BaseFireBlock.getState(job.level, above), 3);
 			changed = true;
 		}
 		return changed;
+	}
+
+	static boolean shouldPlaceFire(Policy policy, long seed, BlockPos pos) {
+		return !policy.naturalOnly() && chance(seed, pos, 73) < 0.09;
 	}
 
 	private static boolean frost(Job job, BlockPos pos, BlockState state) {

@@ -319,7 +319,8 @@ final class MagicTests {
 		MagicTerrain.trail(level, p, Vec3.atCenterOf(sand), Vec3.atCenterOf(sand), 0.5, Trace.SCORCH, 21L, safe);
 		MagicTerrain.trail(level, p, Vec3.atCenterOf(water), Vec3.atCenterOf(water), 0.5, Trace.FROST, 22L, safe);
 		MagicTerrain.flushNow();
-		r.check(level.getBlockState(sand).is(Blocks.BLACKSTONE), "След огня сохраняется на песке");
+		r.check(level.getBlockState(sand).is(Blocks.BLACKSTONE) && level.getBlockState(sand.above()).isAir(),
+				"Безопасный след огня сохраняется на песке и не создаёт распространяющийся огонь");
 		r.check(level.getBlockState(water).is(Blocks.ICE), "След холода замораживает обычную воду");
 		MagicTerrain.clear();
 	}
